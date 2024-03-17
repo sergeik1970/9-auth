@@ -3,3 +3,4 @@ postgres
 **/.nest
 **/dist
 **/.DS_Store
+**/.env
