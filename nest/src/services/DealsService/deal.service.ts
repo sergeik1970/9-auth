@@ -1,0 +1,30 @@
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Deals } from "src/entities/Deals/deals.entity";
+import { Repository } from "typeorm";
+
+@Injectable()
+export class DealsService {
+    constructor(
+        @InjectRepository(Deals)
+        private readonly dealsRepository: Repository<Deals>,
+    ) {}
+
+    getHello(): string {
+        return JSON.stringify({ a: "Hello World!a" });
+    }
+
+    async createDeal(name: string): Promise<Deals> {
+        const deal = this.dealsRepository.create({ name });
+        return this.dealsRepository.save(deal);
+    }
+
+    async getAllDeals(): Promise<Array<Deals>> {
+        return (await this.dealsRepository.find()).reverse();
+    }
+
+    async deleteDeal(id: string): Promise<Array<Deals>> {
+        await this.dealsRepository.delete({ id: Number(id) });
+        return this.dealsRepository.find();
+    }
+}
