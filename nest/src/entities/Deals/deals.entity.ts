@@ -7,4 +7,7 @@ export class Deals {
 
     @Column()
     name: string;
+
+    @Column("boolean", { default: false })
+    done: boolean = false;
 }
