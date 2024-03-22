@@ -8,7 +8,7 @@ FROM node:21-alpine as builder
 COPY . .
 
 COPY --from=deps --chown=builder ./node_modules ./node_modules
-
+ENV NEXT_PUBLIC_API_URL ''
 RUN npm run build
 
 FROM node:21-alpine as runner
