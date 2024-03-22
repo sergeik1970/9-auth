@@ -27,4 +27,11 @@ export class DealsService {
         await this.dealsRepository.delete({ id: Number(id) });
         return this.dealsRepository.find();
     }
+
+    async changeDeal(id: string, data: Deals): Promise<Deals> {
+        await this.dealsRepository.update(id, data);
+        return (
+            await this.dealsRepository.find({ where: { id: Number(id) } })
+        )[0];
+    }
 }

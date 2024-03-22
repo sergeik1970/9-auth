@@ -1,3 +1,4 @@
+import { IDeal } from "@/shared/types/deals";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
 export const getDeals = createAsyncThunk(
@@ -32,6 +33,20 @@ export const addDeal = createAsyncThunk(
         }
     },
 );
+
+export const changeDeal = createAsyncThunk("deals/changeDeal", async ({ id, element }: { id: string; element: IDeal }, { rejectWithValue }) => {
+    try {
+        return await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/deals/change/${id}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ data: element }),
+        }).then(res => res.json())
+    } catch (err) {
+        return rejectWithValue(err);
+    }
+})
 
 export const deleteDeal = createAsyncThunk(
     "deals/deleteDeal",

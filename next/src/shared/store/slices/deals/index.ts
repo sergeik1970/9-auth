@@ -1,6 +1,6 @@
 import { IDeals } from "@/shared/types/deals";
 import { createSlice } from "@reduxjs/toolkit";
-import { getDeals, addDeal, deleteDeal } from "./thunks";
+import { getDeals, addDeal, deleteDeal, changeDeal } from "./thunks";
 import { RootState } from "../../store";
 
 const initialState: IDeals = {
@@ -22,6 +22,10 @@ const dealsSlice = createSlice({
         builder.addCase(deleteDeal.fulfilled, (state, action) => {
             state.deals = action.payload;
         });
+
+        builder.addCase(changeDeal.fulfilled, (state, action) => {
+            console.log(action);
+        })
     },
 });
 

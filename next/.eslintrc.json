@@ -2,14 +2,15 @@
   "extends": ["next/core-web-vitals", "prettier"],
   "plugins": ["prettier"],
   "rules": {
+    "react/display-name": "off",
     "prettier/prettier": [
       "error",
       {
         "endOfLine": "auto"
       },
       {
-        "eslintreact-hooks/exhaustive-deps": false
+        "eslintreact-hooks/exhaustive-deps": false,
       }
-    ]
+    ],
   }
 }

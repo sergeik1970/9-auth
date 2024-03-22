@@ -7,7 +7,7 @@ import styles from "./index.module.scss";
 
 const DealsList = (): ReactElement => {
     const deals = useSelector(selectDeals);
-    console.log(deals);
+
     return (
         <ul className={styles["list"]}>
             {deals?.map((el) => <DealsListItem item={el} key={el.id} />)}
