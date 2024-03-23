@@ -4,3 +4,4 @@ postgres
 **/dist
 **/.DS_Store
 **/.env
+**/*.sql
