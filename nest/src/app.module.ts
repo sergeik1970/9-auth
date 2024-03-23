@@ -1,7 +1,6 @@
 import { Module } from "@nestjs/common";
 import { DealsModule } from "./modules/DealsModule/deal.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { Deals } from "src/entities/Deals/deals.entity";
 
 @Module({
     imports: [
@@ -13,7 +12,7 @@ import { Deals } from "src/entities/Deals/deals.entity";
             password: "postgres",
             database: "postgres",
             autoLoadEntities: true,
-            synchronize: true,
+            synchronize: false,
         }),
         DealsModule,
     ],

@@ -17,7 +17,10 @@ COPY  --from=deps --chown=runner ./package.json ./package.json
 COPY  --from=deps --chown=runner ./package-lock.json ./package-lock.json
 COPY --from=deps --chown=runner ./node_modules ./node_modules
 COPY --from=builder --chown=runner ./dist ./dist
+COPY --from=builder --chown=runner ./migrations ./migrations
+COPY --from=builder --chown=runner ./typeOrm.config.ts ./typeOrm.config.ts
 
 EXPOSE 3001
+ENV NODE_ENV prod
 
 CMD ["npm", "run", "start:prod"]
