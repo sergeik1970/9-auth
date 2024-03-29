@@ -6,6 +6,7 @@ import { useDispatch } from "@/shared/store/store";
 import { changeDeal, deleteDeal } from "@/shared/store/slices/deals/thunks";
 import InputText from "@/shared/components/InputText";
 import useDebounce from "@/shared/hooks/useDebounce";
+import Checkbox from "@/shared/components/Checkbox";
 
 const DealsListItem = ({ item }: { item: IDeal }): ReactElement => {
     const dispatch = useDispatch();
@@ -27,6 +28,13 @@ const DealsListItem = ({ item }: { item: IDeal }): ReactElement => {
         }
     }
 
+    const changeDone = (e: any) => {
+        setItem({
+            ...currentItem,
+            done: e.target.checked
+        })
+    }
+
     useEffect(() => {
         if (currentItem && currentItem !== item) {
             changeItem(currentItem);
@@ -35,7 +43,10 @@ const DealsListItem = ({ item }: { item: IDeal }): ReactElement => {
 
     return (
         <li className={styles["item"]}>
-            <InputText className={styles["input"]} defaultValue={item.name} onChange={changeName} />
+            <div className={styles["item-wrap"]}>
+                <InputText className={styles["input"]} defaultValue={item.name} onChange={changeName} />
+                <Checkbox defaultChecked={item.done} onChange={changeDone} />
+            </div>
             <Button onClick={deleteClick}>delete</Button>
         </li>
     );

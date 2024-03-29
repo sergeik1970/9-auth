@@ -5,5 +5,5 @@ export interface IDeals {
 export interface IDeal {
     name: string;
     id: number;
-    checked: boolean;
+    done: boolean;
 }
