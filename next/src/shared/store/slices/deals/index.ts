@@ -12,7 +12,7 @@ const dealsSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder.addCase(getDeals.fulfilled, (state, action) => {
-            state.deals = action.payload;
+            state.deals = Array.isArray(action.payload) ? action.payload : [];
         });
 
         builder.addCase(addDeal.fulfilled, (state, action) => {
@@ -20,12 +20,15 @@ const dealsSlice = createSlice({
         });
 
         builder.addCase(deleteDeal.fulfilled, (state, action) => {
-            state.deals = action.payload;
+            state.deals = Array.isArray(action.payload) ? action.payload : [];
         });
 
         builder.addCase(changeDeal.fulfilled, (state, action) => {
-            console.log(action);
-        })
+            const index = state.deals.findIndex(deal => deal.id === action.payload.id);
+            if (index !== -1) {
+                state.deals[index] = action.payload;
+            }
+        });
     },
 });
 
