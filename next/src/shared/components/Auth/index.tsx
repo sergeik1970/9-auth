@@ -4,7 +4,9 @@ import styles from "./index.module.scss";
 import { useDispatch, useSelector } from "../../store/store";
 import { registerUser, loginUser, clearError } from "../../store/slices/auth";
 import { AuthFormData } from "../../types/auth";
-import { divide } from "lodash";
+// import InputText from "@/shared/components/InputText";
+import Button from "@/shared/components/Button";
+// import { divide } from "lodash";
 
 const Auth = (): ReactElement => {
     const dispatch = useDispatch();
@@ -150,14 +152,14 @@ const Auth = (): ReactElement => {
                 <div className={styles.toggleMode}>
                     <p>
                         {isLogin ? "Нет аккаунта?" : "Уже есть аккаунт?"}
-                        <button
+                        <Button
                             type="button"
                             onClick={toggleMode}
                             className={styles.toggleMode}
                             disabled={loading}
                         >
                             {isLogin ? "Зарегистрироваться" : "Войти"}
-                        </button>
+                        </Button>
                     </p>
                 </div>
             </div>
