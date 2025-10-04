@@ -6,9 +6,11 @@ import {
     useDispatch as useAppDispatch,
     useSelector as useAppSelector,
 } from "react-redux";
+import auth from "./slices/auth";
 import deals from "./slices/deals";
 
 const rootReducer = combineReducers({
+    auth,
     deals,
 });
 
