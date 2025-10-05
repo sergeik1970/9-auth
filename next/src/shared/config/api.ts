@@ -3,10 +3,10 @@ export const API_BASE_URL =
 
 export const API_ENDPOINTS = {
     auth: {
-        login: "api/auth/login",
-        register: "api/auth/register",
-        // logout: "api/auth/logout",
-        // me: "api/auth/me",
+        login: "/api/auth/login",
+        register: "/api/auth/register",
+        // logout: "/api/auth/logout",
+        // me: "/api/auth/me",
     },
 };
 

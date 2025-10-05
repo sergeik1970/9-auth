@@ -29,28 +29,41 @@ export class AuthService {
     ) {}
 
     async register(registerDto: RegisterDto): Promise<User> {
+        console.log("AuthService.register called");
         const { email, password, name } = registerDto;
+        console.log("Data:", { email, name, passwordLength: password?.length });
 
+        console.log("Checking for existing user...");
         const existingUser = await this.userRepository.findOne({
             where: { email },
         });
+        console.log("Existing user:", existingUser ? "Found" : "Not found");
+
         if (existingUser) {
             throw new ConflictException(
                 "Пользователь с таким email уже существует",
             );
         }
 
+        console.log("Hashing password...");
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
+        console.log("Password hashed successfully");
 
+        console.log("Creating user entity...");
         const user = this.userRepository.create({
             email,
             password: hashedPassword,
             name,
             isAdmin: false,
         });
+        console.log("User entity created:", user);
 
-        return this.userRepository.save(user);
+        console.log("Saving user to database...");
+        const savedUser = await this.userRepository.save(user);
+        console.log("User saved successfully:", savedUser.id);
+
+        return savedUser;
     }
 
     async login(loginDto: LoginDto): Promise<User> {

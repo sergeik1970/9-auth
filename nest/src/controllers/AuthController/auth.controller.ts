@@ -23,7 +23,11 @@ export class AuthController {
     @Post("register")
     async register(@Body() registerDto: RegisterDto, @Res() res: Response) {
         try {
+            console.log("=== REGISTER START ===");
+            console.log("Received data:", registerDto);
+
             const user = await this.authService.register(registerDto);
+            console.log("User created successfully:", user.id);
 
             res.cookie("userId", user.id.toString(), {
                 httpOnly: true,
@@ -39,6 +43,11 @@ export class AuthController {
                 user: userWithoutPassword,
             });
         } catch (error) {
+            console.error("=== REGISTER ERROR ===");
+            console.error("Error type:", error.constructor.name);
+            console.error("Error message:", error.message);
+            console.error("Error stack:", error.stack);
+
             return res.status(HttpStatus.BAD_REQUEST).json({
                 message: error.message,
             });

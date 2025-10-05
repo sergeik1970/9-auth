@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { DealsModule } from "./modules/DealsModule/deal.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { AuthModule } from "./modules/AuthModule/auth.module";
 
 @Module({
     imports: [
@@ -15,6 +16,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
             synchronize: false,
         }),
         DealsModule,
+        AuthModule,
     ],
     controllers: [],
     providers: [],
