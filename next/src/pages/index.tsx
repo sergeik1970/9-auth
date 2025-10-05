@@ -1,11 +1,8 @@
+import HomePage from "@/shared/pages/Home";
 import React from "react";
 
 const Main = () => {
-    return (
-        <div>
-            <span>asdasdasd</span>
-        </div>
-    );
+    return <HomePage />;
 };
 
 export default Main;
