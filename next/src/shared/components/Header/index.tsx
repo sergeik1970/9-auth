@@ -1,16 +1,18 @@
 import React, { ReactElement } from "react";
-import { useSelector } from "@/shared/store/store";
+import { useSelector, useDispatch } from "@/shared/store/store"; // почему не react-redux
 import Button from "@/shared/components/Button"; //
 import Link from "next/link";
 // import { useAuth } from "@/contexts/AuthContext"; // передалать под useSelector и redux
 import { getRoleDisplayName } from "@/shared/utils/roles";
+import { logoutUser } from "@/shared/store/slices/auth";
 import styles from "./index.module.scss";
 
 const Header = (): ReactElement => {
     const { user, isAuthenticated } = useSelector((state) => state.auth);
+    const dispatch = useDispatch();
 
     const handleLogout = () => {
-        logout();
+        dispatch(logoutUser());
     };
     return (
         <header className={styles.header}>
