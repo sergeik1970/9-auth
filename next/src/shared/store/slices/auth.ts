@@ -1,6 +1,12 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import {
+    createSlice,
+    createAsyncThunk,
+    PayloadAction,
+    isRejectedWithValue,
+} from "@reduxjs/toolkit";
 import { createApiUrl, API_ENDPOINTS } from "../../config/api";
 import { User, AuthState, RegisterUserData, LoginUserData } from "../../types/auth";
+import { reject } from "lodash";
 
 const initialState: AuthState = {
     user: null,
@@ -51,6 +57,7 @@ export const loginUser = createAsyncThunk(
                 body: JSON.stringify(userData),
             });
 
+            // Получаем ответ от сервера
             const data = await response.json();
 
             if (!response.ok) {
@@ -64,6 +71,56 @@ export const loginUser = createAsyncThunk(
             return data.user;
         } catch (error) {
             return rejectWithValue("Ошибка входа в catch");
+        }
+    },
+);
+
+export const logoutUser = createAsyncThunk("auth/logout", async (_, { rejectWithValue }) => {
+    try {
+        const response = await fetch(createApiUrl(API_ENDPOINTS.auth.logout), {
+            method: "POST",
+            credentials: "include",
+        });
+        if (!response.ok) {
+            return rejectWithValue("Ошибка выхода");
+        }
+
+        localStorage.removeItem("token");
+
+        return null;
+    } catch (error) {
+        return isRejectedWithValue("Ошибка соединения с сервером в catch");
+    }
+});
+
+export const getCurrentUser = createAsyncThunk(
+    "auth/getCurrentUser",
+    async (_, { rejectWithValue }) => {
+        try {
+            // Получаем токен
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                return rejectWithValue("Токен не найден");
+            }
+
+            const response = await fetch(createApiUrl(API_ENDPOINTS.auth.me), {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                credentials: "include",
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                return rejectWithValue(data.message || "Пользователь не авторизован");
+            }
+
+            return data.user;
+        } catch (error) {
+            return rejectWithValue("Ошибка соединения с сервером в catch");
         }
     },
 );
@@ -115,6 +172,37 @@ const authSlice = createSlice({
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.loading = false;
+                state.error = action.payload as string;
+            });
+        // Logout
+        builder
+            .addCase(logoutUser.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(loginUser.fulfilled, (state, action: PayloadAction<User>) => {
+                state.loading = false;
+                state.user = action.payload;
+            })
+            .addCase(loginUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+        // Get Current User
+        builder
+            .addCase(getCurrentUser.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(getCurrentUser.fulfilled, (state, action: PayloadAction<User>) => {
+                state.loading = false;
+                state.user = action.payload;
+                state.isAuthenticated = true;
+                state.error = null;
+            })
+            .addCase(getCurrentUser.rejected, (state, action) => {
+                state.loading = false;
+                state.user = null;
+                state.isAuthenticated = false;
                 state.error = action.payload as string;
             });
     },
