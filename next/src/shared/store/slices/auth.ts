@@ -4,6 +4,9 @@ import { User, AuthState, RegisterUserData, LoginUserData } from "../../types/au
 
 const initialState: AuthState = {
     user: null,
+    // role: "",
+    // id: 1, // Запрос который получает инфe о пользователе
+    // },
     isAuthenticated: false,
     loading: false,
     error: null,
