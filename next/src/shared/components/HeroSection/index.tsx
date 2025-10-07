@@ -20,7 +20,7 @@ const HeroSection = (): ReactElement => {
                         этапе.
                     </p>
                     <div className={styles.actions}>
-                        <Link href="/auth/register">
+                        <Link href="/auth">
                             <Button variant="primary" size="large">
                                 Начать работу
                             </Button>
