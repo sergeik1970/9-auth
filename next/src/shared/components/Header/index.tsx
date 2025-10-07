@@ -44,10 +44,10 @@ const Header = (): ReactElement => {
                                 <span className={styles.userRole}>
                                     {user?.role ? getRoleDisplayName(user.role) : "Пользователь"}
                                 </span>
-                                <Button variant="outline" size="small" onClick={handleLogout}>
-                                    Выйти
-                                </Button>
                             </div>
+                            <Button variant="outline" size="small" onClick={handleLogout}>
+                                Выйти
+                            </Button>
                         </div>
                     ) : (
                         <>
