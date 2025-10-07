@@ -144,9 +144,9 @@ const Auth = (): ReactElement => {
                     {error && <div className={styles.error}>{error}</div>}
                     {success && <div className={styles.success}>{success}</div>}
 
-                    <button type="submit" disabled={loading} className={styles.submitButton}>
+                    <Button type="submit" disabled={loading} className={styles.submitButton}>
                         {loading ? "Загрузка..." : isLogin ? "Войти" : "Зарегистрироваться"}
-                    </button>
+                    </Button>
                 </form>
 
                 <div className={styles.toggleMode}>

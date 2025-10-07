@@ -1,0 +1,148 @@
+.illustration {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mockup {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  width: 400px;
+  overflow: hidden;
+  transform: rotate(5deg);
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: rotate(0deg) scale(1.05);
+  }
+}
+
+.mockupHeader {
+  background: #f3f4f6;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mockupDots {
+  display: flex;
+  gap: 6px;
+
+  span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d1d5db;
+
+    &:first-child { background: #ef4444; }
+    &:nth-child(2) { background: #f59e0b; }
+    &:nth-child(3) { background: #10b981; }
+  }
+}
+
+.mockupContent {
+  padding: 24px;
+  color: #374151;
+}
+
+.mockupTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #1f2937;
+}
+
+.mockupQuestion { position: relative; }
+
+.questionText {
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: #374151;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option {
+  padding: 8px 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  background: white; /* чтобы кнопки/дивы вели себя одинаково */
+
+  &:hover:not(.disabled):not(.correct):not(.incorrect) {
+    border-color: #d1d5db;
+    background: #f9fafb;
+    transform: translateY(-1px);
+  }
+
+  &.correct {
+    border-color: #10b981;
+    background: #ecfdf5;
+    color: #065f46;
+    animation: correctPulse 0.6s ease-out;
+    cursor: default;
+  }
+
+  &.incorrect {
+    border-color: #ef4444;
+    background: #fef2f2;
+    color: #991b1b;
+    animation: incorrectShake 0.6s ease-out;
+    cursor: default;
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f9fafb;
+  }
+}
+
+.congratsAnimation {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  animation: congratsAppear 0.6s ease-out;
+  z-index: 10;
+}
+
+@keyframes correctPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
+  50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(16,185,129,0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+}
+
+@keyframes incorrectShake {
+  0%,100% { transform: translateX(0); }
+  10%,30%,50%,70%,90% { transform: translateX(-3px); }
+  20%,40%,60%,80% { transform: translateX(3px); }
+}
+
+@keyframes congratsAppear {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotate(-10deg); }
+  50%  { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotate(5deg); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+}
+
+@media (max-width: 768px) {
+  .mockup {
+    width: 320px;
+    transform: none;
+
+    &:hover { transform: scale(1.02); }
+  }
+}
