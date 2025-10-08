@@ -1,5 +1,5 @@
-import React, { ReactElement, useState } from "react";
-import { useSelector, useDispatch } from "@/shared/store/store";
+import React, { ReactElement } from "react";
+import { useSelector } from "@/shared/store/store";
 import { useRouter } from "next/router";
 import { isTeacher, getRoleDisplayName } from "@/shared/utils/roles";
 import styles from "./index.module.scss";
@@ -13,13 +13,13 @@ export interface MenuItem {
 }
 
 interface SideBarProps {
-    className?: string;
+    isOpen?: boolean;
+    onClose?: () => void;
+    isDesktop?: boolean; // Добавьте этот проп
 }
 
-const Sidebar = (): ReactElement => {
-    // Смотреть в 7
+const Sidebar = ({ isOpen = false, onClose, isDesktop = false }: SideBarProps): ReactElement => {
     const { user } = useSelector((state) => state.auth);
-    // const dispatch = useDispatch();
     const router = useRouter();
 
     const teacherMenuItems: MenuItem[] = [
@@ -55,16 +55,51 @@ const Sidebar = (): ReactElement => {
 
     const handleNavigation = (href: string) => {
         router.push(href);
+        if (onClose) {
+            onClose();
+        }
     };
 
     return (
-        <aside className={`${styles.sidebar} ${""}`}>
-            <div className={styles.logo}>
-                <Link href="/" className={styles.logoLink}>
-                    <h2 className={styles.logoText}>Skorix</h2>
-                </Link>
+        <aside className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
+            <div className={styles.sidebarHeader}>
+                <div className={styles.logo}>
+                    <Link href="/" className={styles.logoLink}>
+                        <h2 className={styles.logoText}>Skorix</h2>
+                    </Link>
+                </div>
+                {/* Показываем кнопку закрытия только на мобильных устройствах */}
+                {!isDesktop && (
+                    <button
+                        className={styles.closeButton}
+                        onClick={onClose}
+                        aria-label="Закрыть меню"
+                    >
+                        <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                d="M18 6L6 18"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                            <path
+                                d="M6 6L18 18"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                        </svg>
+                    </button>
+                )}
             </div>
-
             <nav className={styles.nav}>
                 <ul className={styles.navList}>
                     {menuItems.map((item, index) => (
@@ -80,7 +115,6 @@ const Sidebar = (): ReactElement => {
                     ))}
                 </ul>
             </nav>
-
             <div className={styles.user}>
                 <div className={styles.userAvatar}>👤</div>
                 <div className={styles.userInfo}>

@@ -3,6 +3,33 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 32px;
+    margin: 20px;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.menuButton {
+    display: none;
+    background: none;
+    border: none;
+    color: #1f2937;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+        background-color: #f3f4f6;
+    }
+    
+    &:focus {
+        outline: 2px solid #10b981;
+        outline-offset: 2px;
+    }
 }
 
 .title {
@@ -17,9 +44,16 @@
         gap: 16px;
         align-items: stretch;
     }
+    
+    .headerLeft {
+        justify-content: space-between;
+    }
+    
+    .menuButton {
+        display: block;
+    }
 
     .title {
         font-size: 24px;
-        text-align: center;
     }
 }
