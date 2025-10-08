@@ -24,6 +24,7 @@ const Auth = (): ReactElement => {
         confirmPassword: "",
     });
     const [success, setSuccess] = useState("");
+    const [validationError, setValidationError] = useState("");
 
     // Тут будет перенаправление после входа и регистрации
     useEffect(() => {
@@ -44,14 +45,22 @@ const Auth = (): ReactElement => {
         }));
         dispatch(clearError());
         setSuccess("");
+        setValidationError("");
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSuccess("");
+        setValidationError("");
 
         // Проверка данных
         if (isLogin) {
+            // Проверка заполненности полей для входа
+            if (!formData.email || !formData.password) {
+                setValidationError("Заполните все поля");
+                return;
+            }
+
             const result = await dispatch(
                 loginUser({
                     email: formData.email,
@@ -63,19 +72,21 @@ const Auth = (): ReactElement => {
                 setFormData({ email: "", password: "", name: "" });
             }
         } else {
-            // Проверка имени пользователя
-            if (!formData.name) {
-                return alert("Введите имя");
+            // Проверка заполненности всех полей для регистрации
+            if (
+                !formData.email ||
+                !formData.password ||
+                !formData.name ||
+                !formData.confirmPassword
+            ) {
+                setValidationError("Заполните все поля");
+                return;
             }
 
             // Проверка совпадения паролей
             if (formData.password !== formData.confirmPassword) {
-                return alert("Пароли не совпадают");
-            }
-
-            // Проверка роли
-            if (!formData.role) {
-                return alert("Выберите роль");
+                setValidationError("Пароли не совпадают");
+                return;
             }
 
             const result = await dispatch(
@@ -84,7 +95,7 @@ const Auth = (): ReactElement => {
                     email: formData.email,
                     password: formData.password,
                     name: formData.name,
-                    role: formData.role,
+                    role: formData.role || "student", // Добавляем значение по умолчанию, если role не определено
                 }),
             );
 
@@ -113,6 +124,7 @@ const Auth = (): ReactElement => {
         });
         dispatch(clearError());
         setSuccess("");
+        setValidationError("");
     };
 
     return (
@@ -206,7 +218,9 @@ const Auth = (): ReactElement => {
                         </div>
                     )}
 
-                    {error && <div className={styles.error}>{error}</div>}
+                    {(error || validationError) && (
+                        <div className={styles.error}>{validationError || error}</div>
+                    )}
                     {success && <div className={styles.success}>{success}</div>}
 
                     <Button type="submit" disabled={loading} className={styles.submitButton}>
