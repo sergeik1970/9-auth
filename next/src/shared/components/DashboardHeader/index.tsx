@@ -15,7 +15,11 @@ const DashboardHeader = (): ReactElement => {
                 {user?.role ? getDashboardTitle(user.role) : "Панель пользователя"}
             </h1>
             {user?.role && isTeacher(user.role) && (
-                <Button variant="primary" onClick={() => router.push("/dashboard/tests/create")}>
+                <Button
+                    className={styles.createButton}
+                    variant="primary"
+                    onClick={() => router.push("/dashboard/tests/create")}
+                >
                     Создать новый тест
                 </Button>
             )}
