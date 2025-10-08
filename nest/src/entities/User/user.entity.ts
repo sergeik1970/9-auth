@@ -20,6 +20,9 @@ export class User {
     @Column()
     password: string;
 
+    @Column({ type: "varchar", default: "student" })
+    role: string;
+
     @Column("boolean", { default: false })
     isAdmin: boolean = false;
 

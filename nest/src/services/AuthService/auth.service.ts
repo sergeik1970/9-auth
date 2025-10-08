@@ -13,6 +13,7 @@ export interface RegisterDto {
     email: string;
     password: string;
     name: string;
+    role: string;
 }
 
 export interface LoginDto {
@@ -30,8 +31,18 @@ export class AuthService {
 
     async register(registerDto: RegisterDto): Promise<User> {
         console.log("AuthService.register called");
-        const { email, password, name } = registerDto;
-        console.log("Data:", { email, name, passwordLength: password?.length });
+        const { email, password, name, role } = registerDto;
+        console.log("Data:", {
+            email,
+            name,
+            role,
+            passwordLength: password?.length,
+        });
+
+        // Валидация роли
+        if (!["student", "teacher"].includes(role)) {
+            throw new ConflictException("Роль должна быть student или teacher");
+        }
 
         console.log("Checking for existing user...");
         const existingUser = await this.userRepository.findOne({
@@ -55,6 +66,7 @@ export class AuthService {
             email,
             password: hashedPassword,
             name,
+            role,
             isAdmin: false,
         });
         console.log("User entity created:", user);
@@ -84,6 +96,18 @@ export class AuthService {
 
     async findUserById(id: number): Promise<User | null> {
         return this.userRepository.findOne({ where: { id } });
+    }
+
+    async getUserByToken(userId: number): Promise<User> {
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+        });
+
+        if (!user) {
+            throw new UnauthorizedException("Пользователь не найден");
+        }
+
+        return user;
     }
 
     generateToken(user: User): string {

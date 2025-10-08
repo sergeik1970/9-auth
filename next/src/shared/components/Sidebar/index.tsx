@@ -19,7 +19,7 @@ interface SideBarProps {
 const Sidebar = (): ReactElement => {
     // Смотреть в 7
     const { user } = useSelector((state) => state.auth);
-    const dispatch = useDispatch();
+    // const dispatch = useDispatch();
     const router = useRouter();
 
     const teacherMenuItems: MenuItem[] = [

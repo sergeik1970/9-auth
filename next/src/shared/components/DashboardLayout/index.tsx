@@ -1,5 +1,6 @@
 import React, { ReactNode, ReactElement } from "react";
 import Sidebar from "@/shared/components/Sidebar";
+import DashboardHeader from "@/shared/components/DashboardHeader";
 import styles from "./index.module.scss";
 
 interface DashboardLayoutProps {
@@ -19,7 +20,9 @@ const DashboardLayout = (): ReactElement => {
                         </button>
                     </div>
                 </header>
-                <div className={styles.content}>Children</div>
+                <div className={styles.content}>
+                    <DashboardHeader />
+                </div>
             </main>
         </div>
     );

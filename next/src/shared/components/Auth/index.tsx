@@ -20,6 +20,8 @@ const Auth = (): ReactElement => {
         email: "",
         password: "",
         name: "",
+        role: "student",
+        confirmPassword: "",
     });
     const [success, setSuccess] = useState("");
 
@@ -34,7 +36,7 @@ const Auth = (): ReactElement => {
     });
 
     // Обработка инпутов формы
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({
             ...prev,
@@ -66,18 +68,35 @@ const Auth = (): ReactElement => {
                 return alert("Введите имя");
             }
 
+            // Проверка совпадения паролей
+            if (formData.password !== formData.confirmPassword) {
+                return alert("Пароли не совпадают");
+            }
+
+            // Проверка роли
+            if (!formData.role) {
+                return alert("Выберите роль");
+            }
+
             const result = await dispatch(
                 // Диспатч регистрации
                 registerUser({
                     email: formData.email,
                     password: formData.password,
                     name: formData.name,
+                    role: formData.role,
                 }),
             );
 
             // Очистка формы
             if (registerUser.fulfilled.match(result)) {
-                setFormData({ email: "", password: "", name: "" });
+                setFormData({
+                    email: "",
+                    password: "",
+                    name: "",
+                    role: "student",
+                    confirmPassword: "",
+                });
             }
         }
     };
@@ -85,7 +104,13 @@ const Auth = (): ReactElement => {
     // Переключение между входом и регистрацией
     const toggleMode = () => {
         setIsLogin(!isLogin);
-        setFormData({ email: "", password: "", name: "" });
+        setFormData({
+            email: "",
+            password: "",
+            name: "",
+            role: "student",
+            confirmPassword: "",
+        });
         dispatch(clearError());
         setSuccess("");
     };
@@ -104,6 +129,7 @@ const Auth = (): ReactElement => {
                                 type="text"
                                 id="name"
                                 name="name"
+                                placeholder="Введите ваше имя"
                                 value={formData.name || ""}
                                 onChange={handleInputChange}
                                 required={!isLogin}
@@ -119,6 +145,7 @@ const Auth = (): ReactElement => {
                             type="email"
                             id="email"
                             name="email"
+                            placeholder="Введите ваш email"
                             value={formData.email || ""}
                             onChange={handleInputChange}
                             required
@@ -133,6 +160,7 @@ const Auth = (): ReactElement => {
                             type="password"
                             id="password"
                             name="password"
+                            placeholder="Введите пароль"
                             value={formData.password || ""}
                             onChange={handleInputChange}
                             required
@@ -140,6 +168,43 @@ const Auth = (): ReactElement => {
                             className={styles.input}
                         />
                     </div>
+
+                    {/* Подтверждение пароля для регистрации */}
+                    {!isLogin && (
+                        <div className={styles.inputGroup}>
+                            <label htmlFor="confirmPassword">Подтвердите пароль:</label>
+                            <input
+                                type="password"
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                placeholder="Повторите пароль"
+                                value={formData.confirmPassword || ""}
+                                onChange={handleInputChange}
+                                required={!isLogin}
+                                disabled={loading}
+                                className={styles.input}
+                            />
+                        </div>
+                    )}
+
+                    {/* Выбор роли для регистрации */}
+                    {!isLogin && (
+                        <div className={styles.inputGroup}>
+                            <label htmlFor="role">Роль:</label>
+                            <select
+                                id="role"
+                                name="role"
+                                value={formData.role || "student"}
+                                onChange={handleInputChange}
+                                required={!isLogin}
+                                disabled={loading}
+                                className={styles.input}
+                            >
+                                <option value="student">Ученик</option>
+                                <option value="teacher">Учитель</option>
+                            </select>
+                        </div>
+                    )}
 
                     {error && <div className={styles.error}>{error}</div>}
                     {success && <div className={styles.success}>{success}</div>}
@@ -152,14 +217,14 @@ const Auth = (): ReactElement => {
                 <div className={styles.toggleMode}>
                     <p>
                         {isLogin ? "Нет аккаунта?" : "Уже есть аккаунт?"}
-                        <Button
+                        <button
                             type="button"
                             onClick={toggleMode}
-                            className={styles.toggleMode}
+                            className={styles.toggleButton}
                             disabled={loading}
                         >
                             {isLogin ? "Зарегистрироваться" : "Войти"}
-                        </Button>
+                        </button>
                     </p>
                 </div>
             </div>

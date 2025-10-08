@@ -55,8 +55,8 @@
 
     &:focus {
         outline: none;
-        border-color: #2d5f4f;
-        box-shadow: 0 0 0 4px rgba(45, 95, 79, 0.1);
+        border-color: #4CAF93;
+        box-shadow: 0 0 0 4px rgba(76, 175, 147, 0.1);
         background: #fafafa;
     }
 
@@ -83,17 +83,17 @@
 
 .success {
     background: #f5f5f5;
-    color: #2d5f4f;
+    color: #4CAF93;
     padding: 12px 16px;
     border-radius: 10px;
     font-size: 14px;
-    border-left: 4px solid #2d5f4f;
+    border-left: 4px solid #4CAF93;
     animation: slideIn 0.3s ease;
 }
 
 .submitButton {
     padding: 16px;
-    background: #2d5f4f;
+    background: #4CAF93;
     color: white;
     border: none;
     border-radius: 12px;
@@ -102,12 +102,12 @@
     cursor: pointer;
     transition: all 0.3s ease;
     margin-top: 10px;
-    box-shadow: 0 4px 15px rgba(45, 95, 79, 0.2);
+    box-shadow: 0 4px 15px rgba(76, 175, 147, 0.2);
 
     &:hover:not(:disabled) {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(45, 95, 79, 0.3);
-        background: #3a7a63;
+        box-shadow: 0 6px 20px rgba(76, 175, 147, 0.3);
+        background: #45a085;
     }
 
     &:active:not(:disabled) {
@@ -123,36 +123,36 @@
 
 .toggleMode {
     text-align: center;
-    margin-top: 20px;
+    margin-top: 10px;
     color: #666666;
     font-size: 14px;
 
     p {
         margin: 0;
-        display: inline;
+    }
+}
+
+.toggleButton {
+    background: none;
+    border: none;
+    color: #4CAF93;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.3s ease;
+    padding: 0;
+    font-size: 14px;
+    margin-left: 5px;
+    height: auto;
+    font-family: inherit;
+
+    &:hover:not(:disabled) {
+        color: #31715f;
     }
 
-    button {
-        background: none;
-        border: none;
-        color: #2d5f4f;
-        font-weight: 600;
-        cursor: pointer;
-        text-decoration: underline;
-        transition: color 0.3s ease;
-        padding: 0;
-        font-size: 14px;
-        margin-left: 5px;
-        display: inline;
-
-        &:hover:not(:disabled) {
-            color: #3a7a63;
-        }
-
-        &:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 }
 

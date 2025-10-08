@@ -1,31 +1,27 @@
-export type UserRole = "pupil" | "teacher" | "student" | "professor";
+export type UserRole = "student" | "teacher";
 
 export const isTeacher = (role: UserRole): boolean => {
-    return role === "teacher" || role === "professor";
+    return role === "teacher";
 };
 
 export const isStudent = (role: UserRole): boolean => {
-    return role === "pupil" || role === "student";
+    return role === "student";
 };
 
 export const getRoleDisplayName = (role: UserRole): string => {
     switch (role) {
-        case "pupil":
+        case "student":
             return "Ученик";
         case "teacher":
             return "Учитель";
-        case "student":
-            return "Студент";
-        case "professor":
-            return "Преподаватель";
         default:
             return "Неизвестная роль";
     }
 };
 
-export const getDashBoardTitle = (role: UserRole): string => {
+export const getDashboardTitle = (role: UserRole): string => {
     if (isTeacher(role)) {
-        return role === "teacher" ? "Панель учителя" : "Панель преподавателя";
+        return "Панель учителя";
     }
-    return role === "pupil" ? "Панель ученика" : "Панель студента";
+    return "Панель ученика";
 };

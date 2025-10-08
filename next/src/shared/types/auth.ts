@@ -2,7 +2,7 @@ export interface User {
     id: number;
     email: string;
     name: string;
-    role: "pupil" | "teacher" | "student" | "professor";
+    role: "student" | "teacher";
     isAdmin?: boolean;
     createdAt: string;
     updatedAt: string;
@@ -19,12 +19,15 @@ export interface AuthFormData {
     email: string;
     password: string;
     name?: string;
+    role?: "student" | "teacher";
+    confirmPassword?: string;
 }
 
 export interface RegisterUserData {
     email: string;
     password: string;
     name: string;
+    role: "student" | "teacher";
 }
 
 export interface LoginUserData {
