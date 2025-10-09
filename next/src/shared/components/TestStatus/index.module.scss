@@ -1,0 +1,56 @@
+.testStatus {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    line-height: 1;
+    user-select: none;
+    cursor: default;
+
+    // Варианты статусов
+    &.statusDraft {
+        background-color: #f3f4f6;
+        color: #6b7280;
+        border-color: #d1d5db;
+
+        &:hover {
+            background-color: #e5e7eb;
+        }
+    }
+
+    &.statusActive {
+        background-color: #dcfce7;
+        color: #166534;
+        border-color: #86efac;
+
+        &:hover {
+            background-color: #bbf7d0;
+        }
+    }
+
+    &.statusCompleted {
+        background-color: #dbeafe;
+        color: #1e40af;
+        border-color: #93c5fd;
+
+        &:hover {
+            background-color: #bfdbfe;
+        }
+    }
+}
+
+// Адаптивность
+@media (max-width: 768px) {
+    .testStatus {
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 8px;
+    }
+}
