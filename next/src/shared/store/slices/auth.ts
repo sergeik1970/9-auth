@@ -64,9 +64,9 @@ export const loginUser = createAsyncThunk(
                 return rejectWithValue(data.message || "Ошибка входа");
             }
 
-            if (data.token) {
-                localStorage.setItem("token", data.token);
-            }
+            // if (data.token) {
+            //     localStorage.setItem("token", data.token);
+            // }
 
             return data.user;
         } catch (error) {
@@ -85,7 +85,7 @@ export const logoutUser = createAsyncThunk("auth/logout", async (_, { rejectWith
             return rejectWithValue("Ошибка выхода");
         }
 
-        localStorage.removeItem("token");
+        // localStorage.removeItem("token");
 
         return null;
     } catch (error) {
@@ -98,17 +98,18 @@ export const getCurrentUser = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             // Получаем токен
-            const token = localStorage.getItem("token");
+            // Токен не получаем, он теперь в httpOnly cookie
+            // const token = localStorage.getItem("token");
 
-            if (!token) {
-                return rejectWithValue("Токен не найден");
-            }
+            // if (!token) {
+            //     return rejectWithValue("Токен не найден");
+            // }
 
             const response = await fetch(createApiUrl(API_ENDPOINTS.auth.me), {
                 method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                // headers: {
+                //     Authorization: `Bearer ${token}`,
+                // },
                 credentials: "include",
             });
 

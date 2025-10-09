@@ -12,7 +12,7 @@ import { JwtAuthGuard } from "./jwt-auth.guard";
         TypeOrmModule.forFeature([User]),
         JwtModule.register({
             secret: process.env.JWT_SECRET || "your-secret-key",
-            signOptions: { expiresIn: "7d" },
+            signOptions: { expiresIn: "30d" },
         }),
     ],
     controllers: [AuthController],

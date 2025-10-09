@@ -29,6 +29,16 @@ export class AuthController {
             const user = await this.authService.register(registerDto);
             console.log("User created successfully:", user.id);
 
+            const token = this.authService.generateToken(user);
+
+            // Сохраняем JWT токен в httpOnly cookie
+            res.cookie("token", token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: 30 * 24 * 60 * 60 * 1000, // 30 дней
+            });
+
             res.cookie("userId", user.id.toString(), {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
@@ -61,6 +71,14 @@ export class AuthController {
 
             const token = this.authService.generateToken(user);
 
+            // Сохраняем JWT токен в httpOnly cookie
+            res.cookie("token", token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: 30 * 24 * 60 * 60 * 1000, // 30 дней
+            });
+
             res.cookie("userId", user.id.toString(), {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
@@ -73,7 +91,6 @@ export class AuthController {
             return res.status(HttpStatus.OK).json({
                 message: "Успешный вход в систему",
                 user: userWithoutPassword,
-                token: token,
             });
         } catch (error) {
             return res.status(HttpStatus.UNAUTHORIZED).json({
@@ -108,6 +125,13 @@ export class AuthController {
         try {
             // Очищаем cookie userId
             res.clearCookie("userId", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+            });
+
+            // Очищаем cookie token
+            res.clearCookie("token", {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
                 sameSite: "lax",
