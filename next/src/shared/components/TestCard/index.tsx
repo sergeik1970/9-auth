@@ -7,13 +7,14 @@ import Link from "next/link";
 import type { Test } from "@/shared/types/test";
 import { isTeacher } from "@/shared/utils/roles";
 import styles from "./index.module.scss";
+import { User } from "@/shared/types/auth";
 
 interface TestCardProps {
     test: Test;
     // showCreator?: boolean;
     className?: string;
-    creator: string;
-    // onUpdate: () => void;
+    creator: User;
+    onUpdate: () => void;
 }
 
 const TestCard = ({ test, className, creator }: TestCardProps): ReactElement => {

@@ -4,11 +4,13 @@ import Sidebar from "@/shared/components/Sidebar";
 import DashboardHeader from "@/shared/components/DashboardHeader";
 import MobileHeader from "@/shared/components/MobileHeader";
 import styles from "./index.module.scss";
+import TestList from "../TestList";
 
 interface DashboardLayoutProps {
     children: ReactNode;
 }
 
+// селектор для ошиббок из слайса тестов
 const DashboardLayout = ({ children }: DashboardLayoutProps): ReactElement => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isDesktop, setIsDesktop] = useState(false);
@@ -65,6 +67,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps): ReactElement => {
                 >
                     <div className={styles.content}>
                         <DashboardHeader />
+                        <TestList />
                         {children}
                     </div>
                 </main>

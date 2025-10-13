@@ -4,11 +4,11 @@ import Button from "@/shared/components/Button"; //
 import Link from "next/link";
 // import { useAuth } from "@/contexts/AuthContext"; // передалать под useSelector и redux
 import { getRoleDisplayName } from "@/shared/utils/roles";
-import { logoutUser } from "@/shared/store/slices/auth";
+import { logoutUser, selectAuth } from "@/shared/store/slices/auth";
 import styles from "./index.module.scss";
 
 const Header = (): ReactElement => {
-    const { user, isAuthenticated } = useSelector((state) => state.auth);
+    const { user, isAuthenticated } = useSelector(selectAuth);
     const dispatch = useDispatch();
 
     const handleLogout = () => {

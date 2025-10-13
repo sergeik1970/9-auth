@@ -7,6 +7,7 @@ import {
 import { createApiUrl, API_ENDPOINTS } from "../../config/api";
 import { User, AuthState, RegisterUserData, LoginUserData } from "../../types/auth";
 import { reject } from "lodash";
+import { RootState } from "../store";
 
 const initialState: AuthState = {
     user: null,
@@ -211,4 +212,5 @@ const authSlice = createSlice({
 });
 
 export const { clearError, clearAuth } = authSlice.actions;
+export const selectAuth = (state: RootState) => state.auth;
 export default authSlice.reducer;

@@ -15,7 +15,7 @@ export interface MenuItem {
 interface SideBarProps {
     isOpen?: boolean;
     onClose?: () => void;
-    isDesktop?: boolean; // Добавьте этот проп
+    isDesktop?: boolean;
 }
 
 const Sidebar = ({ isOpen = false, onClose, isDesktop = false }: SideBarProps): ReactElement => {
