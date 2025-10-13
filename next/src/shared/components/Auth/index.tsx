@@ -2,7 +2,7 @@ import React, { ReactElement, useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import styles from "./index.module.scss";
 import { useDispatch, useSelector } from "../../store/store";
-import { registerUser, loginUser, clearError } from "../../store/slices/auth";
+import { registerUser, loginUser, clearError, selectAuth } from "../../store/slices/auth";
 import { AuthFormData } from "../../types/auth";
 // import InputText from "@/shared/components/InputText";
 import Button from "@/shared/components/Button";
@@ -12,7 +12,7 @@ const Auth = (): ReactElement => {
     const dispatch = useDispatch();
     const router = useRouter();
 
-    const { loading, error, isAuthenticated, user } = useSelector((state) => state.auth);
+    const { loading, error, isAuthenticated, user } = useSelector(selectAuth);
 
     const [isLogin, setIsLogin] = useState(true);
 

@@ -6,6 +6,7 @@ import styles from "./index.module.scss";
 import TestInfoForm, { TestInfoData } from "@/shared/components/TestInfoForm";
 import { isTeacher } from "@/shared/utils/roles";
 import { createTest } from "@/shared/store/slices/test";
+import { selectAuth } from "@/shared/store/slices/auth";
 
 export interface TestForm {
     title: string;
@@ -28,7 +29,7 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
         timeLimit: undefined,
     });
     const [isLoading, setIsLoading] = useState(false);
-    const { user } = useSelector((state) => state.auth);
+    const { user } = useSelector(selectAuth);
 
     // Проверка роли
     const hasAccess = user && isTeacher(user.role);

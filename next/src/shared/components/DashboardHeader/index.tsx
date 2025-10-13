@@ -4,9 +4,10 @@ import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "@/shared/store/store";
 import { isTeacher, getDashboardTitle } from "@/shared/utils/roles";
 import styles from "./index.module.scss";
+import { selectAuth } from "@/shared/store/slices/auth";
 
 const DashboardHeader = (): ReactElement => {
-    const { user } = useSelector((state) => state.auth);
+    const { user } = useSelector(selectAuth);
     const router = useRouter();
 
     return (

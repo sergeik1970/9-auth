@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { isTeacher, getRoleDisplayName } from "@/shared/utils/roles";
 import styles from "./index.module.scss";
 import Link from "next/link";
+import { selectAuth } from "@/shared/store/slices/auth";
 
 export interface MenuItem {
     icon: string;
@@ -19,7 +20,7 @@ interface SideBarProps {
 }
 
 const Sidebar = ({ isOpen = false, onClose, isDesktop = false }: SideBarProps): ReactElement => {
-    const { user } = useSelector((state) => state.auth);
+    const { user } = useSelector(selectAuth);
     const router = useRouter();
 
     const teacherMenuItems: MenuItem[] = [

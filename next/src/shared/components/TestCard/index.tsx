@@ -8,6 +8,7 @@ import type { Test } from "@/shared/types/test";
 import { isTeacher } from "@/shared/utils/roles";
 import styles from "./index.module.scss";
 import { User } from "@/shared/types/auth";
+import { selectAuth } from "@/shared/store/slices/auth";
 
 interface TestCardProps {
     test: Test;
@@ -18,7 +19,7 @@ interface TestCardProps {
 }
 
 const TestCard = ({ test, className, creator }: TestCardProps): ReactElement => {
-    const { user } = useSelector((state) => state.auth);
+    const { user } = useSelector(selectAuth);
     const router = useRouter();
 
     const handleViewTest = () => {
