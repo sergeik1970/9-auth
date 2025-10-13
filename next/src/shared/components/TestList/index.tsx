@@ -1,4 +1,4 @@
-import React, { ReactElement, useState, useEffect } from "react";
+import React, { ReactElement, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "@/shared/store/store";
 import Button from "@/shared/components/Button";
@@ -6,8 +6,7 @@ import LoadingState from "@/shared/components/LoadingState";
 import EmptyState from "@/shared/components/EmptyState";
 import TestCard from "@/shared/components/TestCard";
 import { isTeacher, type UserRole } from "@/shared/utils/roles";
-import { getTests } from "@/shared/store/slices/test";
-import { Test } from "@/shared/types/test";
+import { getTests, selectTest } from "@/shared/store/slices/test";
 import styles from "./index.module.scss";
 
 interface TestListProps {
@@ -19,7 +18,7 @@ interface TestListProps {
 const TestList = ({ userRole, onCreateTest, onError }: TestListProps): ReactElement => {
     const router = useRouter();
 
-    const { items: tests, loading: isLoading, error } = useSelector((state) => state.test);
+    const { items: tests, loading: isLoading, error } = useSelector(selectTest);
 
     const isUserTeacher = userRole && isTeacher(userRole);
 
@@ -50,6 +49,10 @@ const TestList = ({ userRole, onCreateTest, onError }: TestListProps): ReactElem
     const handleRefresh = () => {
         loadTests();
     };
+
+    if (isLoading) {
+        return <LoadingState message="Загрузка тестов..." />;
+    }
     return (
         <div className={styles.testContainer}>
             <div className={styles.header}>

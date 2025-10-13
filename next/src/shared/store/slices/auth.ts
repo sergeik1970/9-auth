@@ -6,7 +6,6 @@ import {
 } from "@reduxjs/toolkit";
 import { createApiUrl, API_ENDPOINTS } from "../../config/api";
 import { User, AuthState, RegisterUserData, LoginUserData } from "../../types/auth";
-import { reject } from "lodash";
 import { RootState } from "../store";
 
 const initialState: AuthState = {

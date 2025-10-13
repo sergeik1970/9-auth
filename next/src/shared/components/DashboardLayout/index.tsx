@@ -1,11 +1,7 @@
-// /Users/s.kudashev/Desktop/REACT-PROJECTS/9-auth/next/src/shared/components/DashboardLayout/index.tsx
 import React, { ReactNode, ReactElement, useState, useEffect } from "react";
 import Sidebar from "@/shared/components/Sidebar";
-import DashboardHeader from "@/shared/components/DashboardHeader";
 import MobileHeader from "@/shared/components/MobileHeader";
 import styles from "./index.module.scss";
-import TestList from "../TestList";
-import CreateTest from "../CreateTest";
 
 interface DashboardLayoutProps {
     children: ReactNode;

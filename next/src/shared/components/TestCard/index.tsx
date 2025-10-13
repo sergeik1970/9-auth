@@ -1,9 +1,8 @@
 import React, { ReactElement } from "react";
 import { useRouter } from "next/router";
-import { useSelector, useDispatch } from "@/shared/store/store";
+import { useSelector } from "@/shared/store/store";
 import Button from "@/shared/components/Button";
 import TestStatus from "@/shared/components/TestStatus";
-import Link from "next/link";
 import type { Test } from "@/shared/types/test";
 import { isTeacher } from "@/shared/utils/roles";
 import styles from "./index.module.scss";

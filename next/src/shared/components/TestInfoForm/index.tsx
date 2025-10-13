@@ -1,4 +1,4 @@
-import React, { HtmlHTMLAttributes, ReactElement } from "react";
+import React, { ReactElement } from "react";
 import InputText from "@/shared/components/InputText";
 import styles from "./index.module.scss";
 

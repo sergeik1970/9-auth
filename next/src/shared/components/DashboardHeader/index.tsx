@@ -1,7 +1,7 @@
 import React, { ReactElement } from "react";
 import Button from "@/shared/components/Button";
 import { useRouter } from "next/router";
-import { useSelector, useDispatch } from "@/shared/store/store";
+import { useSelector } from "@/shared/store/store";
 import { isTeacher, getDashboardTitle } from "@/shared/utils/roles";
 import styles from "./index.module.scss";
 import { selectAuth } from "@/shared/store/slices/auth";

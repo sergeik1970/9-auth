@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { Test } from "@/shared/types/test";
 import { createApiUrl, API_ENDPOINTS } from "@/shared/config/api";
 import { CreateTestData } from "@/shared/types/test";
+import { RootState } from "../store";
 
 // Определение типа состояния
 interface TestsState {
@@ -104,4 +105,5 @@ const testsSlice = createSlice({
 
 // Экспорт действий и редьюсера
 export const { clearTests } = testsSlice.actions;
+export const selectTest = (state: RootState) => state.test;
 export default testsSlice.reducer;

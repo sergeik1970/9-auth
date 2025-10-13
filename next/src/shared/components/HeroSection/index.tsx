@@ -1,4 +1,4 @@
-import React, { ReactElement, useState } from "react";
+import React, { ReactElement } from "react";
 import Button from "@/shared/components/Button";
 import styles from "./index.module.scss";
 import Link from "next/link";

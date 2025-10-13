@@ -1,4 +1,4 @@
-import React, { ReactElement, forwardRef } from "react";
+import React, { ReactElement } from "react";
 import styles from "./index.module.scss";
 import clsx from "clsx";
 

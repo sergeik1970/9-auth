@@ -4,9 +4,7 @@ import styles from "./index.module.scss";
 import { useDispatch, useSelector } from "../../store/store";
 import { registerUser, loginUser, clearError, selectAuth } from "../../store/slices/auth";
 import { AuthFormData } from "../../types/auth";
-// import InputText from "@/shared/components/InputText";
 import Button from "@/shared/components/Button";
-// import { divide } from "lodash";
 
 const Auth = (): ReactElement => {
     const dispatch = useDispatch();
