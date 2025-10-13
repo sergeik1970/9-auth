@@ -13,7 +13,7 @@ interface TestCardProps {
     test: Test;
     // showCreator?: boolean;
     className?: string;
-    creator: User;
+    creator?: User;
     onUpdate: () => void;
 }
 
@@ -40,7 +40,7 @@ const TestCard = ({ test, className, creator }: TestCardProps): ReactElement => 
                     {test.timeLimit && (
                         <span className={styles.metaItem}>⏱️ {test.timeLimit} мин</span>
                     )}
-                    {user?.role && isTeacher(user.role) && (
+                    {user?.role && isTeacher(user.role) && test.creator?.name && (
                         <span className={styles.metaItem}>👨‍🏫 {test.creator.name}</span>
                     )}
                 </div>

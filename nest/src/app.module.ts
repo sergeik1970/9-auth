@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { DealsModule } from "./modules/DealsModule/deal.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AuthModule } from "./modules/AuthModule/auth.module";
+import { TestModule } from "./modules/TestModule/test.module";
 
 @Module({
     imports: [
@@ -17,6 +18,7 @@ import { AuthModule } from "./modules/AuthModule/auth.module";
         }),
         DealsModule,
         AuthModule,
+        TestModule,
     ],
     controllers: [],
     providers: [],

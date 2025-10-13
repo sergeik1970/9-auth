@@ -2,7 +2,7 @@ import React, { ReactElement, forwardRef } from "react";
 import styles from "./index.module.scss";
 import clsx from "clsx";
 
-interface IInputText extends React.HTMLAttributes<HTMLInputElement> {
+interface IInputText extends React.InputHTMLAttributes<HTMLInputElement> {
     a?: boolean;
 }
 

@@ -1,13 +1,13 @@
 import React from "react";
+import CreateTest from "@/shared/components/CreateTest";
 import DashboardLayout from "@/shared/components/DashboardLayout";
 import DashboardHeader from "@/shared/components/DashboardHeader";
-import TestList from "@/shared/components/TestList";
 
 const Main = () => {
     return (
         <DashboardLayout>
-            <DashboardHeader />
-            <TestList />
+            {/* <DashboardHeader /> */}
+            <CreateTest />
         </DashboardLayout>
     );
 };

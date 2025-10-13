@@ -5,6 +5,7 @@ import DashboardHeader from "@/shared/components/DashboardHeader";
 import MobileHeader from "@/shared/components/MobileHeader";
 import styles from "./index.module.scss";
 import TestList from "../TestList";
+import CreateTest from "../CreateTest";
 
 interface DashboardLayoutProps {
     children: ReactNode;
@@ -65,11 +66,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps): ReactElement => {
                 <main
                     className={`${styles.main} ${isDesktop && isSidebarOpen ? styles.withSidebar : ""} ${!isDesktop ? styles.withMobileHeader : ""}`}
                 >
-                    <div className={styles.content}>
-                        <DashboardHeader />
-                        <TestList />
-                        {children}
-                    </div>
+                    <div className={styles.content}>{children}</div>
                 </main>
             </div>
         </div>

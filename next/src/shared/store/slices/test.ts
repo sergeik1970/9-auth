@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { Test } from "@/shared/types/test";
 import { createApiUrl, API_ENDPOINTS } from "@/shared/config/api";
+import { CreateTestData } from "@/shared/types/test";
 
 // Определение типа состояния
 interface TestsState {
@@ -32,6 +33,34 @@ export const getTests = createAsyncThunk("tests/getTests", async (_, { rejectWit
     }
 });
 
+export const createTest = createAsyncThunk(
+    "tests/create",
+    async (testData: CreateTestData, { rejectWithValue }) => {
+        try {
+            const response = await fetch(createApiUrl(API_ENDPOINTS.tests.create), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify(testData),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                return rejectWithValue(data.message || "Ошибка при создании теста");
+            }
+
+            return data;
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : "Ошибка при создании теста",
+            );
+        }
+    },
+);
+
 // Создание слайса
 const testsSlice = createSlice({
     name: "test",
@@ -53,6 +82,20 @@ const testsSlice = createSlice({
                 state.items = action.payload;
             })
             .addCase(getTests.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+        builder
+            .addCase(createTest.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(createTest.fulfilled, (state, action) => {
+                state.loading = false;
+                state.items.push(action.payload);
+                state.error = null;
+            })
+            .addCase(createTest.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             });

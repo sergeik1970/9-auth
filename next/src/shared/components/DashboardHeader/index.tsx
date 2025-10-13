@@ -18,7 +18,7 @@ const DashboardHeader = (): ReactElement => {
                 <Button
                     className={styles.createButton}
                     variant="primary"
-                    onClick={() => router.push("/dashboard/tests/create")}
+                    onClick={() => router.push("/create")}
                 >
                     Создать новый тест
                 </Button>

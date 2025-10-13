@@ -13,7 +13,7 @@ export const API_ENDPOINTS = {
     tests: {
         getAll: "/api/tests",
         getById: (id: number) => `/api/tests/${id}`,
-        create: "api/tests/create",
+        create: "/api/tests/create",
         update: (id: number) => `/api/tests/${id}`,
         delete: (id: number) => `/api/tests/${id}`,
     },

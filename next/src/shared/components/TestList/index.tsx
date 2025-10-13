@@ -43,7 +43,7 @@ const TestList = ({ userRole, onCreateTest, onError }: TestListProps): ReactElem
         if (onCreateTest) {
             onCreateTest();
         } else {
-            router.push("/dashboard/tests/create");
+            router.push("/create");
         }
     };
 

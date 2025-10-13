@@ -16,6 +16,7 @@ const Button = (props: IButton): ReactElement => {
         types = "primary",
         onClick = () => null,
         className,
+        type = "button",
         ...rest
     } = props;
 
@@ -30,7 +31,7 @@ const Button = (props: IButton): ReactElement => {
                 styles[`button-${size}`],
                 className,
             )}
-            type="button"
+            type={type}
             onClick={onClick}
             {...rest}
         >
