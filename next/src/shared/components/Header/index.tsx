@@ -52,13 +52,8 @@ const Header = (): ReactElement => {
                     ) : (
                         <>
                             <Link href="/auth">
-                                <Button variant="outline" size="small">
-                                    Войти
-                                </Button>
-                            </Link>
-                            <Link href="/auth">
                                 <Button variant="primary" size="small">
-                                    Регистрация
+                                    Авторизация
                                 </Button>
                             </Link>
                         </>

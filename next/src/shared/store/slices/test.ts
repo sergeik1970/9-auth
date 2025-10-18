@@ -9,6 +9,8 @@ interface TestsState {
     items: Test[];
     loading: boolean;
     error: string | null;
+    selectedTest?: Test | null;
+    selectedLoading: boolean;
 }
 
 // Начальное состояние
@@ -16,6 +18,8 @@ const initialState: TestsState = {
     items: [],
     loading: false,
     error: null,
+    selectedTest: null,
+    selectedLoading: false,
 };
 
 // Создание асинхронного thunk для получения тестов
@@ -33,6 +37,26 @@ export const getTests = createAsyncThunk("tests/getTests", async (_, { rejectWit
         return rejectWithValue(error instanceof Error ? error.message : "Ошибка загрузки тестов");
     }
 });
+
+export const getTestById = createAsyncThunk(
+    "tests/getTestById",
+    async (id: number, { rejectWithValue }) => {
+        try {
+            const response = await fetch(`${createApiUrl(API_ENDPOINTS.tests.getById(id))}`);
+
+            if (!response.ok) {
+                throw new Error(`Ошибка при загрузке теста по ID: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data as Test;
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : "Ошибка загрузки теста",
+            );
+        }
+    },
+);
 
 export const createTest = createAsyncThunk(
     "tests/create",
@@ -98,6 +122,20 @@ const testsSlice = createSlice({
             })
             .addCase(createTest.rejected, (state, action) => {
                 state.loading = false;
+                state.error = action.payload as string;
+            });
+        builder
+            .addCase(getTestById.pending, (state) => {
+                state.selectedLoading = true;
+                state.error = null;
+            })
+            .addCase(getTestById.fulfilled, (state, action: PayloadAction<Test>) => {
+                state.selectedLoading = false;
+                state.selectedTest = action.payload;
+                state.error = null;
+            })
+            .addCase(getTestById.rejected, (state, action) => {
+                state.selectedLoading = false;
                 state.error = action.payload as string;
             });
     },

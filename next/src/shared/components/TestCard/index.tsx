@@ -22,7 +22,7 @@ const TestCard = ({ test, className, creator }: TestCardProps): ReactElement => 
     const router = useRouter();
 
     const handleViewTest = () => {
-        router.push(`dashboard/tests/detail?id=${test.id}`);
+        router.push(`/tests/detail?id=${test.id}`);
     };
 
     return (
