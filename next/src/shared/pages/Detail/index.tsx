@@ -1,6 +1,7 @@
 import React, { ReactElement, useEffect } from "react";
 import { useRouter } from "next/router";
 import TestPreview from "@/shared/components/TestPreview";
+import styles from "./index.module.scss";
 
 const TestDetailPage = (): ReactElement => {
     const router = useRouter();
@@ -16,8 +17,8 @@ const TestDetailPage = (): ReactElement => {
     };
 
     return (
-        <div className="container">
-            <h1>Детали теста</h1>
+        <div className={styles.container}>
+            <h1 className={styles.title}>Детали теста</h1>
             {id ? (
                 <TestPreview
                     testId={Number(id)}

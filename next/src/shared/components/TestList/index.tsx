@@ -58,14 +58,19 @@ const TestList = ({ userRole, onCreateTest, onError }: TestListProps): ReactElem
             <div className={styles.header}>
                 <h1 className={styles.title}>{isUserTeacher ? "Мои тесты" : "Доступные тесты"}</h1>
                 <div className={styles.headerActions}>
-                    <Button variant="secondary" onClick={handleRefresh} disabled={isLoading}>
+                    <Button
+                        variant="secondary"
+                        onClick={handleRefresh}
+                        disabled={isLoading}
+                        className={styles.button}
+                    >
                         Обновить
                     </Button>
-                    {isUserTeacher && (
+                    {/* {isUserTeacher && (
                         <Button variant="primary" onClick={handleCreateTest}>
                             Создать новый тест
                         </Button>
-                    )}
+                    )} */}
                 </div>
             </div>
 
