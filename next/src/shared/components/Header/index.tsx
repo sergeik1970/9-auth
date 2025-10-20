@@ -40,10 +40,16 @@ const Header = (): ReactElement => {
                     {isAuthenticated ? (
                         <div className={styles.userMenu}>
                             <div className={styles.userInfo}>
-                                <span className={styles.userName}>Привет, {user?.name}!</span>
-                                <span className={styles.userRole}>
+                                {user?.role === "teacher" ? (
+                                    <span className={styles.userName}>
+                                        Здравствуйте, {user?.name}!
+                                    </span>
+                                ) : (
+                                    <span className={styles.userName}>Привет, {user?.name}!</span>
+                                )}
+                                {/* <span className={styles.userRole}>
                                     {user?.role ? getRoleDisplayName(user.role) : "Пользователь"}
-                                </span>
+                                </span> */}
                             </div>
                             <Button variant="outline" size="small" onClick={handleLogout}>
                                 Выйти

@@ -2,12 +2,12 @@ import React, { ReactElement } from "react";
 import { useRouter } from "next/router";
 import { useSelector } from "@/shared/store/store";
 import Button from "@/shared/components/Button";
-import TestStatus from "@/shared/components/TestStatus";
 import type { Test } from "@/shared/types/test";
 import { isTeacher } from "@/shared/utils/roles";
 import styles from "./index.module.scss";
 import { User } from "@/shared/types/auth";
 import { selectAuth } from "@/shared/store/slices/auth";
+import TestStatus, { TestStatus as TestStatusType } from "@/shared/components/TestStatus";
 
 interface TestCardProps {
     test: Test;
@@ -21,6 +21,13 @@ const TestCard = ({ test, className, creator }: TestCardProps): ReactElement => 
     const { user } = useSelector(selectAuth);
     const router = useRouter();
 
+    const shouldShowStatus = (status: TestStatusType): boolean => {
+        if (status === "draft" && test.creator?.id !== user?.id) {
+            return false; // скрываем черновик, если ты не создатель
+        }
+        return true;
+    };
+
     const handleViewTest = () => {
         router.push(`/tests/detail?id=${test.id}`);
     };
@@ -30,7 +37,7 @@ const TestCard = ({ test, className, creator }: TestCardProps): ReactElement => 
             <div className={styles.testInfo}>
                 <div className={styles.testHeader}>
                     <h3 className={styles.testName}>{test.title}</h3>
-                    <TestStatus status={test.status} />
+                    <TestStatus status={test.status} shouldShow={shouldShowStatus} />
                 </div>
 
                 {test.description && <p className={styles.testDescription}>{test.description}</p>}

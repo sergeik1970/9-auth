@@ -6,9 +6,14 @@ export type TestStatus = "draft" | "active" | "completed";
 export interface TestStatusProps {
     status: TestStatus;
     className?: string;
+    shouldShow?: (status: TestStatus) => boolean;
 }
 
-const TestStatus = ({ status, className }: TestStatusProps): ReactElement => {
+const TestStatus = ({ status, className, shouldShow }: TestStatusProps): ReactElement => {
+    if (shouldShow && !shouldShow(status)) {
+        return <></>;
+    }
+
     const getStatusText = (status: TestStatus): string => {
         switch (status) {
             case "draft":
