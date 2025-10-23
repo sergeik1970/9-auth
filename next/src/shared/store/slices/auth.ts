@@ -32,6 +32,9 @@ export const registerUser = createAsyncThunk(
             });
 
             const data = await response.json();
+            console.log("registerUser response:", data);
+            console.log("registerUser data.user:", data.user);
+            console.log("registerUser data.user?.role:", data.user?.role);
 
             if (!response.ok) {
                 return rejectWithValue(data.message || "Ошибка регистрации");
@@ -39,6 +42,7 @@ export const registerUser = createAsyncThunk(
 
             return data.user;
         } catch (error) {
+            console.error("registerUser error:", error);
             return rejectWithValue("Ошибка регистрации в catch");
         }
     },
@@ -114,6 +118,9 @@ export const getCurrentUser = createAsyncThunk(
             });
 
             const data = await response.json();
+            console.log("getCurrentUser response:", data);
+            console.log("getCurrentUser data.user:", data.user);
+            console.log("getCurrentUser data.user?.role:", data.user?.role);
 
             if (!response.ok) {
                 return rejectWithValue(data.message || "Пользователь не авторизован");
@@ -121,6 +128,7 @@ export const getCurrentUser = createAsyncThunk(
 
             return data.user;
         } catch (error) {
+            console.error("getCurrentUser error:", error);
             return rejectWithValue("Ошибка соединения с сервером в catch");
         }
     },

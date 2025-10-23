@@ -11,6 +11,10 @@ const Header = (): ReactElement => {
     const { user, isAuthenticated } = useSelector(selectAuth);
     const dispatch = useDispatch();
 
+    console.log("Header - user:", user);
+    console.log("Header - user?.role:", user?.role);
+    console.log("Header - is teacher check (user?.role === 'teacher'):", user?.role === "teacher");
+
     const handleLogout = () => {
         dispatch(logoutUser());
     };

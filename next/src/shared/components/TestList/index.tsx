@@ -20,6 +20,13 @@ const TestList = ({ userRole, onCreateTest, onError }: TestListProps): ReactElem
 
     const { items: tests, loading: isLoading, error } = useSelector(selectTest);
 
+    console.log("TestList - userRole:", userRole);
+    console.log("TestList - typeof userRole:", typeof userRole);
+    console.log(
+        "TestList - isTeacher(userRole):",
+        userRole ? isTeacher(userRole) : "userRole is falsy",
+    );
+
     const isUserTeacher = userRole && isTeacher(userRole);
 
     const dispatch = useDispatch();

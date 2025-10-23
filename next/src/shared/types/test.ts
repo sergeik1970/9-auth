@@ -1,4 +1,5 @@
 import { User } from "./auth";
+import { QuestionFormData } from "./question";
 
 export interface Test {
     id?: number;
@@ -16,5 +17,5 @@ export interface CreateTestData {
     title: string;
     description?: string;
     timeLimit?: number;
-    // questions: Question[];
+    questions: QuestionFormData[]; // Раскомментируйте и укажите правильный тип
 }

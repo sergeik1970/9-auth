@@ -1,0 +1,51 @@
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+.sectionTitle {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #1a1a1a;
+}
+
+.questionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.emptyState {
+    padding: 32px;
+    text-align: center;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px dashed #dee2e6;
+
+    p {
+        margin: 0;
+        font-size: 14px;
+        color: #6c757d;
+    }
+}
+
+.addQuestionBottom {
+    display: flex;
+    justify-content: center;
+    padding-top: 16px;
+}

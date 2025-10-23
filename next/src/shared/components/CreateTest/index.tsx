@@ -4,15 +4,17 @@ import { useSelector, useDispatch } from "@/shared/store/store";
 import Button from "@/shared/components/Button";
 import styles from "./index.module.scss";
 import TestInfoForm, { TestInfoData } from "@/shared/components/TestInfoForm";
+import Questions from "@/shared/components/Questions";
 import { isTeacher } from "@/shared/utils/roles";
 import { createTest } from "@/shared/store/slices/test";
 import { selectAuth } from "@/shared/store/slices/auth";
+import { QuestionFormData } from "@/shared/types/question";
 
 export interface TestForm {
     title: string;
     description: string;
     timeLimit: number;
-    // questions: QuestionData[];
+    questions: QuestionFormData[];
 }
 
 interface CreateTestProps {
@@ -28,6 +30,7 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
         description: "",
         timeLimit: undefined,
     });
+    const [questions, setQuestions] = useState<QuestionFormData[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const { user } = useSelector(selectAuth);
 
@@ -55,6 +58,7 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
                     title: testInfo.title,
                     description: testInfo.description,
                     timeLimit: testInfo.timeLimit,
+                    questions: questions,
                 }),
             ).unwrap();
 
@@ -70,7 +74,8 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
         }
     };
 
-    // const isFormValid = validationErrors.length === 0 && testInfo.title.trim().length > 0 && questions.length > 0;
+    const isFormValid = testInfo.title.trim().length > 0 && questions.length > 0;
+
     return (
         <div className={styles.createTest}>
             <div className={styles.header}>
@@ -83,15 +88,10 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
             <form onSubmit={handleSubmit} className={styles.form}>
                 <TestInfoForm data={testInfo} onChange={setTestInfo} disabled={isLoading} />
 
+                <Questions questions={questions} onChange={setQuestions} disabled={isLoading} />
+
                 <div className={styles.actions}>
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        disabled={
-                            isLoading || !testInfo.title
-                            // questions.length === 0
-                        }
-                    >
+                    <Button type="submit" variant="primary" disabled={isLoading || !isFormValid}>
                         {isLoading ? "Создание..." : "Создать тест"}
                     </Button>
                 </div>

@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { JwtService } from "@nestjs/jwt";
-import { User } from "src/entities/User/user.entity";
+import { User, UserRole } from "src/entities/User/user.entity";
 import * as bcrypt from "bcrypt";
 
 export interface RegisterDto {
@@ -66,7 +66,7 @@ export class AuthService {
             email,
             password: hashedPassword,
             name,
-            role,
+            role: role as UserRole,
             isAdmin: false,
         });
         console.log("User entity created:", user);

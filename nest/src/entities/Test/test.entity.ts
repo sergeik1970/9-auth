@@ -6,15 +6,24 @@ import {
     UpdateDateColumn,
     ManyToOne,
     JoinColumn,
+    OneToMany,
 } from "typeorm";
 import { User } from "../User/user.entity";
+import { Question } from "../Question/question.entity";
+import { TestAttempt } from "../TestAttempt/testAttempt.entity";
 
-@Entity()
+export enum TestStatus {
+    DRAFT = "draft",
+    ACTIVE = "active",
+    COMPLETED = "completed",
+}
+
+@Entity("tests")
 export class Test {
     @PrimaryGeneratedColumn("increment")
     id: number;
 
-    @Column()
+    @Column({ type: "varchar", length: 255 })
     title: string;
 
     @Column({ type: "text", nullable: true })
@@ -23,15 +32,29 @@ export class Test {
     @Column({ type: "int", nullable: true })
     timeLimit: number;
 
-    @Column({ type: "varchar", default: "draft" })
-    status: string; // draft, active, completed
+    // Статус теста
+    @Column({
+        type: "enum",
+        // Выбирать из этого массива
+        enum: TestStatus,
+        default: TestStatus.DRAFT,
+    })
+    status: TestStatus;
 
-    @ManyToOne(() => User, { eager: true })
+    @ManyToOne(() => User, (user) => user.createdTests)
     @JoinColumn({ name: "creatorId" })
     creator: User;
 
     @Column()
     creatorId: number;
+
+    // Связь с вопросами
+    @OneToMany(() => Question, (question) => question.test, { cascade: true })
+    questions: Question[];
+
+    // Связь с попытками
+    @OneToMany(() => TestAttempt, (attempt) => attempt.test)
+    attempts: TestAttempt[];
 
     @CreateDateColumn()
     createdAt: Date;
