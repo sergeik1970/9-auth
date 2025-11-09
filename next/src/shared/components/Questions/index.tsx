@@ -1,4 +1,4 @@
-import React, { ReactElement } from "react";
+import React, { ReactElement, useCallback } from "react";
 import Button from "@/shared/components/Button";
 import Question from "@/shared/components/Question";
 import { QuestionFormData } from "@/shared/types/question";
@@ -15,8 +15,7 @@ const Questions: React.FC<QuestionsProps> = ({
     onChange,
     disabled = false,
 }): ReactElement => {
-    // Добавление нового вопроса
-    const handleAddQuestion = () => {
+    const handleAddQuestion = useCallback(() => {
         const newQuestion: QuestionFormData = {
             text: "",
             type: "single_choice",
@@ -27,115 +26,121 @@ const Questions: React.FC<QuestionsProps> = ({
             ],
         };
         onChange([...questions, newQuestion]);
-    };
+    }, [questions, onChange]);
 
-    // Удаление вопроса
-    const handleRemoveQuestion = (questionIndex: number) => {
-        const updated = questions.filter((_, idx) => idx !== questionIndex);
-        // Переиндексируем порядок
-        const reindexed = updated.map((q, idx) => ({ ...q, order: idx }));
-        onChange(reindexed);
-    };
+    const handleRemoveQuestion = useCallback(
+        (questionIndex: number) => {
+            const updated = questions.filter((_, idx) => idx !== questionIndex);
+            const reindexed = updated.map((q, idx) => ({ ...q, order: idx }));
+            onChange(reindexed);
+        },
+        [questions, onChange],
+    );
 
-    // Изменение поля вопроса (text, type)
-    const handleQuestionChange = (
-        questionIndex: number,
-        field: keyof QuestionFormData,
-        value: any,
-    ) => {
-        const updated = [...questions];
+    const handleQuestionChange = useCallback(
+        (questionIndex: number, field: keyof QuestionFormData, value: any) => {
+            const updated = [...questions];
 
-        // Специальная логика для изменения типа
-        if (field === "type") {
-            if (value === "text_input") {
-                updated[questionIndex] = {
-                    ...updated[questionIndex],
-                    type: value,
-                    options: [],
-                    correctTextAnswer: "",
-                };
+            if (field === "type") {
+                if (value === "text_input") {
+                    updated[questionIndex] = {
+                        ...updated[questionIndex],
+                        type: value,
+                        options: [],
+                        correctTextAnswer: "",
+                    };
+                } else {
+                    updated[questionIndex] = {
+                        ...updated[questionIndex],
+                        type: value,
+                        options: [
+                            { text: "", isCorrect: false, order: 0 },
+                            { text: "", isCorrect: false, order: 1 },
+                        ],
+                        correctTextAnswer: undefined,
+                    };
+                }
             } else {
                 updated[questionIndex] = {
                     ...updated[questionIndex],
-                    type: value,
-                    options: [
-                        { text: "", isCorrect: false, order: 0 },
-                        { text: "", isCorrect: false, order: 1 },
-                    ],
-                    correctTextAnswer: undefined,
+                    [field]: value,
                 };
             }
-        } else {
-            updated[questionIndex] = {
-                ...updated[questionIndex],
-                [field]: value,
-            };
-        }
 
-        onChange(updated);
-    };
-
-    // Изменение текста опции
-    const handleOptionTextChange = (questionIndex: number, optionIndex: number, text: string) => {
-        const updated = [...questions];
-        if (updated[questionIndex].options && updated[questionIndex].options[optionIndex]) {
-            updated[questionIndex].options[optionIndex] = {
-                ...updated[questionIndex].options[optionIndex],
-                text,
-            };
             onChange(updated);
-        }
-    };
+        },
+        [questions, onChange],
+    );
 
-    // Переключение правильности опции
-    const handleToggleCorrectOption = (questionIndex: number, optionIndex: number) => {
-        const updated = [...questions];
-        const question = updated[questionIndex];
+    const handleOptionTextChange = useCallback(
+        (questionIndex: number, optionIndex: number, text: string) => {
+            const updated = [...questions];
+            if (updated[questionIndex].options && updated[questionIndex].options[optionIndex]) {
+                updated[questionIndex].options[optionIndex] = {
+                    ...updated[questionIndex].options[optionIndex],
+                    text,
+                };
+                onChange(updated);
+            }
+        },
+        [questions, onChange],
+    );
 
-        if (question.options) {
-            if (question.type === "single_choice") {
-                // Для single choice сбрасываем остальные
-                question.options = question.options.map((opt, idx) => ({
+    const handleToggleCorrectOption = useCallback(
+        (questionIndex: number, optionIndex: number) => {
+            const updated = [...questions];
+            const question = updated[questionIndex];
+
+            if (question.options) {
+                if (question.type === "single_choice") {
+                    question.options = question.options.map((opt, idx) => ({
+                        ...opt,
+                        isCorrect: idx === optionIndex,
+                    }));
+                } else {
+                    question.options[optionIndex] = {
+                        ...question.options[optionIndex],
+                        isCorrect: !question.options[optionIndex].isCorrect,
+                    };
+                }
+                onChange(updated);
+            }
+        },
+        [questions, onChange],
+    );
+
+    const handleRemoveOption = useCallback(
+        (questionIndex: number, optionIndex: number) => {
+            const updated = [...questions];
+            if (updated[questionIndex].options) {
+                const removed = updated[questionIndex].options!.filter(
+                    (_, idx) => idx !== optionIndex,
+                );
+                updated[questionIndex].options = removed.map((opt, idx) => ({
                     ...opt,
-                    isCorrect: idx === optionIndex,
+                    order: idx,
                 }));
-            } else {
-                // Для multiple choice просто переключаем
-                question.options[optionIndex] = {
-                    ...question.options[optionIndex],
-                    isCorrect: !question.options[optionIndex].isCorrect,
-                };
+                onChange(updated);
             }
-            onChange(updated);
-        }
-    };
+        },
+        [questions, onChange],
+    );
 
-    // Удаление опции
-    const handleRemoveOption = (questionIndex: number, optionIndex: number) => {
-        const updated = [...questions];
-        if (updated[questionIndex].options) {
-            const removed = updated[questionIndex].options!.filter((_, idx) => idx !== optionIndex);
-            updated[questionIndex].options = removed.map((opt, idx) => ({
-                ...opt,
-                order: idx,
-            }));
-            onChange(updated);
-        }
-    };
-
-    // Добавление опции
-    const handleAddOption = (questionIndex: number) => {
-        const updated = [...questions];
-        const question = updated[questionIndex];
-        if (question.options) {
-            question.options.push({
-                text: "",
-                isCorrect: false,
-                order: question.options.length,
-            });
-            onChange(updated);
-        }
-    };
+    const handleAddOption = useCallback(
+        (questionIndex: number) => {
+            const updated = [...questions];
+            const question = updated[questionIndex];
+            if (question.options) {
+                question.options.push({
+                    text: "",
+                    isCorrect: false,
+                    order: question.options.length,
+                });
+                onChange(updated);
+            }
+        },
+        [questions, onChange],
+    );
 
     return (
         <div className={styles.section}>
@@ -163,6 +168,7 @@ const Questions: React.FC<QuestionsProps> = ({
                                 key={idx}
                                 question={question}
                                 questionIndex={idx}
+                                index={idx}
                                 onQuestionChange={(field, value) =>
                                     handleQuestionChange(idx, field, value)
                                 }

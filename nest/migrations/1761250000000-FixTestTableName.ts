@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, TableExists } from "typeorm";
+import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class FixTestTableName1761250000000 implements MigrationInterface {
     name = 'FixTestTableName1761250000000'

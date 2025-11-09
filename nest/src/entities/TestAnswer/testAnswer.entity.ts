@@ -29,6 +29,10 @@ export class TestAnswer {
     @Column({ type: "int", nullable: true })
     selectedOptionId: number;
 
+    // ID выбранных вариантов ответа (для multiple choice)
+    @Column({ type: "text", nullable: true })
+    selectedOptionIds: string;
+
     // Ответ текстом
     @Column({ type: "text", nullable: true })
     textAnswer: string;

@@ -15,7 +15,7 @@ interface QuestionDisplayProps {
     ) => void;
     isSaving?: boolean;
 }
-
+// Вынести в props
 const QuestionDisplay = React.forwardRef<HTMLDivElement, QuestionDisplayProps>(
     (
         {

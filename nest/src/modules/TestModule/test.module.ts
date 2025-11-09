@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 import { TestService } from "src/services/TestService/test.service";
 import { TestController } from "src/controllers/TestController/test.controller";
+import { TestAttemptService } from "src/services/TestAttemptService/testAttempt.service";
+import { TestAttemptController } from "src/controllers/TestAttemptController/testAttempt.controller";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Test } from "src/entities/Test/test.entity";
 import { Question } from "src/entities/Question/question.entity";
@@ -16,7 +18,7 @@ import { QuestionModule } from "../QuestionModule/question.module";
         AuthModule,
         QuestionModule,
     ],
-    controllers: [TestController],
-    providers: [TestService],
+    controllers: [TestController, TestAttemptController],
+    providers: [TestService, TestAttemptService],
 })
 export class TestModule {}

@@ -24,7 +24,7 @@ const dealsSlice = createSlice({
         });
 
         builder.addCase(changeDeal.fulfilled, (state, action) => {
-            const index = state.deals.findIndex(deal => deal.id === action.payload.id);
+            const index = state.deals.findIndex((deal) => deal.id === action.payload.id);
             if (index !== -1) {
                 state.deals[index] = action.payload;
             }

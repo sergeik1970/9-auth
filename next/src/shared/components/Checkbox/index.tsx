@@ -1,18 +1,24 @@
-import React, { ReactElement, useState } from "react";
+import React, { ReactElement, useState, useEffect } from "react";
 import styles from "./index.module.scss";
 import clsx from "clsx";
 
 interface ICheckbox extends React.HTMLAttributes<HTMLInputElement> {
     a?: boolean;
+    checked?: boolean;
 }
 
 const Checkbox = (props: ICheckbox): ReactElement => {
-    const { onChange = () => null, defaultChecked } = props;
-    const [checked, setChecked] = useState(defaultChecked);
+    const { onChange = () => null, checked = false } = props;
+    // const { onChange = () => null, defaultChecked } = props;
+    // const [checked, setChecked] = useState(defaultChecked);
+
+    // useEffect(() => {
+    //     setChecked(defaultChecked);
+    // }, [defaultChecked]);
 
     const change = (e: any) => {
         onChange(e);
-        setChecked(e.target.checked);
+        // setChecked(e.target.checked);
     };
 
     return (

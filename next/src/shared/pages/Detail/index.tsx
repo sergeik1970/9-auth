@@ -1,15 +1,32 @@
-import React, { ReactElement, useEffect } from "react";
+import React, { ReactElement, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import TestPreview from "@/shared/components/TestPreview";
 import styles from "./index.module.scss";
 
 const TestDetailPage = (): ReactElement => {
     const router = useRouter();
-    const { id } = router.query;
+    const [id, setId] = useState<string | number | null>(null);
+    const [isStarting, setIsStarting] = useState(false);
 
-    const handleStartTest = () => {
-        // Логика начала теста
-        console.log("Начинаем тест");
+    useEffect(() => {
+        if (!router.isReady) return;
+        const queryId = router.query.id;
+        if (queryId) {
+            const resolvedId = Array.isArray(queryId) ? queryId[0] : queryId;
+            setId(resolvedId);
+        }
+    }, [router.isReady, router.query.id]);
+
+    const handleStartTest = async () => {
+        if (!id) return;
+
+        setIsStarting(true);
+        try {
+            await router.push(`/tests/${id}/take`);
+        } catch (error) {
+            console.error("Ошибка при переходе к тесту:", error);
+            setIsStarting(false);
+        }
     };
 
     const handleError = (error: string) => {
@@ -25,6 +42,7 @@ const TestDetailPage = (): ReactElement => {
                     isOwner={true}
                     onStartTest={handleStartTest}
                     onError={handleError}
+                    isStarting={isStarting}
                 />
             ) : (
                 <p>Загрузка ID теста...</p>

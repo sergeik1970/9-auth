@@ -9,6 +9,7 @@ import styles from "./index.module.scss";
 export interface QuestionProps {
     question: QuestionFormData;
     questionIndex: number;
+    index: number;
     onQuestionChange: (field: keyof QuestionFormData, value: any) => void;
     onOptionTextChange: (optionIndex: number, text: string) => void;
     onToggleCorrectOption: (optionIndex: number) => void;
@@ -19,6 +20,7 @@ export interface QuestionProps {
 }
 
 const Question = ({
+    index,
     question,
     questionIndex,
     onQuestionChange,
@@ -31,17 +33,6 @@ const Question = ({
 }: QuestionProps): ReactElement => {
     const handleTypeChange = (newType: QuestionType) => {
         onQuestionChange("type", newType);
-
-        if (newType === "text_input") {
-            onQuestionChange("options", []);
-            onQuestionChange("correctTextAnswer", "");
-        } else if (newType === "single_choice" || newType === "multiple_choice") {
-            onQuestionChange("correctTextAnswer", undefined);
-            onQuestionChange("options", [
-                { text: "", isCorrect: false, order: 0 },
-                { text: "", isCorrect: false, order: 1 },
-            ]);
-        }
     };
 
     return (
@@ -74,6 +65,7 @@ const Question = ({
             {(question.type === "single_choice" || question.type === "multiple_choice") &&
                 question.options && (
                     <QuestionOptionsSection
+                        index={index}
                         options={question.options}
                         type={question.type}
                         questionIndex={questionIndex}

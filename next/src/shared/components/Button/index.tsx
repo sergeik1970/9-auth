@@ -5,7 +5,8 @@ import clsx from "clsx";
 interface IButton extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: "primary" | "outline" | "secondary";
     size?: "small" | "medium" | "large";
-    types?: "primary"; // Оставляем для обратной совместимости
+    types?: "primary";
+    loading?: boolean;
 }
 
 const Button = (props: IButton): ReactElement => {
@@ -17,6 +18,8 @@ const Button = (props: IButton): ReactElement => {
         onClick = () => null,
         className,
         type = "button",
+        loading = false,
+        disabled,
         ...rest
     } = props;
 
@@ -29,13 +32,15 @@ const Button = (props: IButton): ReactElement => {
                 styles["button"],
                 styles[`button-${buttonVariant}`],
                 styles[`button-${size}`],
+                { [styles.loading]: loading },
                 className,
             )}
             type={type}
             onClick={onClick}
+            disabled={disabled || loading}
             {...rest}
         >
-            {children}
+            {loading ? "Загрузка..." : children}
         </button>
     );
 };

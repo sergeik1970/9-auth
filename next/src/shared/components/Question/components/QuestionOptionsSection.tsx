@@ -8,6 +8,7 @@ interface QuestionOptionsSectionProps {
     options: QuestionOptionFormData[];
     type: QuestionType;
     questionIndex: number;
+    index: number;
     onOptionTextChange: (optionIndex: number, text: string) => void;
     onToggleCorrect: (optionIndex: number) => void;
     onRemoveOption: (optionIndex: number) => void;
@@ -16,6 +17,7 @@ interface QuestionOptionsSectionProps {
 }
 
 const QuestionOptionsSection = ({
+    index,
     options,
     type,
     questionIndex,
@@ -74,15 +76,81 @@ const QuestionOptionsSection = ({
         }
     };
 
+    // const handleOptionTextChange = (optionIndex: number, text: string) => {
+    //     onOptionTextChange(optionIndex, text);
+
+    //     // Auto-add new option when last option is being filled
+    //     const lastOptionIndex = options.length - 1;
+    //     if (optionIndex === lastOptionIndex && text.trim() !== "" && options.length < 10) {
+    //         onAddOption();
+    //     }
+    // };
+
+    // const handleOptionTextChange = (optionIndex: number, text: string) => {
+    //     onOptionTextChange(optionIndex, text);
+
+    //     const lastOptionIndex = options.length - 1;
+
+    //     // Удалить вариант если полностью стирли его (кроме последнего пустого поля)
+    //     if (text.trim() === "" && optionIndex !== lastOptionIndex && options.length > 2) {
+    //         onRemoveOption(optionIndex);
+    //         return;
+    //     }
+
+    //     // Добавить новое поле если вводим в последнее
+    //     if (optionIndex === lastOptionIndex && text.trim() !== "" && options.length < 10) {
+    //         onAddOption();
+    //     }
+
+    //     // Удалить лишние пустые поля с конца (оставить только одно пустое)
+    //     if (options.length > 2) {
+    //         let emptyCount = 0;
+    //         for (let i = options.length - 1; i >= 0; i--) {
+    //             if (options[i].text.trim() === "") {
+    //                 emptyCount++;
+    //                 if (emptyCount > 1) {
+    //                     onRemoveOption(i);
+    //                 }
+    //             } else {
+    //                 break;
+    //             }
+    //         }
+    //     }
+    // };
+
     const handleOptionTextChange = (optionIndex: number, text: string) => {
         onOptionTextChange(optionIndex, text);
 
-        // Auto-add new option when last option is being filled
         const lastOptionIndex = options.length - 1;
+
         if (optionIndex === lastOptionIndex && text.trim() !== "" && options.length < 10) {
-            // Check if last option now has content
-            if (options[lastOptionIndex].text.trim() === "") {
-                onAddOption();
+            onAddOption();
+        }
+    };
+
+    const handleOptionBlur = (optionIndex: number) => {
+        const lastOptionIndex = options.length - 1;
+
+        if (
+            options[optionIndex].text.trim() === "" &&
+            optionIndex !== lastOptionIndex &&
+            options.length > 2
+        ) {
+            onRemoveOption(optionIndex);
+            return;
+        }
+
+        if (options.length > 2) {
+            let emptyCount = 0;
+            for (let i = options.length - 1; i >= 0; i--) {
+                if (options[i].text.trim() === "") {
+                    emptyCount++;
+                    if (emptyCount > 1) {
+                        onRemoveOption(i);
+                    }
+                } else {
+                    break;
+                }
             }
         }
     };
@@ -100,6 +168,7 @@ const QuestionOptionsSection = ({
                         optionIndex={optionIndex}
                         totalOptions={options.length}
                         onTextChange={(text) => handleOptionTextChange(optionIndex, text)}
+                        onBlur={() => handleOptionBlur(optionIndex)}
                         onToggleCorrect={() => onToggleCorrect(optionIndex)}
                         onDelete={() => onRemoveOption(optionIndex)}
                         disabled={disabled}

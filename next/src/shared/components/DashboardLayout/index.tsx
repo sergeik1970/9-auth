@@ -10,7 +10,8 @@ interface DashboardLayoutProps {
 // селектор для ошиббок из слайса тестов
 const DashboardLayout = ({ children }: DashboardLayoutProps): ReactElement => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isDesktop, setIsDesktop] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(true);
+    const [isMounted, setIsMounted] = useState(false);
 
     // Определяем, является ли текущий размер экрана десктопным (>1200px)
     useEffect(() => {
@@ -26,6 +27,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps): ReactElement => {
 
         // Проверяем при первой загрузке
         checkIfDesktop();
+        setIsMounted(true);
 
         // Добавляем слушатель изменения размера окна
         window.addEventListener("resize", checkIfDesktop);
@@ -47,7 +49,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps): ReactElement => {
     return (
         <div className={styles.layoutContainer}>
             {/* MobileHeader теперь вне основного layout и будет фиксирован вверху экрана */}
-            {!isDesktop && <MobileHeader onMenuClick={toggleSidebar} />}
+            {isMounted && !isDesktop && <MobileHeader onMenuClick={toggleSidebar} />}
 
             <div className={styles.layout}>
                 <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} isDesktop={isDesktop} />
