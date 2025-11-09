@@ -38,9 +38,10 @@ const QuestionDisplay = React.forwardRef<HTMLDivElement, QuestionDisplayProps>(
 
         const handleMultipleChoice = (optionId: number) => {
             if (!isDisabled) {
-                const newIds = selectedOptionIds.includes(optionId)
-                    ? selectedOptionIds.filter((id) => id !== optionId)
-                    : [...selectedOptionIds, optionId];
+                const currentIds = Array.isArray(selectedOptionIds) ? selectedOptionIds : [];
+                const newIds = currentIds.includes(optionId)
+                    ? currentIds.filter((id) => id !== optionId)
+                    : [...currentIds, optionId];
                 onAnswerChange(undefined, newIds, undefined);
             }
         };
@@ -78,7 +79,7 @@ const QuestionDisplay = React.forwardRef<HTMLDivElement, QuestionDisplayProps>(
                                         checked={
                                             question.type === "single_choice"
                                                 ? selectedOptionId === option.id
-                                                : selectedOptionIds.includes(option.id!)
+                                                : Array.isArray(selectedOptionIds) && selectedOptionIds.includes(option.id!)
                                         }
                                         onChange={() => {
                                             question.type === "single_choice"

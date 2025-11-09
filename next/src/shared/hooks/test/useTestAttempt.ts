@@ -29,7 +29,13 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
 
             const answersMap = new Map();
             data.answers?.forEach((answer: TestAnswer) => {
-                answersMap.set(answer.questionId, answer);
+                const normalizedAnswer = {
+                    ...answer,
+                    selectedOptionIds: typeof answer.selectedOptionIds === 'string'
+                        ? JSON.parse(answer.selectedOptionIds || '[]')
+                        : (Array.isArray(answer.selectedOptionIds) ? answer.selectedOptionIds : [])
+                };
+                answersMap.set(answer.questionId, normalizedAnswer);
             });
             setAnswers(answersMap);
         } catch (err) {
@@ -52,6 +58,7 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
             }
             const data = await response.json();
             setAttempt(data);
+            setAnswers(new Map());
         } catch (err) {
             setError(err instanceof Error ? err.message : "Unknown error");
         }
@@ -67,6 +74,7 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
             if (!attempt) return;
 
             setIsSaving(true);
+            setError(null);
             try {
                 const response = await fetch(
                     `/api/tests/${testId}/attempts/${attempt.id}/answers`,
@@ -89,7 +97,13 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
 
                 setAnswers((prev) => {
                     const newAnswers = new Map(prev);
-                    newAnswers.set(questionId, savedAnswer);
+                    const normalizedAnswer = {
+                        ...savedAnswer,
+                        selectedOptionIds: typeof savedAnswer.selectedOptionIds === 'string'
+                            ? JSON.parse(savedAnswer.selectedOptionIds || '[]')
+                            : (Array.isArray(savedAnswer.selectedOptionIds) ? savedAnswer.selectedOptionIds : [])
+                    };
+                    newAnswers.set(questionId, normalizedAnswer);
                     return newAnswers;
                 });
             } catch (err) {
