@@ -103,15 +103,17 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test }) => {
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <div className={styles.titleSection}>
-                    <h1>{test.title}</h1>
+                <div>
+                    <div className={styles.titleSection}>
+                        <h1>{test.title}</h1>
+                    </div>
+                    <Timer
+                        minutes={minutes}
+                        seconds={seconds}
+                        isActive={isActive}
+                        isTimeUp={isTimeUp}
+                    />
                 </div>
-                <Timer
-                    minutes={minutes}
-                    seconds={seconds}
-                    isActive={isActive}
-                    isTimeUp={isTimeUp}
-                />
             </div>
 
             {currentQuestion && (

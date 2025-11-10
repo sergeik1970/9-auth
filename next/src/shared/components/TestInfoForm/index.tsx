@@ -1,5 +1,6 @@
 import React, { ReactElement } from "react";
 import InputText from "@/shared/components/InputText";
+import TimeLimitPicker from "@/shared/components/TimeLimitPicker";
 import styles from "./index.module.scss";
 
 export interface TestInfoData {
@@ -28,15 +29,11 @@ const TestInfoForm = ({ data, onChange, disabled = false }: TestInfoFormProps): 
         });
     };
 
-    const handleTimeLimitChange = (event: React.FormEvent<HTMLInputElement>) => {
-        if (!isNaN(Number(event.currentTarget.value))) {
-            onChange({
-                ...data,
-                timeLimit: Number(event.currentTarget.value),
-            });
-        } else {
-            console.log("Invalid input");
-        }
+    const handleTimeLimitChange = (minutes: number) => {
+        onChange({
+            ...data,
+            timeLimit: minutes,
+        });
     };
     return (
         <div>
@@ -65,14 +62,11 @@ const TestInfoForm = ({ data, onChange, disabled = false }: TestInfoFormProps): 
                 </div>
 
                 <div className={styles.field}>
-                    <label className={styles.label}>Время на прохождение (минуты)</label>
-                    <InputText
-                        type="number"
-                        value={data.timeLimit?.toString() || ""}
+                    <label className={styles.label}>Время на прохождение</label>
+                    <TimeLimitPicker
+                        value={data.timeLimit}
                         onChange={handleTimeLimitChange}
-                        placeholder="Не ограничено"
-                        min="1"
-                        // disabled={disabled}
+                        disabled={disabled}
                     />
                 </div>
             </div>

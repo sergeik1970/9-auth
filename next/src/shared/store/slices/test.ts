@@ -62,13 +62,23 @@ export const createTest = createAsyncThunk(
     "tests/create",
     async (testData: CreateTestData, { rejectWithValue }) => {
         try {
+            const cleanedData = {
+                ...testData,
+                questions: testData.questions.map((question) => ({
+                    ...question,
+                    options: question.options
+                        ? question.options.filter((option) => option.text.trim() !== "")
+                        : question.options,
+                })),
+            };
+
             const response = await fetch(createApiUrl(API_ENDPOINTS.tests.create), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 credentials: "include",
-                body: JSON.stringify(testData),
+                body: JSON.stringify(cleanedData),
             });
 
             const data = await response.json();
