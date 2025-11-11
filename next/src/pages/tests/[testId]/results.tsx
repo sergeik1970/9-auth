@@ -71,7 +71,11 @@ const ResultsPage = () => {
         );
     }
 
-    return <TestResultsComponent results={results} onRetry={handleRetry} onGoBack={handleGoBack} />;
+    return (
+        <DashboardLayout>
+            <TestResultsComponent results={results} onRetry={handleRetry} onGoBack={handleGoBack} />
+        </DashboardLayout>
+    );
 };
 
 export default ResultsPage;

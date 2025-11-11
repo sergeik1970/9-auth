@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { TestResults as TestResultsType } from "@/shared/types/test";
 import Button from "@/shared/components/Button";
 import styles from "./index.module.scss";
@@ -11,6 +11,7 @@ interface TestResultsProps {
 }
 
 export const TestResults: React.FC<TestResultsProps> = ({ results, onRetry, onGoBack }) => {
+    const [selectedQuestionIndex, setSelectedQuestionIndex] = useState<number | null>(null);
     const isPassed = results.percentage >= 70;
 
     const formatTime = (seconds: number) => {
@@ -19,73 +20,142 @@ export const TestResults: React.FC<TestResultsProps> = ({ results, onRetry, onGo
         return `${mins}м ${secs}с`;
     };
 
+    const getQuestionStatus = (answer: any) => {
+        if (answer.isCorrect) return "correct";
+        if (answer.isPartiallyCorrect) return "partial";
+        return "incorrect";
+    };
+
+    const handleQuestionClick = (index: number) => {
+        setSelectedQuestionIndex(selectedQuestionIndex === index ? null : index);
+    };
+
     return (
         <div className={styles.container}>
             <div className={styles.card}>
-                <div className={clsx(styles.resultSection, styles[isPassed ? "passed" : "failed"])}>
-                    <div className={styles.scoreCircle}>
-                        <span className={styles.percentage}>{Math.round(results.percentage)}%</span>
-                    </div>
-                    <h1 className={styles.status}>
-                        {isPassed ? "Тест пройден! ✓" : "Тест не пройден ✗"}
-                    </h1>
-                    <p className={styles.subtitle}>
-                        {isPassed
-                            ? "Отличная работа! Вы успешно прошли тест."
-                            : "Попробуйте ещё раз, чтобы улучшить результат."}
-                    </p>
-                </div>
-
-                <div className={styles.stats}>
-                    <div className={styles.stat}>
-                        <span className={styles.label}>Правильных ответов</span>
-                        <span className={styles.value}>
-                            {results.correctAnswers} / {results.totalQuestions}
-                        </span>
-                    </div>
-                    <div className={styles.stat}>
-                        <span className={styles.label}>Баллы</span>
-                        <span className={styles.value}>{results.score}</span>
-                    </div>
-                    <div className={styles.stat}>
-                        <span className={styles.label}>Время</span>
-                        <span className={styles.value}>{formatTime(results.timeSpent)}</span>
-                    </div>
-                </div>
-
-                <div className={styles.answers}>
-                    <h2>Анализ ответов</h2>
-                    <div className={styles.answersList}>
-                        {results.answers.map((answer, index) => (
-                            <div
-                                key={index}
-                                className={clsx(styles.answer, {
-                                    [styles.correct]: answer.isCorrect,
-                                    [styles.incorrect]: !answer.isCorrect,
-                                })}
-                            >
-                                <div className={styles.answerHeader}>
-                                    <span className={styles.answerNumber}>Вопрос {index + 1}</span>
-                                    <span className={styles.answerIcon}>
-                                        {answer.isCorrect ? "✓" : "✗"}
-                                    </span>
-                                </div>
-                                <p className={styles.questionText}>{answer.questionText}</p>
-                                {answer.userAnswer && (
-                                    <div className={styles.userAnswerBox}>
-                                        <span className={styles.label}>Ваш ответ:</span>
-                                        <span>{answer.userAnswer}</span>
-                                    </div>
-                                )}
-                                {!answer.isCorrect && answer.correctAnswer && (
-                                    <div className={styles.correctAnswerBox}>
-                                        <span className={styles.label}>Правильный ответ:</span>
-                                        <span>{answer.correctAnswer}</span>
-                                    </div>
-                                )}
+                <div className={styles.resultSection}>
+                    <h1 className={styles.status}>Результаты теста</h1>
+                    <div className={styles.statsContainer}>
+                        <div className={styles.progressCircle}>
+                            <svg width="120" height="120" viewBox="0 0 120 120">
+                                <circle
+                                    cx="60"
+                                    cy="60"
+                                    r="54"
+                                    fill="none"
+                                    stroke="#e5e7eb"
+                                    strokeWidth="8"
+                                />
+                                <circle
+                                    cx="60"
+                                    cy="60"
+                                    r="54"
+                                    fill="none"
+                                    stroke={isPassed ? "#10b981" : "#ef4444"}
+                                    strokeWidth="8"
+                                    strokeDasharray={`${(results.percentage / 100) * 339.292} 339.292`}
+                                    strokeLinecap="round"
+                                    transform="rotate(-90 60 60)"
+                                />
+                            </svg>
+                            <div className={styles.percentageText}>
+                                <span className={clsx(styles.percentage, isPassed ? styles.passed : styles.failed)}>
+                                    {Math.round(results.percentage)}%
+                                </span>
                             </div>
+                        </div>
+                        <div className={styles.stats}>
+                            <div className={styles.stat}>
+                                <span className={styles.label}>Правильных ответов</span>
+                                <span className={styles.value}>
+                                    {results.correctAnswers} / {results.totalQuestions}
+                                </span>
+                            </div>
+                            <div className={styles.stat}>
+                                <span className={styles.label}>Баллы</span>
+                                <span className={styles.value}>{results.score}</span>
+                            </div>
+                            <div className={styles.stat}>
+                                <span className={styles.label}>Время</span>
+                                <span className={styles.value}>{formatTime(results.timeSpent)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className={styles.questionsNavigation}>
+                    <h2>Вопросы теста</h2>
+                    <div className={styles.indicators}>
+                        {results.answers.map((answer, index) => (
+                            <button
+                                key={index}
+                                className={clsx(styles.indicator, styles[getQuestionStatus(answer)], {
+                                    [styles.active]: selectedQuestionIndex === index,
+                                })}
+                                onClick={() => handleQuestionClick(index)}
+                                title={`Вопрос ${index + 1}`}
+                            >
+                                {index + 1}
+                            </button>
                         ))}
                     </div>
+
+                    {selectedQuestionIndex !== null && (
+                        <div className={styles.questionDetail}>
+                            <div className={styles.questionHeader}>
+                                <h3>Вопрос {selectedQuestionIndex + 1}</h3>
+                                <button
+                                    className={styles.closeButton}
+                                    onClick={() => setSelectedQuestionIndex(null)}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            <p className={styles.questionText}>
+                                {results.answers[selectedQuestionIndex].questionText}
+                            </p>
+                            {results.answers[selectedQuestionIndex].options &&
+                            results.answers[selectedQuestionIndex].options.length > 0 ? (
+                                <div className={styles.optionsList}>
+                                    {results.answers[selectedQuestionIndex].options.map((option: any, idx: number) => (
+                                        <div
+                                            key={idx}
+                                            className={clsx(styles.option, {
+                                                [styles.correctOption]: option.isCorrect,
+                                                [styles.userSelectedWrong]:
+                                                    option.isUserSelected && !option.isCorrect,
+                                            })}
+                                        >
+                                            <span className={styles.optionText}>{option.text}</span>
+                                            {option.isCorrect && (
+                                                <span className={styles.badge}>Правильный ответ</span>
+                                            )}
+                                            {option.isUserSelected && !option.isCorrect && (
+                                                <span className={styles.badge}>Ваш ответ</span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className={styles.textAnswers}>
+                                    <div className={styles.answerBox}>
+                                        <span className={styles.label}>Ваш ответ:</span>
+                                        <span className={styles.answerText}>
+                                            {results.answers[selectedQuestionIndex].userAnswer || "Не отвечено"}
+                                        </span>
+                                    </div>
+                                    {!results.answers[selectedQuestionIndex].isCorrect && (
+                                        <div className={styles.answerBox}>
+                                            <span className={styles.label}>Правильный ответ:</span>
+                                            <span className={styles.answerText}>
+                                                {results.answers[selectedQuestionIndex].correctAnswer}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className={styles.actions}>

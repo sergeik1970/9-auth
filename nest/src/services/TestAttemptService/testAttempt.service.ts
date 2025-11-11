@@ -169,6 +169,8 @@ export class TestAttemptService {
         await this.answerRepository.save(answers);
         const savedAttempt = await this.attemptRepository.save(attempt);
 
+        const answerMap = new Map(answers.map((a) => [a.questionId, a]));
+
         return {
             attemptId: savedAttempt.id,
             testId,
@@ -179,15 +181,72 @@ export class TestAttemptService {
             timeSpent: Math.floor(
                 (new Date().getTime() - new Date(savedAttempt.startedAt).getTime()) / 1000,
             ),
-            answers: answers.map((answer) => {
-                const question = test.questions.find((q) => q.id === answer.questionId);
+            answers: test.questions.map((question) => {
+                const answer = answerMap.get(question.id);
+
+                let isCorrect = false;
+                let isPartiallyCorrect = false;
+                let options = [];
+                let userAnswerText = "";
+
+                if (question.type === "single_choice" || question.type === "multiple_choice") {
+                    const correctOptionIds = question.options
+                        .filter((o) => o.isCorrect)
+                        .map((o) => o.id);
+
+                    let userSelectedIds: number[] = [];
+                    if (answer) {
+                        if (question.type === "single_choice" && answer.selectedOptionId) {
+                            userSelectedIds = [answer.selectedOptionId];
+                        } else if (question.type === "multiple_choice" && answer.selectedOptionIds) {
+                            userSelectedIds = JSON.parse(answer.selectedOptionIds);
+                        }
+                    }
+
+                    isCorrect = answer?.isCorrect || false;
+
+                    if (question.type === "multiple_choice" && !isCorrect && userSelectedIds.length > 0) {
+                        const correctSelected = userSelectedIds.filter((id) =>
+                            correctOptionIds.includes(id),
+                        );
+                        if (correctSelected.length > 0) {
+                            isPartiallyCorrect = true;
+                        }
+                    }
+
+                    options = question.options.map((option) => ({
+                        id: option.id,
+                        text: option.text,
+                        isCorrect: option.isCorrect,
+                        isUserSelected: userSelectedIds.includes(option.id),
+                    }));
+
+                    userAnswerText = question.options
+                        .filter((o) => userSelectedIds.includes(o.id))
+                        .map((o) => o.text)
+                        .join(", ");
+                } else if (question.type === "text_input") {
+                    isCorrect = answer?.isCorrect || false;
+                    userAnswerText = answer?.textAnswer || "";
+                }
+
+                const correctAnswerText =
+                    question.type === "text_input"
+                        ? question.correctTextAnswer || ""
+                        : question.options
+                              .filter((o) => o.isCorrect)
+                              .map((o) => o.text)
+                              .join(", ");
+
                 return {
-                    questionId: answer.questionId,
-                    questionText: question?.text || "",
-                    questionType: question?.type || "",
-                    isCorrect: answer.isCorrect,
-                    userAnswer: answer.textAnswer || "",
-                    correctAnswer: question?.correctTextAnswer || "",
+                    questionId: question.id,
+                    questionText: question.text || "",
+                    questionType: question.type || "",
+                    isCorrect,
+                    isPartiallyCorrect,
+                    userAnswer: userAnswerText,
+                    correctAnswer: correctAnswerText,
+                    options,
                 };
             }),
         };
@@ -213,6 +272,8 @@ export class TestAttemptService {
             where: { attemptId },
         });
 
+        const answerMap = new Map(answers.map((a) => [a.questionId, a]));
+
         return {
             attemptId: attempt.id,
             testId,
@@ -225,15 +286,72 @@ export class TestAttemptService {
                     new Date(attempt.startedAt).getTime()) /
                     1000,
             ),
-            answers: answers.map((answer) => {
-                const question = test.questions.find((q) => q.id === answer.questionId);
+            answers: test.questions.map((question) => {
+                const answer = answerMap.get(question.id);
+
+                let isCorrect = false;
+                let isPartiallyCorrect = false;
+                let options = [];
+                let userAnswerText = "";
+
+                if (question.type === "single_choice" || question.type === "multiple_choice") {
+                    const correctOptionIds = question.options
+                        .filter((o) => o.isCorrect)
+                        .map((o) => o.id);
+
+                    let userSelectedIds: number[] = [];
+                    if (answer) {
+                        if (question.type === "single_choice" && answer.selectedOptionId) {
+                            userSelectedIds = [answer.selectedOptionId];
+                        } else if (question.type === "multiple_choice" && answer.selectedOptionIds) {
+                            userSelectedIds = JSON.parse(answer.selectedOptionIds);
+                        }
+                    }
+
+                    isCorrect = answer?.isCorrect || false;
+
+                    if (question.type === "multiple_choice" && !isCorrect && userSelectedIds.length > 0) {
+                        const correctSelected = userSelectedIds.filter((id) =>
+                            correctOptionIds.includes(id),
+                        );
+                        if (correctSelected.length > 0) {
+                            isPartiallyCorrect = true;
+                        }
+                    }
+
+                    options = question.options.map((option) => ({
+                        id: option.id,
+                        text: option.text,
+                        isCorrect: option.isCorrect,
+                        isUserSelected: userSelectedIds.includes(option.id),
+                    }));
+
+                    userAnswerText = question.options
+                        .filter((o) => userSelectedIds.includes(o.id))
+                        .map((o) => o.text)
+                        .join(", ");
+                } else if (question.type === "text_input") {
+                    isCorrect = answer?.isCorrect || false;
+                    userAnswerText = answer?.textAnswer || "";
+                }
+
+                const correctAnswerText =
+                    question.type === "text_input"
+                        ? question.correctTextAnswer || ""
+                        : question.options
+                              .filter((o) => o.isCorrect)
+                              .map((o) => o.text)
+                              .join(", ");
+
                 return {
-                    questionId: answer.questionId,
-                    questionText: question?.text || "",
-                    questionType: question?.type || "",
-                    isCorrect: answer.isCorrect,
-                    userAnswer: answer.textAnswer || "",
-                    correctAnswer: question?.correctTextAnswer || "",
+                    questionId: question.id,
+                    questionText: question.text || "",
+                    questionType: question.type || "",
+                    isCorrect,
+                    isPartiallyCorrect,
+                    userAnswer: userAnswerText,
+                    correctAnswer: correctAnswerText,
+                    options,
                 };
             }),
         };

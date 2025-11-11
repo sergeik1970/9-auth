@@ -9,9 +9,11 @@ interface TimeLimitPickerProps {
 
 const TIME_PRESETS = [
     { label: "15 минут", value: 15 },
+    { label: "20 минут", value: 20 },
     { label: "30 минут", value: 30 },
     { label: "40 минут", value: 40 },
     { label: "1 час", value: 60 },
+    { label: "1,5 часа", value: 90 },
     { label: "2 часа", value: 120 },
     { label: "3 часа 55 минут", value: 235 },
 ];

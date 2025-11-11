@@ -61,6 +61,15 @@ export interface AnswerResult {
     questionText: string;
     questionType: string;
     isCorrect: boolean;
+    isPartiallyCorrect?: boolean;
     userAnswer: string;
     correctAnswer: string;
+    options?: AnswerOption[];
+}
+
+export interface AnswerOption {
+    id: number;
+    text: string;
+    isCorrect: boolean;
+    isUserSelected: boolean;
 }
