@@ -17,7 +17,7 @@
         border-color: #d1d5db;
     }
 
-    &:focus-within {
+    &.correct:focus-within {
         border-color: #10b981;
         background-color: #ecfdf5;
     }
@@ -91,4 +91,18 @@
 .option-delete {
     display: flex;
     flex-shrink: 0;
+}
+
+.correctInput {
+    &:focus {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+    }
+}
+
+.regularInput {
+    &:focus {
+        border-color: #d1d5db !important;
+        box-shadow: none !important;
+    }
 }

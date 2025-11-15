@@ -13,43 +13,27 @@ interface QuestionDisplayProps {
         selectedOptionIds?: number[],
         textAnswer?: string,
     ) => void;
-    isSaving?: boolean;
 }
 // Вынести в props
 const QuestionDisplay = React.forwardRef<HTMLDivElement, QuestionDisplayProps>(
     (
-        {
-            question,
-            selectedOptionId,
-            selectedOptionIds = [],
-            textAnswer = "",
-            onAnswerChange,
-            isSaving = false,
-        },
+        { question, selectedOptionId, selectedOptionIds = [], textAnswer = "", onAnswerChange },
         ref,
     ): ReactElement => {
-        const isDisabled = isSaving;
-
         const handleSingleChoice = (optionId: number) => {
-            if (!isDisabled) {
-                onAnswerChange(optionId, [optionId], undefined);
-            }
+            onAnswerChange(optionId, [optionId], undefined);
         };
 
         const handleMultipleChoice = (optionId: number) => {
-            if (!isDisabled) {
-                const currentIds = Array.isArray(selectedOptionIds) ? selectedOptionIds : [];
-                const newIds = currentIds.includes(optionId)
-                    ? currentIds.filter((id) => id !== optionId)
-                    : [...currentIds, optionId];
-                onAnswerChange(undefined, newIds, undefined);
-            }
+            const currentIds = Array.isArray(selectedOptionIds) ? selectedOptionIds : [];
+            const newIds = currentIds.includes(optionId)
+                ? currentIds.filter((id) => id !== optionId)
+                : [...currentIds, optionId];
+            onAnswerChange(undefined, newIds, undefined);
         };
 
         const handleTextAnswer = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-            if (!isDisabled) {
-                onAnswerChange(undefined, undefined, e.target.value);
-            }
+            onAnswerChange(undefined, undefined, e.target.value);
         };
 
         return (
@@ -61,12 +45,7 @@ const QuestionDisplay = React.forwardRef<HTMLDivElement, QuestionDisplayProps>(
                     question.options && (
                         <div className={styles.optionsGroup}>
                             {question.options.map((option) => (
-                                <label
-                                    key={option.id}
-                                    className={clsx(styles.optionLabel, {
-                                        [styles.disabled]: isDisabled,
-                                    })}
-                                >
+                                <label key={option.id} className={styles.optionLabel}>
                                     <input
                                         type={
                                             question.type === "single_choice" ? "radio" : "checkbox"
@@ -79,14 +58,14 @@ const QuestionDisplay = React.forwardRef<HTMLDivElement, QuestionDisplayProps>(
                                         checked={
                                             question.type === "single_choice"
                                                 ? selectedOptionId === option.id
-                                                : Array.isArray(selectedOptionIds) && selectedOptionIds.includes(option.id!)
+                                                : Array.isArray(selectedOptionIds) &&
+                                                  selectedOptionIds.includes(option.id!)
                                         }
                                         onChange={() => {
                                             question.type === "single_choice"
                                                 ? handleSingleChoice(option.id!)
                                                 : handleMultipleChoice(option.id!);
                                         }}
-                                        disabled={isDisabled}
                                         className={styles.input}
                                     />
                                     <span className={styles.optionText}>{option.text}</span>
@@ -100,7 +79,6 @@ const QuestionDisplay = React.forwardRef<HTMLDivElement, QuestionDisplayProps>(
                     <textarea
                         value={textAnswer}
                         onChange={handleTextAnswer}
-                        disabled={isDisabled}
                         placeholder="Введите ваш ответ..."
                         className={styles.textarea}
                         rows={4}

@@ -47,11 +47,19 @@
                 font-size: 28px;
                 font-weight: 700;
 
-                &.passed {
+                &.excellent {
                     color: #10b981;
                 }
 
-                &.failed {
+                &.good {
+                    color: #eab308;
+                }
+
+                &.fair {
+                    color: #f59e0b;
+                }
+
+                &.poor {
                     color: #ef4444;
                 }
             }
@@ -124,26 +132,51 @@
         }
 
         &.correct {
-            background: #10b981;
+            background: #ecfdf5;
             border-color: #10b981;
-            color: #fff;
+            border-width: 3px;
+            color: #10b981;
         }
 
         &.partial {
-            background: #f59e0b;
+            background: #fffbeb;
             border-color: #f59e0b;
-            color: #fff;
+            border-width: 3px;
+            color: #f59e0b;
         }
 
         &.incorrect {
-            background: #ef4444;
+            background: #fef2f2;
             border-color: #ef4444;
-            color: #fff;
+            border-width: 3px;
+            color: #ef4444;
+        }
+
+        &.unanswered {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            border-width: 3px;
+            color: #6b7280;
         }
 
         &.active {
             transform: scale(1.15);
+        }
+
+        &.correct.active {
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        &.partial.active {
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+        }
+
+        &.incorrect.active {
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+        }
+
+        &.unanswered.active {
+            box-shadow: 0 0 0 3px rgba(209, 213, 219, 0.4);
         }
     }
 }
@@ -228,6 +261,48 @@
             display: block;
             font-size: 15px;
             color: #374151;
+        }
+
+        &.correctOption {
+            background: #f0fdf4;
+            border-color: #10b981;
+
+            .label {
+                color: #065f46;
+            }
+
+            .answerText {
+                color: #065f46;
+                font-weight: 500;
+            }
+        }
+
+        &.userSelectedWrong {
+            background: #fef2f2;
+            border-color: #ef4444;
+
+            .label {
+                color: #991b1b;
+            }
+
+            .answerText {
+                color: #991b1b;
+                font-weight: 500;
+            }
+        }
+
+        &.noAnswer {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+
+            .label {
+                color: #6b7280;
+            }
+
+            .answerText {
+                color: #6b7280;
+                font-weight: 500;
+            }
         }
     }
 }

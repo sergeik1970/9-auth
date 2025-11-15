@@ -74,7 +74,50 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
         }
     };
 
-    const isFormValid = testInfo.title.trim().length > 0 && questions.length > 0;
+    const getValidationErrors = () => {
+        const errors: string[] = [];
+
+        if (!testInfo.title.trim()) {
+            errors.push("Название теста");
+        }
+        if (!testInfo.description.trim()) {
+            errors.push("Описание теста");
+        }
+        if (!testInfo.timeLimit || testInfo.timeLimit <= 0) {
+            errors.push("Время для прохождения теста");
+        }
+        if (questions.length === 0) {
+            errors.push("Минимум один вопрос");
+        }
+
+        questions.forEach((question, index) => {
+            if (!question.text.trim()) {
+                errors.push(`Вопрос ${index + 1}: текст вопроса`);
+            }
+
+            if (question.type === "text_input") {
+                if (!question.correctTextAnswer?.trim()) {
+                    errors.push(`Вопрос ${index + 1}: правильный ответ`);
+                }
+            } else {
+                const filledOptions = question.options?.filter((opt) => opt.text.trim()) || [];
+
+                if (filledOptions.length < 2) {
+                    errors.push(`Вопрос ${index + 1}: минимум два варианта ответа`);
+                } else {
+                    const hasCorrectOption = filledOptions.some((opt) => opt.isCorrect);
+                    if (!hasCorrectOption) {
+                        errors.push(`Вопрос ${index + 1}: не отмечен правильный ответ`);
+                    }
+                }
+            }
+        });
+
+        return errors;
+    };
+
+    const validationErrors = getValidationErrors();
+    const isFormValid = validationErrors.length === 0;
 
     return (
         <div className={styles.createTest}>
@@ -91,6 +134,16 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
                 <Questions questions={questions} onChange={setQuestions} disabled={isLoading} />
 
                 <div className={styles.actions}>
+                    {validationErrors.length > 0 && (
+                        <div className={styles.validationErrors}>
+                            <p className={styles.validationTitle}>Не заполнено:</p>
+                            <ul>
+                                {validationErrors.map((error, idx) => (
+                                    <li key={idx}>{error}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                     <Button type="submit" variant="primary" disabled={isLoading || !isFormValid}>
                         {isLoading ? "Создание..." : "Создать тест"}
                     </Button>

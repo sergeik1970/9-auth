@@ -19,10 +19,14 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test }) => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [questions, setQuestions] = useState<Question[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [currentSelectedOptionId, setCurrentSelectedOptionId] = useState<number | undefined>();
+    const [currentSelectedOptionIds, setCurrentSelectedOptionIds] = useState<number[]>([]);
+    const [currentTextAnswer, setCurrentTextAnswer] = useState<string>("");
 
-    const { attempt, answers, isSaving, saveAnswer, submitTest, isAnswered } = useTestAttempt({
-        testId: test.id!,
-    });
+    const { attempt, answers, isSaving, isSubmitting, saveAnswer, submitTest, isAnswered } =
+        useTestAttempt({
+            testId: test.id!,
+        });
 
     const { minutes, seconds, isActive, isTimeUp, pause, resume } = useTimer({
         durationSeconds: (test.timeLimit || 60) * 60,
@@ -38,6 +42,18 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test }) => {
             handleSubmit();
         }
     }, [isTimeUp, attempt]);
+
+    useEffect(() => {
+        const currentQuestion = questions[currentQuestionIndex];
+        if (currentQuestion) {
+            const savedAnswer = answers.get(currentQuestion.id!);
+            setCurrentSelectedOptionId(savedAnswer?.selectedOptionId);
+            setCurrentSelectedOptionIds(
+                Array.isArray(savedAnswer?.selectedOptionIds) ? savedAnswer.selectedOptionIds : [],
+            );
+            setCurrentTextAnswer(savedAnswer?.textAnswer || "");
+        }
+    }, [currentQuestionIndex, questions, answers]);
 
     const loadQuestions = async () => {
         try {
@@ -59,24 +75,36 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test }) => {
             .map(([id]) => id),
     );
 
-    const handleAnswerChange = async (
+    const handleAnswerChange = (
         selectedOptionId?: number,
         selectedOptionIds?: number[],
         textAnswer?: string,
     ) => {
-        if (!currentQuestion) return;
-
-        await saveAnswer(currentQuestion.id!, selectedOptionId, selectedOptionIds, textAnswer);
+        setCurrentSelectedOptionId(selectedOptionId);
+        setCurrentSelectedOptionIds(selectedOptionIds || []);
+        setCurrentTextAnswer(textAnswer || "");
     };
 
-    const handlePrevious = () => {
+    const saveCurrentAnswer = async () => {
+        if (!currentQuestion) return;
+        await saveAnswer(
+            currentQuestion.id!,
+            currentSelectedOptionId,
+            currentSelectedOptionIds,
+            currentTextAnswer,
+        );
+    };
+
+    const handlePrevious = async () => {
         if (currentQuestionIndex > 0) {
+            await saveCurrentAnswer();
             setCurrentQuestionIndex(currentQuestionIndex - 1);
         }
     };
 
-    const handleNext = () => {
+    const handleNext = async () => {
         if (currentQuestionIndex < questions.length - 1) {
+            await saveCurrentAnswer();
             setCurrentQuestionIndex(currentQuestionIndex + 1);
         }
     };
@@ -88,6 +116,7 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test }) => {
     const handleSubmit = async () => {
         try {
             pause();
+            await saveCurrentAnswer();
             const results = await submitTest();
             router.push(`/tests/${test.id}/results?attemptId=${results.attemptId}`);
         } catch (error) {
@@ -124,11 +153,10 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test }) => {
                         </div>
                         <QuestionDisplay
                             question={currentQuestion}
-                            selectedOptionId={answers.get(currentQuestion.id!)?.selectedOptionId}
-                            selectedOptionIds={answers.get(currentQuestion.id!)?.selectedOptionIds}
-                            textAnswer={answers.get(currentQuestion.id!)?.textAnswer}
+                            selectedOptionId={currentSelectedOptionId}
+                            selectedOptionIds={currentSelectedOptionIds}
+                            textAnswer={currentTextAnswer}
                             onAnswerChange={handleAnswerChange}
-                            isSaving={isSaving}
                         />
                     </div>
 
@@ -143,7 +171,7 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test }) => {
                         {currentQuestionIndex === questions.length - 1 ? (
                             <Button
                                 onClick={handleSubmit}
-                                loading={isSaving}
+                                loading={isSubmitting}
                                 className={styles.submitBtn}
                             >
                                 Завершить тест

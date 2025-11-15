@@ -308,14 +308,17 @@ export class TestAttemptService {
                         }
                     }
 
-                    isCorrect = answer?.isCorrect || false;
-
-                    if (question.type === "multiple_choice" && !isCorrect && userSelectedIds.length > 0) {
-                        const correctSelected = userSelectedIds.filter((id) =>
-                            correctOptionIds.includes(id),
-                        );
-                        if (correctSelected.length > 0) {
-                            isPartiallyCorrect = true;
+                    if (question.type === "single_choice") {
+                        isCorrect = (answer?.selectedOptionId && correctOptionIds.includes(answer.selectedOptionId)) || false;
+                    } else {
+                        isCorrect = JSON.stringify(userSelectedIds.sort()) === JSON.stringify(correctOptionIds.sort());
+                        if (!isCorrect && userSelectedIds.length > 0) {
+                            const correctSelected = userSelectedIds.filter((id) =>
+                                correctOptionIds.includes(id),
+                            );
+                            if (correctSelected.length > 0) {
+                                isPartiallyCorrect = true;
+                            }
                         }
                     }
 
@@ -331,7 +334,7 @@ export class TestAttemptService {
                         .map((o) => o.text)
                         .join(", ");
                 } else if (question.type === "text_input") {
-                    isCorrect = answer?.isCorrect || false;
+                    isCorrect = (answer?.textAnswer && answer.textAnswer.toLowerCase() === question.correctTextAnswer?.toLowerCase()) || false;
                     userAnswerText = answer?.textAnswer || "";
                 }
 

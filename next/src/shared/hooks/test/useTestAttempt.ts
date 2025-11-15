@@ -10,6 +10,7 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
     const [attempt, setAttempt] = useState<TestAttempt | null>(null);
     const [answers, setAnswers] = useState<Map<number, TestAnswer>>(new Map());
     const [isSaving, setIsSaving] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -31,9 +32,12 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
             data.answers?.forEach((answer: TestAnswer) => {
                 const normalizedAnswer = {
                     ...answer,
-                    selectedOptionIds: typeof answer.selectedOptionIds === 'string'
-                        ? JSON.parse(answer.selectedOptionIds || '[]')
-                        : (Array.isArray(answer.selectedOptionIds) ? answer.selectedOptionIds : [])
+                    selectedOptionIds:
+                        typeof answer.selectedOptionIds === "string"
+                            ? JSON.parse(answer.selectedOptionIds || "[]")
+                            : Array.isArray(answer.selectedOptionIds)
+                              ? answer.selectedOptionIds
+                              : [],
                 };
                 answersMap.set(answer.questionId, normalizedAnswer);
             });
@@ -73,8 +77,22 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
         ) => {
             if (!attempt) return;
 
-            setIsSaving(true);
             setError(null);
+
+            const newAnswer = {
+                questionId,
+                selectedOptionId,
+                selectedOptionIds: selectedOptionIds || [],
+                textAnswer,
+            };
+
+            setAnswers((prev) => {
+                const newAnswers = new Map(prev);
+                newAnswers.set(questionId, newAnswer);
+                return newAnswers;
+            });
+
+            setIsSaving(true);
             try {
                 const response = await fetch(
                     `/api/tests/${testId}/attempts/${attempt.id}/answers`,
@@ -99,9 +117,12 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
                     const newAnswers = new Map(prev);
                     const normalizedAnswer = {
                         ...savedAnswer,
-                        selectedOptionIds: typeof savedAnswer.selectedOptionIds === 'string'
-                            ? JSON.parse(savedAnswer.selectedOptionIds || '[]')
-                            : (Array.isArray(savedAnswer.selectedOptionIds) ? savedAnswer.selectedOptionIds : [])
+                        selectedOptionIds:
+                            typeof savedAnswer.selectedOptionIds === "string"
+                                ? JSON.parse(savedAnswer.selectedOptionIds || "[]")
+                                : Array.isArray(savedAnswer.selectedOptionIds)
+                                  ? savedAnswer.selectedOptionIds
+                                  : [],
                     };
                     newAnswers.set(questionId, normalizedAnswer);
                     return newAnswers;
@@ -118,7 +139,7 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
     const submitTest = useCallback(async () => {
         if (!attempt) return;
 
-        setIsSaving(true);
+        setIsSubmitting(true);
         try {
             const response = await fetch(`/api/tests/${testId}/attempts/${attempt.id}/submit`, {
                 method: "POST",
@@ -135,7 +156,7 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
             setError(err instanceof Error ? err.message : "Unknown error");
             throw err;
         } finally {
-            setIsSaving(false);
+            setIsSubmitting(false);
         }
     }, [testId, attempt]);
 
@@ -145,6 +166,7 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
         attempt,
         answers,
         isSaving,
+        isSubmitting,
         error,
         saveAnswer,
         submitTest,

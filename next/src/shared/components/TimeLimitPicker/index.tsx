@@ -18,7 +18,11 @@ const TIME_PRESETS = [
     { label: "3 часа 55 минут", value: 235 },
 ];
 
-const TimeLimitPicker: React.FC<TimeLimitPickerProps> = ({ value, onChange, disabled = false }): ReactElement => {
+const TimeLimitPicker: React.FC<TimeLimitPickerProps> = ({
+    value,
+    onChange,
+    disabled = false,
+}): ReactElement => {
     const [isOpen, setIsOpen] = useState(false);
     const [hours, setHours] = useState("");
     const [minutes, setMinutes] = useState("");
@@ -99,14 +103,15 @@ const TimeLimitPicker: React.FC<TimeLimitPickerProps> = ({ value, onChange, disa
         setIsOpen(false);
     };
 
-
-
-    const handleClickOutside = useCallback((event: MouseEvent) => {
-        if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-            submitTime();
-            setIsOpen(false);
-        }
-    }, [hours, minutes]);
+    const handleClickOutside = useCallback(
+        (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                submitTime();
+                setIsOpen(false);
+            }
+        },
+        [hours, minutes],
+    );
 
     useEffect(() => {
         if (isOpen) {
@@ -127,7 +132,7 @@ const TimeLimitPicker: React.FC<TimeLimitPickerProps> = ({ value, onChange, disa
     return (
         <div className={styles.timeLimitPicker} ref={containerRef}>
             <div className={styles.inputContainer} onClick={handleInputsClick}>
-                <div className={`${styles.inputDisplay} ${isOpen ? styles.active : ''}`}>
+                <div className={`${styles.inputDisplay} ${isOpen ? styles.active : ""}`}>
                     <input
                         ref={hoursInputRef}
                         type="text"
