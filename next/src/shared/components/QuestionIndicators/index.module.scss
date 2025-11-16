@@ -25,14 +25,16 @@
         }
 
         &.answered {
-            background: #e3f2fd;
+            background: #fff;
             border-color: #2196f3;
+            border-width: 3px;
             color: #2196f3;
         }
 
         &.current {
-            background: #007bff;
-            border-color: #007bff;
+            background: #2196f3;
+            border-color: #2196f3;
+            border-width: 2px;
             color: #fff;
         }
     }

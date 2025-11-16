@@ -181,7 +181,7 @@ export class TestAttemptService {
             timeSpent: Math.floor(
                 (new Date().getTime() - new Date(savedAttempt.startedAt).getTime()) / 1000,
             ),
-            answers: test.questions.map((question) => {
+            answers: [...test.questions].sort((a, b) => a.order - b.order).map((question) => {
                 const answer = answerMap.get(question.id);
 
                 let isCorrect = false;
@@ -286,7 +286,7 @@ export class TestAttemptService {
                     new Date(attempt.startedAt).getTime()) /
                     1000,
             ),
-            answers: test.questions.map((question) => {
+            answers: [...test.questions].sort((a, b) => a.order - b.order).map((question) => {
                 const answer = answerMap.get(question.id);
 
                 let isCorrect = false;

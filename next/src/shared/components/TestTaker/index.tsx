@@ -72,7 +72,8 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test }) => {
     const answeredSet = new Set(
         Array.from(answers.entries())
             .filter(([_, answer]) => answer)
-            .map(([id]) => id),
+            .map(([id]) => questions.findIndex((q) => q.id === id))
+            .filter((index) => index !== -1),
     );
 
     const handleAnswerChange = (

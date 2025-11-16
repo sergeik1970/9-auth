@@ -22,7 +22,7 @@ export const QuestionIndicators: React.FC<QuestionIndicatorsProps> = ({
                     key={index}
                     className={clsx(styles.indicator, {
                         [styles.current]: index === currentQuestion,
-                        [styles.answered]: answeredQuestions.has(index),
+                        [styles.answered]: answeredQuestions.has(index) && index !== currentQuestion,
                     })}
                     onClick={() => onQuestionClick(index)}
                     title={`Вопрос ${index + 1}`}
