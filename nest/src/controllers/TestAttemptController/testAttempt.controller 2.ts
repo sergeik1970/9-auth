@@ -25,8 +25,14 @@ export class TestAttemptController {
 
     @Get(":testId/attempts/:attemptId")
     @UseGuards(JwtAuthGuard)
-    getAttempt(@Param("testId") testId: string, @Param("attemptId") attemptId: string) {
-        return this.attemptService.getAttempt(Number(testId), Number(attemptId));
+    getAttempt(
+        @Param("testId") testId: string,
+        @Param("attemptId") attemptId: string,
+    ) {
+        return this.attemptService.getAttempt(
+            Number(testId),
+            Number(attemptId),
+        );
     }
 
     @Post(":testId/attempts/:attemptId/answers")
@@ -61,7 +67,11 @@ export class TestAttemptController {
         @Param("attemptId") attemptId: string,
         @Req() req: any,
     ) {
-        return this.attemptService.submitTest(Number(testId), Number(attemptId), req.user);
+        return this.attemptService.submitTest(
+            Number(testId),
+            Number(attemptId),
+            req.user,
+        );
     }
 
     @Get(":testId/attempts/:attemptId/results")
@@ -71,6 +81,10 @@ export class TestAttemptController {
         @Param("attemptId") attemptId: string,
         @Req() req: any,
     ) {
-        return this.attemptService.getResults(Number(testId), Number(attemptId), req.user);
+        return this.attemptService.getResults(
+            Number(testId),
+            Number(attemptId),
+            req.user,
+        );
     }
 }

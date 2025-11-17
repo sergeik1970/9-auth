@@ -8,7 +8,10 @@ import { QuestionController } from "src/controllers/QuestionController/question.
 import { AuthModule } from "../AuthModule/auth.module";
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Question, QuestionOption, Test]), AuthModule],
+    imports: [
+        TypeOrmModule.forFeature([Question, QuestionOption, Test]),
+        AuthModule,
+    ],
     controllers: [QuestionController],
     providers: [QuestionService],
     exports: [QuestionService],

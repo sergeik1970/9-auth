@@ -4,10 +4,28 @@ interface UseTimerProps {
     durationSeconds: number;
     onTimeUp?: () => void;
     autoStart?: boolean;
+    serverTimeOffset?: number;
+    startedAt?: Date;
 }
 
-export const useTimer = ({ durationSeconds, onTimeUp, autoStart = true }: UseTimerProps) => {
-    const [remainingSeconds, setRemainingSeconds] = useState(durationSeconds);
+export const useTimer = ({
+    durationSeconds,
+    onTimeUp,
+    autoStart = true,
+    serverTimeOffset = 0,
+    startedAt,
+}: UseTimerProps) => {
+    const getServerTime = () => Date.now() + serverTimeOffset;
+
+    const calculateRemainingTime = () => {
+        if (!startedAt) return durationSeconds;
+        const startTime = new Date(startedAt).getTime();
+        const endTime = startTime + durationSeconds * 1000;
+        const remaining = Math.max(0, Math.ceil((endTime - getServerTime()) / 1000));
+        return remaining;
+    };
+
+    const [remainingSeconds, setRemainingSeconds] = useState(calculateRemainingTime());
     const [isActive, setIsActive] = useState(autoStart);
 
     useEffect(() => {
@@ -21,24 +39,25 @@ export const useTimer = ({ durationSeconds, onTimeUp, autoStart = true }: UseTim
 
         const interval = setInterval(() => {
             setRemainingSeconds((prev) => {
-                if (prev <= 1) {
+                const newRemaining = calculateRemainingTime();
+                if (newRemaining <= 0) {
                     setIsActive(false);
                     onTimeUp?.();
                     return 0;
                 }
-                return prev - 1;
+                return newRemaining;
             });
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [isActive, remainingSeconds, onTimeUp]);
+    }, [isActive, onTimeUp, startedAt, serverTimeOffset, durationSeconds]);
 
     const pause = useCallback(() => setIsActive(false), []);
     const resume = useCallback(() => setIsActive(true), []);
     const reset = useCallback(() => {
-        setRemainingSeconds(durationSeconds);
+        setRemainingSeconds(calculateRemainingTime());
         setIsActive(autoStart);
-    }, [durationSeconds, autoStart]);
+    }, [durationSeconds, autoStart, startedAt, serverTimeOffset]);
 
     const minutes = Math.floor(remainingSeconds / 60);
     const seconds = remainingSeconds % 60;

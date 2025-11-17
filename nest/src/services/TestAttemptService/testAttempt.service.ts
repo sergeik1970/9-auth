@@ -2,10 +2,15 @@ import {
     Injectable,
     NotFoundException,
     ForbiddenException,
+    HttpException,
+    HttpStatus,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { TestAttempt, AttemptStatus } from "src/entities/TestAttempt/testAttempt.entity";
+import {
+    TestAttempt,
+    AttemptStatus,
+} from "src/entities/TestAttempt/testAttempt.entity";
 import { TestAnswer } from "src/entities/TestAnswer/testAnswer.entity";
 import { Test } from "src/entities/Test/test.entity";
 import { Question } from "src/entities/Question/question.entity";
@@ -29,8 +34,10 @@ export class TestAttemptService {
         private readonly questionRepository: Repository<Question>,
     ) {}
 
-    async createAttempt(testId: number, user: JwtPayload): Promise<TestAttempt> {
-        const test = await this.testRepository.findOne({ where: { id: testId } });
+    async createAttempt(testId: number, user: JwtPayload): Promise<any> {
+        const test = await this.testRepository.findOne({
+            where: { id: testId },
+        });
         if (!test) {
             throw new NotFoundException(`Тест с ID ${testId} не найден`);
         }
@@ -42,13 +49,21 @@ export class TestAttemptService {
             startedAt: new Date(),
         });
 
-        return this.attemptRepository.save(attempt);
+        const savedAttempt = await this.attemptRepository.save(attempt);
+        return {
+            ...savedAttempt,
+            serverTime: new Date().getTime(),
+        };
     }
 
-    async getAttempt(testId: number, attemptId: number): Promise<TestAttempt> {
+    async getAttempt(
+        testId: number,
+        attemptId: number,
+        validateStatus: boolean = true,
+    ): Promise<any> {
         const attempt = await this.attemptRepository.findOne({
             where: { id: attemptId, testId },
-            relations: ["answers"],
+            relations: ["answers", "test"],
         });
 
         if (!attempt) {
@@ -57,7 +72,36 @@ export class TestAttemptService {
             );
         }
 
-        return attempt;
+        if (validateStatus) {
+            this.checkAttemptTimeLimit(attempt);
+        }
+
+        return {
+            ...attempt,
+            serverTime: new Date().getTime(),
+        };
+    }
+
+    private checkAttemptTimeLimit(attempt: TestAttempt): void {
+        if (attempt.status === AttemptStatus.COMPLETED) {
+            throw new HttpException(
+                "Эта попытка уже завершена. Вы можете просмотреть результаты.",
+                HttpStatus.GONE,
+            );
+        }
+
+        const test = attempt.test as any;
+        const timeLimitMinutes = test?.timeLimit || 60;
+        const timeLimitMs = timeLimitMinutes * 60 * 1000;
+        const elapsedMs =
+            new Date().getTime() - new Date(attempt.startedAt).getTime();
+
+        if (elapsedMs > timeLimitMs) {
+            throw new HttpException(
+                "Время прохождения теста истекло. Попытка больше недоступна.",
+                HttpStatus.GONE,
+            );
+        }
     }
 
     async saveAnswer(
@@ -68,7 +112,7 @@ export class TestAttemptService {
         selectedOptionIds?: number[],
         textAnswer?: string,
     ): Promise<TestAnswer> {
-        const attempt = await this.getAttempt(testId, attemptId);
+        await this.getAttempt(testId, attemptId);
 
         let answer = await this.answerRepository.findOne({
             where: { attemptId, questionId },
@@ -79,12 +123,16 @@ export class TestAttemptService {
                 attemptId,
                 questionId,
                 selectedOptionId,
-                selectedOptionIds: selectedOptionIds ? JSON.stringify(selectedOptionIds) : null,
+                selectedOptionIds: selectedOptionIds
+                    ? JSON.stringify(selectedOptionIds)
+                    : null,
                 textAnswer,
             });
         } else {
             answer.selectedOptionId = selectedOptionId;
-            answer.selectedOptionIds = selectedOptionIds ? JSON.stringify(selectedOptionIds) : null;
+            answer.selectedOptionIds = selectedOptionIds
+                ? JSON.stringify(selectedOptionIds)
+                : null;
             answer.textAnswer = textAnswer;
         }
 
@@ -117,15 +165,25 @@ export class TestAttemptService {
         const totalQuestions = test.questions.length;
 
         for (const answer of answers) {
-            const question = test.questions.find((q) => q.id === answer.questionId);
+            const question = test.questions.find(
+                (q) => q.id === answer.questionId,
+            );
             if (!question) continue;
 
-            if (question.type === "single_choice" || question.type === "multiple_choice") {
-                const correctOptions = question.options.filter((o) => o.isCorrect);
+            if (
+                question.type === "single_choice" ||
+                question.type === "multiple_choice"
+            ) {
+                const correctOptions = question.options.filter(
+                    (o) => o.isCorrect,
+                );
                 const correctOptionIds = correctOptions.map((o) => o.id);
 
                 if (question.type === "single_choice") {
-                    if (answer.selectedOptionId && correctOptionIds.includes(answer.selectedOptionId)) {
+                    if (
+                        answer.selectedOptionId &&
+                        correctOptionIds.includes(answer.selectedOptionId)
+                    ) {
                         correctAnswers++;
                         answer.isCorrect = true;
                     } else {
@@ -148,7 +206,8 @@ export class TestAttemptService {
             } else if (question.type === "text_input") {
                 if (
                     answer.textAnswer &&
-                    answer.textAnswer.toLowerCase() === question.correctTextAnswer?.toLowerCase()
+                    answer.textAnswer.toLowerCase() ===
+                        question.correctTextAnswer?.toLowerCase()
                 ) {
                     correctAnswers++;
                     answer.isCorrect = true;
@@ -179,84 +238,105 @@ export class TestAttemptService {
             totalQuestions,
             correctAnswers,
             timeSpent: Math.floor(
-                (new Date().getTime() - new Date(savedAttempt.startedAt).getTime()) / 1000,
+                (new Date().getTime() -
+                    new Date(savedAttempt.startedAt).getTime()) /
+                    1000,
             ),
-            answers: [...test.questions].sort((a, b) => a.order - b.order).map((question) => {
-                const answer = answerMap.get(question.id);
+            answers: [...test.questions]
+                .sort((a, b) => a.order - b.order)
+                .map((question) => {
+                    const answer = answerMap.get(question.id);
 
-                let isCorrect = false;
-                let isPartiallyCorrect = false;
-                let options = [];
-                let userAnswerText = "";
+                    let isCorrect = false;
+                    let isPartiallyCorrect = false;
+                    let options = [];
+                    let userAnswerText = "";
 
-                if (question.type === "single_choice" || question.type === "multiple_choice") {
-                    const correctOptionIds = question.options
-                        .filter((o) => o.isCorrect)
-                        .map((o) => o.id);
+                    if (
+                        question.type === "single_choice" ||
+                        question.type === "multiple_choice"
+                    ) {
+                        const correctOptionIds = question.options
+                            .filter((o) => o.isCorrect)
+                            .map((o) => o.id);
 
-                    let userSelectedIds: number[] = [];
-                    if (answer) {
-                        if (question.type === "single_choice" && answer.selectedOptionId) {
-                            userSelectedIds = [answer.selectedOptionId];
-                        } else if (question.type === "multiple_choice" && answer.selectedOptionIds) {
-                            userSelectedIds = JSON.parse(answer.selectedOptionIds);
+                        let userSelectedIds: number[] = [];
+                        if (answer) {
+                            if (
+                                question.type === "single_choice" &&
+                                answer.selectedOptionId
+                            ) {
+                                userSelectedIds = [answer.selectedOptionId];
+                            } else if (
+                                question.type === "multiple_choice" &&
+                                answer.selectedOptionIds
+                            ) {
+                                userSelectedIds = JSON.parse(
+                                    answer.selectedOptionIds,
+                                );
+                            }
                         }
+
+                        isCorrect = answer?.isCorrect || false;
+
+                        if (
+                            question.type === "multiple_choice" &&
+                            !isCorrect &&
+                            userSelectedIds.length > 0
+                        ) {
+                            const correctSelected = userSelectedIds.filter(
+                                (id) => correctOptionIds.includes(id),
+                            );
+                            if (correctSelected.length > 0) {
+                                isPartiallyCorrect = true;
+                            }
+                        }
+
+                        options = question.options.map((option) => ({
+                            id: option.id,
+                            text: option.text,
+                            isCorrect: option.isCorrect,
+                            isUserSelected: userSelectedIds.includes(option.id),
+                        }));
+
+                        userAnswerText = question.options
+                            .filter((o) => userSelectedIds.includes(o.id))
+                            .map((o) => o.text)
+                            .join(", ");
+                    } else if (question.type === "text_input") {
+                        isCorrect = answer?.isCorrect || false;
+                        userAnswerText = answer?.textAnswer || "";
                     }
 
-                    isCorrect = answer?.isCorrect || false;
+                    const correctAnswerText =
+                        question.type === "text_input"
+                            ? question.correctTextAnswer || ""
+                            : question.options
+                                  .filter((o) => o.isCorrect)
+                                  .map((o) => o.text)
+                                  .join(", ");
 
-                    if (question.type === "multiple_choice" && !isCorrect && userSelectedIds.length > 0) {
-                        const correctSelected = userSelectedIds.filter((id) =>
-                            correctOptionIds.includes(id),
-                        );
-                        if (correctSelected.length > 0) {
-                            isPartiallyCorrect = true;
-                        }
-                    }
-
-                    options = question.options.map((option) => ({
-                        id: option.id,
-                        text: option.text,
-                        isCorrect: option.isCorrect,
-                        isUserSelected: userSelectedIds.includes(option.id),
-                    }));
-
-                    userAnswerText = question.options
-                        .filter((o) => userSelectedIds.includes(o.id))
-                        .map((o) => o.text)
-                        .join(", ");
-                } else if (question.type === "text_input") {
-                    isCorrect = answer?.isCorrect || false;
-                    userAnswerText = answer?.textAnswer || "";
-                }
-
-                const correctAnswerText =
-                    question.type === "text_input"
-                        ? question.correctTextAnswer || ""
-                        : question.options
-                              .filter((o) => o.isCorrect)
-                              .map((o) => o.text)
-                              .join(", ");
-
-                return {
-                    questionId: question.id,
-                    questionText: question.text || "",
-                    questionType: question.type || "",
-                    isCorrect,
-                    isPartiallyCorrect,
-                    userAnswer: userAnswerText,
-                    correctAnswer: correctAnswerText,
-                    options,
-                };
-            }),
+                    return {
+                        questionId: question.id,
+                        questionText: question.text || "",
+                        questionType: question.type || "",
+                        isCorrect,
+                        isPartiallyCorrect,
+                        userAnswer: userAnswerText,
+                        correctAnswer: correctAnswerText,
+                        options,
+                    };
+                }),
         };
     }
 
     async getResults(testId: number, attemptId: number, user: JwtPayload) {
-        const attempt = await this.getAttempt(testId, attemptId);
+        const attempt = await this.getAttempt(testId, attemptId, false);
 
         if (attempt.userId !== user.sub) {
-            throw new ForbiddenException("Вы можете просмотреть только свои результаты");
+            throw new ForbiddenException(
+                "Вы можете просмотреть только свои результаты",
+            );
         }
 
         const test = await this.testRepository.findOne({
@@ -286,77 +366,101 @@ export class TestAttemptService {
                     new Date(attempt.startedAt).getTime()) /
                     1000,
             ),
-            answers: [...test.questions].sort((a, b) => a.order - b.order).map((question) => {
-                const answer = answerMap.get(question.id);
+            answers: [...test.questions]
+                .sort((a, b) => a.order - b.order)
+                .map((question) => {
+                    const answer = answerMap.get(question.id);
 
-                let isCorrect = false;
-                let isPartiallyCorrect = false;
-                let options = [];
-                let userAnswerText = "";
+                    let isCorrect = false;
+                    let isPartiallyCorrect = false;
+                    let options = [];
+                    let userAnswerText = "";
 
-                if (question.type === "single_choice" || question.type === "multiple_choice") {
-                    const correctOptionIds = question.options
-                        .filter((o) => o.isCorrect)
-                        .map((o) => o.id);
+                    if (
+                        question.type === "single_choice" ||
+                        question.type === "multiple_choice"
+                    ) {
+                        const correctOptionIds = question.options
+                            .filter((o) => o.isCorrect)
+                            .map((o) => o.id);
 
-                    let userSelectedIds: number[] = [];
-                    if (answer) {
-                        if (question.type === "single_choice" && answer.selectedOptionId) {
-                            userSelectedIds = [answer.selectedOptionId];
-                        } else if (question.type === "multiple_choice" && answer.selectedOptionIds) {
-                            userSelectedIds = JSON.parse(answer.selectedOptionIds);
-                        }
-                    }
-
-                    if (question.type === "single_choice") {
-                        isCorrect = (answer?.selectedOptionId && correctOptionIds.includes(answer.selectedOptionId)) || false;
-                    } else {
-                        isCorrect = JSON.stringify(userSelectedIds.sort()) === JSON.stringify(correctOptionIds.sort());
-                        if (!isCorrect && userSelectedIds.length > 0) {
-                            const correctSelected = userSelectedIds.filter((id) =>
-                                correctOptionIds.includes(id),
-                            );
-                            if (correctSelected.length > 0) {
-                                isPartiallyCorrect = true;
+                        let userSelectedIds: number[] = [];
+                        if (answer) {
+                            if (
+                                question.type === "single_choice" &&
+                                answer.selectedOptionId
+                            ) {
+                                userSelectedIds = [answer.selectedOptionId];
+                            } else if (
+                                question.type === "multiple_choice" &&
+                                answer.selectedOptionIds
+                            ) {
+                                userSelectedIds = JSON.parse(
+                                    answer.selectedOptionIds,
+                                );
                             }
                         }
+
+                        if (question.type === "single_choice") {
+                            isCorrect =
+                                (answer?.selectedOptionId &&
+                                    correctOptionIds.includes(
+                                        answer.selectedOptionId,
+                                    )) ||
+                                false;
+                        } else {
+                            isCorrect =
+                                JSON.stringify(userSelectedIds.sort()) ===
+                                JSON.stringify(correctOptionIds.sort());
+                            if (!isCorrect && userSelectedIds.length > 0) {
+                                const correctSelected = userSelectedIds.filter(
+                                    (id) => correctOptionIds.includes(id),
+                                );
+                                if (correctSelected.length > 0) {
+                                    isPartiallyCorrect = true;
+                                }
+                            }
+                        }
+
+                        options = question.options.map((option) => ({
+                            id: option.id,
+                            text: option.text,
+                            isCorrect: option.isCorrect,
+                            isUserSelected: userSelectedIds.includes(option.id),
+                        }));
+
+                        userAnswerText = question.options
+                            .filter((o) => userSelectedIds.includes(o.id))
+                            .map((o) => o.text)
+                            .join(", ");
+                    } else if (question.type === "text_input") {
+                        isCorrect =
+                            (answer?.textAnswer &&
+                                answer.textAnswer.toLowerCase() ===
+                                    question.correctTextAnswer?.toLowerCase()) ||
+                            false;
+                        userAnswerText = answer?.textAnswer || "";
                     }
 
-                    options = question.options.map((option) => ({
-                        id: option.id,
-                        text: option.text,
-                        isCorrect: option.isCorrect,
-                        isUserSelected: userSelectedIds.includes(option.id),
-                    }));
+                    const correctAnswerText =
+                        question.type === "text_input"
+                            ? question.correctTextAnswer || ""
+                            : question.options
+                                  .filter((o) => o.isCorrect)
+                                  .map((o) => o.text)
+                                  .join(", ");
 
-                    userAnswerText = question.options
-                        .filter((o) => userSelectedIds.includes(o.id))
-                        .map((o) => o.text)
-                        .join(", ");
-                } else if (question.type === "text_input") {
-                    isCorrect = (answer?.textAnswer && answer.textAnswer.toLowerCase() === question.correctTextAnswer?.toLowerCase()) || false;
-                    userAnswerText = answer?.textAnswer || "";
-                }
-
-                const correctAnswerText =
-                    question.type === "text_input"
-                        ? question.correctTextAnswer || ""
-                        : question.options
-                              .filter((o) => o.isCorrect)
-                              .map((o) => o.text)
-                              .join(", ");
-
-                return {
-                    questionId: question.id,
-                    questionText: question.text || "",
-                    questionType: question.type || "",
-                    isCorrect,
-                    isPartiallyCorrect,
-                    userAnswer: userAnswerText,
-                    correctAnswer: correctAnswerText,
-                    options,
-                };
-            }),
+                    return {
+                        questionId: question.id,
+                        questionText: question.text || "",
+                        questionType: question.type || "",
+                        isCorrect,
+                        isPartiallyCorrect,
+                        userAnswer: userAnswerText,
+                        correctAnswer: correctAnswerText,
+                        options,
+                    };
+                }),
         };
     }
 }

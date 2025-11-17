@@ -154,7 +154,9 @@ const QuestionOption = (props: IQuestionOption): ReactElement => {
 
     return (
         <div className={styles["option-wrapper"]}>
-            <div className={clsx(styles["option-container"], { [styles.correct]: option.isCorrect })}>
+            <div
+                className={clsx(styles["option-container"], { [styles.correct]: option.isCorrect })}
+            >
                 <div className={styles["option-input"]}>
                     {isRadio ? (
                         <label className={styles["radio-label"]}>

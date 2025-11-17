@@ -12,9 +12,10 @@ import clsx from "clsx";
 
 interface TestTakerProps {
     test: Test;
+    attemptId?: number;
 }
 
-export const TestTaker: React.FC<TestTakerProps> = ({ test }) => {
+export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
     const router = useRouter();
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -23,14 +24,32 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test }) => {
     const [currentSelectedOptionIds, setCurrentSelectedOptionIds] = useState<number[]>([]);
     const [currentTextAnswer, setCurrentTextAnswer] = useState<string>("");
 
-    const { attempt, answers, isSaving, isSubmitting, saveAnswer, submitTest, isAnswered } =
-        useTestAttempt({
-            testId: test.id!,
-        });
+    const {
+        attempt,
+        answers,
+        isSaving,
+        isSubmitting,
+        saveAnswer,
+        submitTest,
+        isAnswered,
+        error: attemptError,
+        serverTimeOffset,
+    } = useTestAttempt({
+        testId: test.id!,
+        attemptId,
+        onAttemptCreated: (newAttemptId: number) => {
+            router.replace(`/tests/${test.id}/take/${newAttemptId}`);
+        },
+        onAttemptUnavailable: (unavailableAttemptId: number) => {
+            router.replace(`/tests/${test.id}/results?attemptId=${unavailableAttemptId}`);
+        },
+    });
 
     const { minutes, seconds, isActive, isTimeUp, pause, resume } = useTimer({
         durationSeconds: (test.timeLimit || 60) * 60,
         onTimeUp: () => handleSubmit(),
+        serverTimeOffset,
+        startedAt: attempt?.startedAt ? new Date(attempt.startedAt) : undefined,
     });
 
     useEffect(() => {
@@ -42,6 +61,12 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test }) => {
             handleSubmit();
         }
     }, [isTimeUp, attempt]);
+
+    useEffect(() => {
+        if (attemptError && attemptError.includes("уже завершена") && attemptId) {
+            router.replace(`/tests/${test.id}/results?attemptId=${attemptId}`);
+        }
+    }, [attemptError, attemptId, test.id, router]);
 
     useEffect(() => {
         const currentQuestion = questions[currentQuestionIndex];
@@ -125,6 +150,28 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test }) => {
             resume();
         }
     };
+
+    if (attemptError) {
+        const isAttemptCompleted = attemptError.includes("уже завершена");
+        return (
+            <div className={styles.loading}>
+                <div
+                    style={{
+                        color: isAttemptCompleted ? "#ff9800" : "red",
+                        padding: "20px",
+                    }}
+                >
+                    <h2>{isAttemptCompleted ? "Попытка завершена" : "Ошибка"}</h2>
+                    <p>{attemptError}</p>
+                    {isAttemptCompleted && (
+                        <p style={{ marginTop: "20px", fontSize: "14px" }}>
+                            Перенаправление на результаты...
+                        </p>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     if (isLoading || !attempt) {
         return <div className={styles.loading}>Загрузка теста...</div>;

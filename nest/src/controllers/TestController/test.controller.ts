@@ -11,7 +11,10 @@ import {
     Req,
     UseGuards,
 } from "@nestjs/common";
-import { TestService, CreateTestDto } from "../../services/TestService/test.service";
+import {
+    TestService,
+    CreateTestDto,
+} from "../../services/TestService/test.service";
 import { JwtAuthGuard } from "src/modules/AuthModule/jwt-auth.guard";
 
 @Controller("tests")

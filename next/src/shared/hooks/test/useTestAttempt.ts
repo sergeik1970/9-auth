@@ -4,14 +4,22 @@ import { TestAttempt, TestAnswer } from "@/shared/types/test";
 interface UseTestAttemptProps {
     testId: number;
     attemptId?: number;
+    onAttemptCreated?: (attemptId: number) => void;
+    onAttemptUnavailable?: (attemptId: number) => void;
 }
 
-export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
+export const useTestAttempt = ({
+    testId,
+    attemptId,
+    onAttemptCreated,
+    onAttemptUnavailable,
+}: UseTestAttemptProps) => {
     const [attempt, setAttempt] = useState<TestAttempt | null>(null);
     const [answers, setAnswers] = useState<Map<number, TestAnswer>>(new Map());
     const [isSaving, setIsSaving] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [serverTimeOffset, setServerTimeOffset] = useState<number>(0);
 
     useEffect(() => {
         if (attemptId) {
@@ -24,12 +32,33 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
     const loadAttempt = useCallback(async () => {
         try {
             const response = await fetch(`/api/tests/${testId}/attempts/${attemptId}`);
-            if (!response.ok) throw new Error("Failed to load attempt");
+            if (!response.ok) {
+                if (response.status === 410 || response.status === 403) {
+                    const errorData = await response.json();
+                    const errorMessage =
+                        errorData.message ||
+                        "Время прохождения теста истекло или попытка больше недоступна";
+
+                    if (attemptId && errorMessage.includes("уже завершена")) {
+                        onAttemptUnavailable?.(attemptId);
+                    }
+
+                    throw new Error(errorMessage);
+                }
+                throw new Error("Failed to load attempt");
+            }
             const data = await response.json();
-            setAttempt(data);
+            const { serverTime, ...attemptData } = data;
+
+            if (serverTime) {
+                const offset = serverTime - Date.now();
+                setServerTimeOffset(offset);
+            }
+
+            setAttempt(attemptData);
 
             const answersMap = new Map();
-            data.answers?.forEach((answer: TestAnswer) => {
+            attemptData.answers?.forEach((answer: TestAnswer) => {
                 const normalizedAnswer = {
                     ...answer,
                     selectedOptionIds:
@@ -45,7 +74,7 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
         } catch (err) {
             setError(err instanceof Error ? err.message : "Unknown error");
         }
-    }, [testId, attemptId]);
+    }, [testId, attemptId, onAttemptUnavailable]);
 
     const createAttempt = useCallback(async () => {
         try {
@@ -61,12 +90,22 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
                 throw new Error(error.message || "Failed to create attempt");
             }
             const data = await response.json();
-            setAttempt(data);
+            const { serverTime, ...attemptData } = data;
+
+            if (serverTime) {
+                const offset = serverTime - Date.now();
+                setServerTimeOffset(offset);
+            }
+
+            setAttempt(attemptData);
             setAnswers(new Map());
+            if (onAttemptCreated && attemptData.id) {
+                onAttemptCreated(attemptData.id);
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : "Unknown error");
         }
-    }, [testId]);
+    }, [testId, onAttemptCreated]);
 
     const saveAnswer = useCallback(
         async (
@@ -84,7 +123,7 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
                 selectedOptionId,
                 selectedOptionIds: selectedOptionIds || [],
                 textAnswer,
-            };
+            } as unknown as TestAnswer;
 
             setAnswers((prev) => {
                 const newAnswers = new Map(prev);
@@ -171,5 +210,6 @@ export const useTestAttempt = ({ testId, attemptId }: UseTestAttemptProps) => {
         saveAnswer,
         submitTest,
         isAnswered,
+        serverTimeOffset,
     };
 };

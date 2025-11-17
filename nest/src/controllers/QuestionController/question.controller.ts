@@ -11,7 +11,11 @@ import {
     Req,
     UseGuards,
 } from "@nestjs/common";
-import { QuestionService, CreateQuestionDto, UpdateQuestionDto } from "src/services/QuestionService/question.service";
+import {
+    QuestionService,
+    CreateQuestionDto,
+    UpdateQuestionDto,
+} from "src/services/QuestionService/question.service";
 import { JwtAuthGuard } from "src/modules/AuthModule/jwt-auth.guard";
 
 @Controller("questions")
@@ -27,7 +31,11 @@ export class QuestionController {
         @Body() createQuestionDto: CreateQuestionDto,
         @Req() req: any,
     ) {
-        return this.questionService.createQuestion(Number(testId), createQuestionDto, req.user);
+        return this.questionService.createQuestion(
+            Number(testId),
+            createQuestionDto,
+            req.user,
+        );
     }
 
     // Получение всех вопросов для теста
@@ -50,7 +58,11 @@ export class QuestionController {
         @Body() updateQuestionDto: UpdateQuestionDto,
         @Req() req: any,
     ) {
-        return this.questionService.updateQuestion(Number(id), updateQuestionDto, req.user);
+        return this.questionService.updateQuestion(
+            Number(id),
+            updateQuestionDto,
+            req.user,
+        );
     }
 
     // Удаление вопроса

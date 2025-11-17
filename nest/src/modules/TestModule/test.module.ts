@@ -14,7 +14,13 @@ import { QuestionModule } from "../QuestionModule/question.module";
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Test, Question, QuestionOption, TestAttempt, TestAnswer]),
+        TypeOrmModule.forFeature([
+            Test,
+            Question,
+            QuestionOption,
+            TestAttempt,
+            TestAnswer,
+        ]),
         AuthModule,
         QuestionModule,
     ],

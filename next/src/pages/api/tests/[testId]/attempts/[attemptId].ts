@@ -25,10 +25,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 headers,
             });
 
-            if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
-            }
-
             const data = await response.json();
             res.status(response.status).json(data);
         } catch (error) {
