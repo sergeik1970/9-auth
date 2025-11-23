@@ -35,6 +35,8 @@ export class TestAttemptService {
     ) {}
 
     async createAttempt(testId: number, user: JwtPayload): Promise<any> {
+        console.log("createAttempt called - testId:", testId, "user:", user);
+        
         const test = await this.testRepository.findOne({
             where: { id: testId },
         });
@@ -49,7 +51,10 @@ export class TestAttemptService {
             startedAt: new Date(),
         });
 
+        console.log("Creating attempt with userId:", user.sub);
         const savedAttempt = await this.attemptRepository.save(attempt);
+        console.log("Attempt created:", savedAttempt);
+        
         return {
             ...savedAttempt,
             serverTime: new Date().getTime(),
@@ -102,6 +107,36 @@ export class TestAttemptService {
                 HttpStatus.GONE,
             );
         }
+    }
+
+    async getActiveAttempts(user: JwtPayload): Promise<any[]> {
+        console.log("getActiveAttempts called with user:", user);
+        
+        const attempts = await this.attemptRepository.find({
+            where: { userId: user.sub, status: AttemptStatus.IN_PROGRESS },
+            relations: ["test"],
+        });
+
+        console.log("Found attempts:", attempts.length, attempts);
+
+        const now = new Date().getTime();
+        const activeAttempts = attempts.filter((attempt) => {
+            const test = attempt.test as any;
+            const timeLimitMinutes = test?.timeLimit || 60;
+            const timeLimitMs = timeLimitMinutes * 60 * 1000;
+            const elapsedMs = now - new Date(attempt.startedAt).getTime();
+            return elapsedMs <= timeLimitMs;
+        });
+
+        console.log("Active attempts after time validation:", activeAttempts.length);
+
+        return activeAttempts.map((attempt) => ({
+            id: attempt.id,
+            testId: attempt.testId,
+            test: attempt.test,
+            startedAt: attempt.startedAt,
+            serverTime: new Date().getTime(),
+        }));
     }
 
     async saveAnswer(

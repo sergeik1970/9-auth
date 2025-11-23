@@ -1,8 +1,18 @@
 import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import DashboardLayout from "@/shared/components/DashboardLayout";
-import { TestTaker } from "@/shared/components/TestTaker";
 import { Test } from "@/shared/types/test";
+
+const TestTaker = dynamic(
+    () =>
+        import("@/shared/components/TestTaker").then((mod) => ({
+            default: mod.TestTaker,
+        })),
+    {
+        ssr: false,
+    },
+);
 
 const TakeTestWithAttemptPage = () => {
     const router = useRouter();

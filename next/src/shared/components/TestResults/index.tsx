@@ -148,71 +148,81 @@ export const TestResults: React.FC<TestResultsProps> = ({ results, onRetry, onGo
                             </p>
                             {results.answers[selectedQuestionIndex].options &&
                             results.answers[selectedQuestionIndex].options.length > 0 ? (
-                                <div className={styles.optionsList}>
-                                    {results.answers[selectedQuestionIndex].options.map(
-                                        (option: any, idx: number) => (
-                                            <div
-                                                key={idx}
-                                                className={clsx(styles.option, {
-                                                    [styles.correctOption]: option.isCorrect,
-                                                    [styles.userSelectedWrong]:
-                                                        option.isUserSelected && !option.isCorrect,
-                                                })}
-                                            >
-                                                <span className={styles.optionText}>
-                                                    {option.text}
-                                                </span>
-                                                {option.isCorrect && (
-                                                    <span className={styles.badge}>
-                                                        Правильный ответ
+                                (() => {
+                                    const hasUserAnswer = results.answers[
+                                        selectedQuestionIndex
+                                    ].options.some((o: any) => o.isUserSelected);
+
+                                    if (!hasUserAnswer) {
+                                        return (
+                                            <div className={styles.textAnswers}>
+                                                <div
+                                                    className={clsx(
+                                                        styles.answerBox,
+                                                        styles.noAnswer,
+                                                    )}
+                                                >
+                                                    <span className={styles.answerText}>
+                                                        Не отвечено
                                                     </span>
-                                                )}
-                                                {option.isUserSelected && !option.isCorrect && (
-                                                    <span className={styles.badge}>Ваш ответ</span>
-                                                )}
+                                                </div>
                                             </div>
-                                        ),
-                                    )}
-                                </div>
+                                        );
+                                    }
+
+                                    const isCorrect =
+                                        results.answers[selectedQuestionIndex].isCorrect;
+
+                                    return (
+                                        <div className={styles.optionsList}>
+                                            {results.answers[selectedQuestionIndex].options.map(
+                                                (option: any, idx: number) => {
+                                                    if (!option.isUserSelected) return null;
+
+                                                    return (
+                                                        <div
+                                                            key={idx}
+                                                            className={clsx(styles.option, {
+                                                                [styles.correctOption]:
+                                                                    option.isCorrect,
+                                                                [styles.userSelectedWrong]:
+                                                                    option.isUserSelected &&
+                                                                    !option.isCorrect,
+                                                            })}
+                                                        >
+                                                            <span className={styles.optionText}>
+                                                                {option.text}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                },
+                                            )}
+                                        </div>
+                                    );
+                                })()
                             ) : (
                                 <div className={styles.textAnswers}>
-                                    <div
-                                        className={clsx(styles.answerBox, {
-                                            [styles.correctOption]:
-                                                results.answers[selectedQuestionIndex].isCorrect &&
-                                                results.answers[selectedQuestionIndex].userAnswer,
-                                            [styles.userSelectedWrong]:
-                                                !results.answers[selectedQuestionIndex].isCorrect &&
-                                                results.answers[selectedQuestionIndex].userAnswer,
-                                            [styles.noAnswer]:
-                                                !results.answers[selectedQuestionIndex].userAnswer,
-                                        })}
-                                    >
-                                        <span className={styles.label}>Ваш ответ:</span>
-                                        <span className={styles.answerText}>
-                                            {results.answers[selectedQuestionIndex].userAnswer ||
-                                                "Не отвечено"}
-                                        </span>
-                                    </div>
-                                    {!results.answers[selectedQuestionIndex].isCorrect &&
-                                        results.answers[selectedQuestionIndex].userAnswer && (
-                                            <div
-                                                className={clsx(
-                                                    styles.answerBox,
-                                                    styles.correctOption,
-                                                )}
-                                            >
-                                                <span className={styles.label}>
-                                                    Правильный ответ:
-                                                </span>
-                                                <span className={styles.answerText}>
-                                                    {
-                                                        results.answers[selectedQuestionIndex]
-                                                            .correctAnswer
-                                                    }
-                                                </span>
-                                            </div>
-                                        )}
+                                    {results.answers[selectedQuestionIndex].userAnswer && (
+                                        <div
+                                            className={clsx(styles.answerBox, {
+                                                [styles.correctOption]:
+                                                    results.answers[selectedQuestionIndex]
+                                                        .isCorrect,
+                                                [styles.userSelectedWrong]:
+                                                    !results.answers[selectedQuestionIndex]
+                                                        .isCorrect,
+                                            })}
+                                        >
+                                            <span className={styles.answerText}>
+                                                {results.answers[selectedQuestionIndex].userAnswer}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {!results.answers[selectedQuestionIndex].userAnswer && (
+                                        <div className={clsx(styles.answerBox, styles.noAnswer)}>
+                                            <span className={styles.answerText}>Не отвечено</span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

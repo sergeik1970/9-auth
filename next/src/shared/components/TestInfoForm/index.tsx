@@ -37,7 +37,7 @@ const TestInfoForm = ({ data, onChange, disabled = false }: TestInfoFormProps): 
     };
     return (
         <div>
-            <div className={styles.testInfoForm}>
+            <div className={styles.testInfoForm} id="field-title">
                 <h2 className={styles.sectionTitle}>Основная информация</h2>
                 <div className={styles.field}>
                     <label className={styles.label}>Название теста *</label>
@@ -49,20 +49,19 @@ const TestInfoForm = ({ data, onChange, disabled = false }: TestInfoFormProps): 
                     />
                 </div>
 
-                <div className={styles.field}>
+                <div className={styles.field} id="field-description">
                     <label className={styles.label}>Описание</label>
                     <textarea
                         className={styles.textarea}
                         value={data.description}
                         onChange={handleDescriptionChange}
                         placeholder="Введите описание теста"
-                        // disabled={disabled}
                         rows={3}
                     />
                 </div>
 
-                <div className={styles.field}>
-                    <label className={styles.label}>Время на прохождение</label>
+                <div className={styles.field} id="field-timeLimit">
+                    <label className={styles.label}>Время на прохождение *</label>
                     <TimeLimitPicker
                         value={data.timeLimit}
                         onChange={handleTimeLimitChange}

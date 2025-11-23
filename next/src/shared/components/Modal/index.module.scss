@@ -1,0 +1,82 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: white;
+    border-radius: 8px;
+    padding: 30px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.title {
+    margin: 0 0 15px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+}
+
+.message {
+    margin: 0 0 25px 0;
+    font-size: 16px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.cancelBtn,
+.confirmBtn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cancelBtn {
+    background: #f0f0f0;
+    color: #333;
+
+    &:hover {
+        background: #e0e0e0;
+    }
+}
+
+.confirmBtn {
+    background: #10b981;
+    color: white;
+
+    &:hover {
+        background: #059669;
+    }
+}

@@ -143,7 +143,7 @@ const Questions: React.FC<QuestionsProps> = ({
     );
 
     return (
-        <div className={styles.section}>
+        <div className={styles.section} id="questions-section">
             <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>Вопросы</h2>
                 <Button
@@ -164,27 +164,28 @@ const Questions: React.FC<QuestionsProps> = ({
                 <>
                     <div className={styles.questionsList}>
                         {questions.map((question, idx) => (
-                            <Question
-                                key={idx}
-                                question={question}
-                                questionIndex={idx}
-                                index={idx}
-                                onQuestionChange={(field, value) =>
-                                    handleQuestionChange(idx, field, value)
-                                }
-                                onOptionTextChange={(optionIndex, text) =>
-                                    handleOptionTextChange(idx, optionIndex, text)
-                                }
-                                onToggleCorrectOption={(optionIndex) =>
-                                    handleToggleCorrectOption(idx, optionIndex)
-                                }
-                                onRemoveOption={(optionIndex) =>
-                                    handleRemoveOption(idx, optionIndex)
-                                }
-                                onAddOption={() => handleAddOption(idx)}
-                                onRemoveQuestion={() => handleRemoveQuestion(idx)}
-                                disabled={disabled}
-                            />
+                            <div key={idx} id={`question-${idx}`}>
+                                <Question
+                                    question={question}
+                                    questionIndex={idx}
+                                    index={idx}
+                                    onQuestionChange={(field, value) =>
+                                        handleQuestionChange(idx, field, value)
+                                    }
+                                    onOptionTextChange={(optionIndex, text) =>
+                                        handleOptionTextChange(idx, optionIndex, text)
+                                    }
+                                    onToggleCorrectOption={(optionIndex) =>
+                                        handleToggleCorrectOption(idx, optionIndex)
+                                    }
+                                    onRemoveOption={(optionIndex) =>
+                                        handleRemoveOption(idx, optionIndex)
+                                    }
+                                    onAddOption={() => handleAddOption(idx)}
+                                    onRemoveQuestion={() => handleRemoveQuestion(idx)}
+                                    disabled={disabled}
+                                />
+                            </div>
                         ))}
                     </div>
 

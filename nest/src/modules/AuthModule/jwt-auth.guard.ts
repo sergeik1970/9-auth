@@ -15,6 +15,9 @@ export class JwtAuthGuard implements CanActivate {
         const request = context.switchToHttp().getRequest<Request>();
         const token = this.extractTokenFromCookie(request);
 
+        console.log("JwtAuthGuard - token exists:", !!token);
+        console.log("JwtAuthGuard - cookies:", request.cookies);
+
         if (!token) {
             throw new UnauthorizedException("Токен не предоставлен");
         }
@@ -24,9 +27,12 @@ export class JwtAuthGuard implements CanActivate {
                 secret: process.env.JWT_SECRET || "your-secret-key",
             });
 
+            console.log("JwtAuthGuard - payload:", payload);
+
             // Добавляем данные пользователя в request
             request["user"] = payload;
         } catch (error) {
+            console.log("JwtAuthGuard - error:", error);
             throw new UnauthorizedException("Невалидный токен");
         }
 

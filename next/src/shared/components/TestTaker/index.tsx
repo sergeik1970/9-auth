@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import { useTimer, useTestAttempt } from "@/shared/hooks/test";
 import { Timer } from "@/shared/components/Timer";
 import { QuestionIndicators } from "@/shared/components/QuestionIndicators";
 import QuestionDisplay from "@/shared/components/QuestionDisplay";
 import Button from "@/shared/components/Button";
+import Modal from "@/shared/components/Modal";
 import { Test } from "@/shared/types/test";
 import { Question } from "@/shared/types/question";
 import styles from "./index.module.scss";
@@ -23,6 +24,8 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
     const [currentSelectedOptionId, setCurrentSelectedOptionId] = useState<number | undefined>();
     const [currentSelectedOptionIds, setCurrentSelectedOptionIds] = useState<number[]>([]);
     const [currentTextAnswer, setCurrentTextAnswer] = useState<string>("");
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [isSubmitted, setIsSubmitted] = useState(false);
 
     const {
         attempt,
@@ -45,22 +48,62 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
         },
     });
 
-    const { minutes, seconds, isActive, isTimeUp, pause, resume } = useTimer({
+    const { hours, minutes, seconds, isActive, isTimeUp, pause, resume } = useTimer({
         durationSeconds: (test.timeLimit || 60) * 60,
-        onTimeUp: () => handleSubmit(),
+        onTimeUp: () => {
+            // Will be triggered when time is up
+        },
         serverTimeOffset,
         startedAt: attempt?.startedAt ? new Date(attempt.startedAt) : undefined,
     });
 
+    const currentQuestion = questions[currentQuestionIndex];
+
+    const saveCurrentAnswer = useCallback(async () => {
+        if (!currentQuestion) return;
+        await saveAnswer(
+            currentQuestion.id!,
+            currentSelectedOptionId,
+            currentSelectedOptionIds,
+            currentTextAnswer,
+        );
+    }, [
+        currentQuestion,
+        saveAnswer,
+        currentSelectedOptionId,
+        currentSelectedOptionIds,
+        currentTextAnswer,
+    ]);
+
+    const handleConfirmSubmit = useCallback(async () => {
+        if (isSubmitted) return;
+
+        setIsSubmitted(true);
+        try {
+            pause();
+            await saveCurrentAnswer();
+            const results = await submitTest();
+            router.push(`/tests/${test.id}/results?attemptId=${results.attemptId}`);
+        } catch (error) {
+            console.error("Error submitting test:", error);
+            setIsSubmitted(false);
+            resume();
+        }
+    }, [isSubmitted, pause, saveCurrentAnswer, submitTest, test.id, router, resume]);
+
+    const handleSubmitClick = () => {
+        setIsConfirmModalOpen(true);
+    };
+
+    useEffect(() => {
+        if (isTimeUp && !isSubmitted) {
+            handleConfirmSubmit();
+        }
+    }, [isTimeUp, isSubmitted, handleConfirmSubmit]);
+
     useEffect(() => {
         loadQuestions();
     }, [test.id]);
-
-    useEffect(() => {
-        if (isTimeUp && attempt) {
-            handleSubmit();
-        }
-    }, [isTimeUp, attempt]);
 
     useEffect(() => {
         if (attemptError && attemptError.includes("уже завершена") && attemptId) {
@@ -93,7 +136,6 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
         }
     };
 
-    const currentQuestion = questions[currentQuestionIndex];
     const answeredSet = new Set(
         Array.from(answers.entries())
             .filter(([_, answer]) => answer)
@@ -109,16 +151,6 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
         setCurrentSelectedOptionId(selectedOptionId);
         setCurrentSelectedOptionIds(selectedOptionIds || []);
         setCurrentTextAnswer(textAnswer || "");
-    };
-
-    const saveCurrentAnswer = async () => {
-        if (!currentQuestion) return;
-        await saveAnswer(
-            currentQuestion.id!,
-            currentSelectedOptionId,
-            currentSelectedOptionIds,
-            currentTextAnswer,
-        );
     };
 
     const handlePrevious = async () => {
@@ -139,34 +171,40 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
         setCurrentQuestionIndex(questionIndex);
     };
 
-    const handleSubmit = async () => {
-        try {
-            pause();
-            await saveCurrentAnswer();
-            const results = await submitTest();
-            router.push(`/tests/${test.id}/results?attemptId=${results.attemptId}`);
-        } catch (error) {
-            console.error("Error submitting test:", error);
-            resume();
-        }
-    };
-
     if (attemptError) {
         const isAttemptCompleted = attemptError.includes("уже завершена");
+        const isTimeExpired = attemptError.includes("истекло");
+
         return (
             <div className={styles.loading}>
                 <div
                     style={{
-                        color: isAttemptCompleted ? "#ff9800" : "red",
+                        color: isAttemptCompleted || isTimeExpired ? "#ff9800" : "red",
                         padding: "20px",
+                        textAlign: "center",
                     }}
                 >
-                    <h2>{isAttemptCompleted ? "Попытка завершена" : "Ошибка"}</h2>
+                    <h2>
+                        {isAttemptCompleted
+                            ? "Попытка завершена"
+                            : isTimeExpired
+                              ? "Время прохождения истекло"
+                              : "Ошибка"}
+                    </h2>
                     <p>{attemptError}</p>
-                    {isAttemptCompleted && (
-                        <p style={{ marginTop: "20px", fontSize: "14px" }}>
-                            Перенаправление на результаты...
-                        </p>
+                    {(isAttemptCompleted || isTimeExpired) && (
+                        <div style={{ marginTop: "20px" }}>
+                            {isAttemptCompleted && (
+                                <p style={{ fontSize: "14px" }}>Перенаправление на результаты...</p>
+                            )}
+                            <Button
+                                variant="primary"
+                                onClick={() => router.push("/")}
+                                style={{ marginTop: "20px" }}
+                            >
+                                На главную
+                            </Button>
+                        </div>
                     )}
                 </div>
             </div>
@@ -184,12 +222,27 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
                     <div className={styles.titleSection}>
                         <h1>{test.title}</h1>
                     </div>
-                    <Timer
-                        minutes={minutes}
-                        seconds={seconds}
-                        isActive={isActive}
-                        isTimeUp={isTimeUp}
-                    />
+                    <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
+                        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                            <div style={{ fontSize: "16px", color: "#666", fontWeight: "600" }}>
+                                {answeredSet.size}/{questions.length}
+                            </div>
+                            <Button
+                                onClick={handleSubmitClick}
+                                loading={isSubmitting}
+                                variant="primary"
+                            >
+                                Завершить тест
+                            </Button>
+                        </div>
+                        <Timer
+                            hours={hours}
+                            minutes={minutes}
+                            seconds={seconds}
+                            isActive={isActive}
+                            isTimeUp={isTimeUp}
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -209,26 +262,13 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
                     </div>
 
                     <div className={styles.navigation}>
-                        <Button
-                            onClick={handlePrevious}
-                            disabled={currentQuestionIndex === 0}
-                            variant="secondary"
-                        >
-                            ← Назад
-                        </Button>
-                        {currentQuestionIndex === questions.length - 1 ? (
-                            <Button
-                                onClick={handleSubmit}
-                                loading={isSubmitting}
-                                className={styles.submitBtn}
-                            >
-                                Завершить тест
+                        {currentQuestionIndex > 0 && (
+                            <Button onClick={handlePrevious} variant="secondary">
+                                ← Назад
                             </Button>
-                        ) : (
-                            <Button
-                                onClick={handleNext}
-                                disabled={currentQuestionIndex === questions.length - 1}
-                            >
+                        )}
+                        {currentQuestionIndex < questions.length - 1 && (
+                            <Button onClick={handleNext}>
                                 Далее →
                             </Button>
                         )}
@@ -242,6 +282,16 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
                     />
                 </div>
             )}
+
+            <Modal
+                isOpen={isConfirmModalOpen}
+                title="Завершить тест?"
+                message="Вы уверены, что хотите завершить тест?"
+                onConfirm={handleConfirmSubmit}
+                onCancel={() => setIsConfirmModalOpen(false)}
+                confirmText="Завершить"
+                cancelText="Вернуться"
+            />
         </div>
     );
 };

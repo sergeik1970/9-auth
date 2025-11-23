@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { TestAttempt, TestAnswer } from "@/shared/types/test";
+import { useDispatch } from "@/shared/store/store";
+import { getActiveAttempts } from "@/shared/store/slices/test";
 
 interface UseTestAttemptProps {
     testId: number;
@@ -14,6 +16,7 @@ export const useTestAttempt = ({
     onAttemptCreated,
     onAttemptUnavailable,
 }: UseTestAttemptProps) => {
+    const dispatch = useDispatch();
     const [attempt, setAttempt] = useState<TestAttempt | null>(null);
     const [answers, setAnswers] = useState<Map<number, TestAnswer>>(new Map());
     const [isSaving, setIsSaving] = useState(false);
@@ -83,6 +86,7 @@ export const useTestAttempt = ({
                 headers: {
                     "Content-Type": "application/json",
                 },
+                credentials: "include",
                 body: JSON.stringify({}),
             });
             if (!response.ok) {
@@ -99,13 +103,14 @@ export const useTestAttempt = ({
 
             setAttempt(attemptData);
             setAnswers(new Map());
+            dispatch(getActiveAttempts());
             if (onAttemptCreated && attemptData.id) {
                 onAttemptCreated(attemptData.id);
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : "Unknown error");
         }
-    }, [testId, onAttemptCreated]);
+    }, [testId, onAttemptCreated, dispatch]);
 
     const saveAnswer = useCallback(
         async (

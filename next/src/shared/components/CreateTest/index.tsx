@@ -80,9 +80,6 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
         if (!testInfo.title.trim()) {
             errors.push("Название теста");
         }
-        if (!testInfo.description.trim()) {
-            errors.push("Описание теста");
-        }
         if (!testInfo.timeLimit || testInfo.timeLimit <= 0) {
             errors.push("Время для прохождения теста");
         }
@@ -105,9 +102,11 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
                 if (filledOptions.length < 2) {
                     errors.push(`Вопрос ${index + 1}: минимум два варианта ответа`);
                 } else {
-                    const hasCorrectOption = filledOptions.some((opt) => opt.isCorrect);
-                    if (!hasCorrectOption) {
+                    const correctOptions = filledOptions.filter((opt) => opt.isCorrect);
+                    if (correctOptions.length === 0) {
                         errors.push(`Вопрос ${index + 1}: не отмечен правильный ответ`);
+                    } else if (question.type === "multiple_choice" && correctOptions.length < 2) {
+                        errors.push(`Вопрос ${index + 1}: минимум два правильных ответа для множественного выбора`);
                     }
                 }
             }
@@ -118,6 +117,28 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
 
     const validationErrors = getValidationErrors();
     const isFormValid = validationErrors.length === 0;
+
+    const getErrorElementId = (error: string): string => {
+        if (error.includes("Название теста")) return "field-title";
+        if (error.includes("Описание теста")) return "field-description";
+        if (error.includes("Время для прохождения")) return "field-timeLimit";
+        if (error.includes("Минимум один вопрос")) return "questions-section";
+        if (error.includes("Вопрос")) {
+            const match = error.match(/Вопрос (\d+)/);
+            if (match) {
+                return `question-${parseInt(match[1]) - 1}`;
+            }
+        }
+        return "";
+    };
+
+    const handleErrorClick = (error: string) => {
+        const elementId = getErrorElementId(error);
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    };
 
     return (
         <div className={styles.createTest}>
@@ -139,7 +160,13 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
                             <p className={styles.validationTitle}>Не заполнено:</p>
                             <ul>
                                 {validationErrors.map((error, idx) => (
-                                    <li key={idx}>{error}</li>
+                                    <li
+                                        key={idx}
+                                        onClick={() => handleErrorClick(error)}
+                                        className={styles.errorItem}
+                                    >
+                                        {error}
+                                    </li>
                                 ))}
                             </ul>
                         </div>

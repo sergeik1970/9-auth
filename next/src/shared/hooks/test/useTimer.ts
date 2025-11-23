@@ -59,11 +59,13 @@ export const useTimer = ({
         setIsActive(autoStart);
     }, [durationSeconds, autoStart, startedAt, serverTimeOffset]);
 
-    const minutes = Math.floor(remainingSeconds / 60);
+    const hours = Math.floor(remainingSeconds / 3600);
+    const minutes = Math.floor((remainingSeconds % 3600) / 60);
     const seconds = remainingSeconds % 60;
 
     return {
         remainingSeconds,
+        hours,
         minutes,
         seconds,
         isActive,

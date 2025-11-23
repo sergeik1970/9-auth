@@ -12,7 +12,44 @@ interface TestPreviewProps {
     onStartTest?: () => void;
     onError?: (error: string) => void;
     testId?: number;
+    isActiveAttempt?: boolean;
 }
+
+const getWord = (count: number, words: [string, string, string]): string => {
+    const remainder10 = count % 10;
+    const remainder100 = count % 100;
+
+    if (remainder100 >= 11 && remainder100 <= 19) {
+        return words[2];
+    }
+
+    if (remainder10 === 1) {
+        return words[0];
+    }
+
+    if (remainder10 >= 2 && remainder10 <= 4) {
+        return words[1];
+    }
+
+    return words[2];
+};
+
+const formatTime = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+
+    const parts: string[] = [];
+
+    if (hours > 0) {
+        parts.push(`${hours} ${getWord(hours, ["час", "часа", "часов"])}`);
+    }
+
+    if (mins > 0) {
+        parts.push(`${mins} ${getWord(mins, ["минута", "минуты", "минут"])}`);
+    }
+
+    return parts.join(" ");
+};
 
 const TestPreview = ({
     isOwner = false,
@@ -20,6 +57,7 @@ const TestPreview = ({
     onStartTest,
     onError,
     testId,
+    isActiveAttempt = false,
 }: TestPreviewProps): ReactElement => {
     const dispatch = useDispatch();
     const router = useRouter();
@@ -59,7 +97,7 @@ const TestPreview = ({
                 </div>
                 <div className={styles.infoItem}>
                     <strong>Время на прохождение:</strong>
-                    <p>{test.timeLimit ? `${test.timeLimit} минут` : "Не ограничено"}</p>
+                    <p>{test.timeLimit ? formatTime(test.timeLimit) : "Не ограничено"}</p>
                 </div>
 
                 {/* <div className={styles.infoItem}>
@@ -77,8 +115,16 @@ const TestPreview = ({
 
             {onStartTest && (
                 <div className={styles.actions}>
-                    <Button onClick={onStartTest} disabled={isStarting}>
-                        {isStarting ? "Загрузка..." : "Начать тест"}
+                    <Button
+                        onClick={onStartTest}
+                        disabled={isStarting}
+                        variant={isActiveAttempt ? "primary" : "outline"}
+                    >
+                        {isStarting
+                            ? "Загрузка..."
+                            : isActiveAttempt
+                              ? "Продолжить тест"
+                              : "Начать тест"}
                     </Button>
                 </div>
             )}

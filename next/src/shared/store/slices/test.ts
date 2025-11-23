@@ -11,6 +11,8 @@ interface TestsState {
     error: string | null;
     selectedTest?: Test | null;
     selectedLoading: boolean;
+    activeAttempts: Array<{ id: number; testId: number; test: Test; startedAt: Date }>;
+    activeAttemptsLoading: boolean;
 }
 
 // Начальное состояние
@@ -20,6 +22,8 @@ const initialState: TestsState = {
     error: null,
     selectedTest: null,
     selectedLoading: false,
+    activeAttempts: [],
+    activeAttemptsLoading: false,
 };
 
 // Создание асинхронного thunk для получения тестов
@@ -96,6 +100,33 @@ export const createTest = createAsyncThunk(
     },
 );
 
+export const getActiveAttempts = createAsyncThunk(
+    "tests/getActiveAttempts",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await fetch("/api/tests/active-attempts", {
+                credentials: "include",
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(
+                    `Ошибка при загрузке активных попыток: ${response.status} - ${
+                        errorData.details || errorData.error || ""
+                    }`,
+                );
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : "Ошибка загрузки активных попыток",
+            );
+        }
+    },
+);
+
 // Создание слайса
 const testsSlice = createSlice({
     name: "test",
@@ -147,6 +178,18 @@ const testsSlice = createSlice({
             .addCase(getTestById.rejected, (state, action) => {
                 state.selectedLoading = false;
                 state.error = action.payload as string;
+            });
+        builder
+            .addCase(getActiveAttempts.pending, (state) => {
+                state.activeAttemptsLoading = true;
+            })
+            .addCase(getActiveAttempts.fulfilled, (state, action: PayloadAction<any>) => {
+                state.activeAttemptsLoading = false;
+                state.activeAttempts = action.payload;
+            })
+            .addCase(getActiveAttempts.rejected, (state) => {
+                state.activeAttemptsLoading = false;
+                state.activeAttempts = [];
             });
     },
 });
