@@ -8,7 +8,7 @@ import DashboardLayout from "@/shared/components/DashboardLayout";
 
 const EditTestPage = () => {
     const router = useRouter();
-    const { id } = router.query;
+    const { testId } = router.query;
     const { user } = useSelector(selectAuth);
 
     const hasAccess = user && isTeacher(user.role);
@@ -25,7 +25,7 @@ const EditTestPage = () => {
 
     return (
         <DashboardLayout>
-            <EditTest testId={Number(id)} />
+            <EditTest testId={Number(testId)} />
         </DashboardLayout>
     );
 };

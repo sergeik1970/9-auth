@@ -21,6 +21,24 @@ export interface LoginDto {
     password: string;
 }
 
+export interface UpdateProfileDto {
+    name?: string;
+    avatar?: string;
+    password?: string;
+    currentPassword?: string;
+}
+
+export interface GradingCriteria {
+    excellent: number;
+    good: number;
+    satisfactory: number;
+    poor: number;
+}
+
+export interface UpdateGradingCriteriaDto {
+    gradingCriteria: GradingCriteria;
+}
+
 @Injectable()
 export class AuthService {
     constructor(
@@ -117,5 +135,95 @@ export class AuthService {
             role: user.role,
         };
         return this.jwtService.sign(payload);
+    }
+
+    async updateProfile(
+        userId: number,
+        updateDto: UpdateProfileDto,
+    ): Promise<User> {
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+        });
+
+        if (!user) {
+            throw new UnauthorizedException("Пользователь не найден");
+        }
+
+        if (updateDto.password) {
+            if (!updateDto.currentPassword) {
+                throw new ConflictException(
+                    "Требуется текущий пароль для изменения пароля",
+                );
+            }
+
+            const isPasswordValid = await bcrypt.compare(
+                updateDto.currentPassword,
+                user.password,
+            );
+            if (!isPasswordValid) {
+                throw new UnauthorizedException("Неверный текущий пароль");
+            }
+
+            const saltRounds = 10;
+            user.password = await bcrypt.hash(updateDto.password, saltRounds);
+        }
+
+        if (updateDto.name) {
+            user.name = updateDto.name;
+        }
+
+        if (updateDto.avatar !== undefined) {
+            user.avatar = updateDto.avatar;
+        }
+
+        return this.userRepository.save(user);
+    }
+
+    async updateGradingCriteria(
+        userId: number,
+        updateDto: UpdateGradingCriteriaDto,
+    ): Promise<User> {
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+        });
+
+        if (!user) {
+            throw new UnauthorizedException("Пользователь не найден");
+        }
+
+        const criteria = updateDto.gradingCriteria;
+
+        if (
+            criteria.excellent <= 0 ||
+            criteria.good <= 0 ||
+            criteria.satisfactory <= 0 ||
+            criteria.poor <= 0
+        ) {
+            throw new ConflictException("Все критерии должны быть > 0");
+        }
+
+        if (
+            criteria.excellent > 100 ||
+            criteria.good > 100 ||
+            criteria.satisfactory > 100 ||
+            criteria.poor > 100
+        ) {
+            throw new ConflictException("Все критерии должны быть <= 100");
+        }
+
+        if (
+            !(
+                criteria.excellent > criteria.good &&
+                criteria.good > criteria.satisfactory &&
+                criteria.satisfactory > criteria.poor
+            )
+        ) {
+            throw new ConflictException(
+                "Критерии должны быть в порядке убывания: excellent > good > satisfactory > poor",
+            );
+        }
+
+        user.gradingCriteria = criteria;
+        return this.userRepository.save(user);
     }
 }

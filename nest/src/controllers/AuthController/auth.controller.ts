@@ -7,12 +7,15 @@ import {
     Req,
     HttpStatus,
     UseGuards,
+    Patch,
 } from "@nestjs/common";
 import { Response, Request } from "express";
 import {
     AuthService,
     RegisterDto,
     LoginDto,
+    UpdateProfileDto,
+    UpdateGradingCriteriaDto,
 } from "src/services/AuthService/auth.service";
 import { JwtAuthGuard } from "src/modules/AuthModule/jwt-auth.guard";
 
@@ -31,18 +34,19 @@ export class AuthController {
 
             const token = this.authService.generateToken(user);
 
-            // Сохраняем JWT токен в httpOnly cookie
             res.cookie("token", token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
+                secure: false,
                 sameSite: "lax",
-                maxAge: 30 * 24 * 60 * 60 * 1000, // 30 дней
+                path: "/",
+                maxAge: 30 * 24 * 60 * 60 * 1000,
             });
 
             res.cookie("userId", user.id.toString(), {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
+                secure: false,
                 sameSite: "lax",
+                path: "/",
                 maxAge: 30 * 24 * 60 * 60 * 1000,
             });
 
@@ -50,6 +54,7 @@ export class AuthController {
 
             return res.status(HttpStatus.CREATED).json({
                 message: "Пользователь успешно зарегистрирован",
+                token,
                 user: userWithoutPassword,
             });
         } catch (error) {
@@ -67,32 +72,47 @@ export class AuthController {
     @Post("login")
     async login(@Body() loginDto: LoginDto, @Res() res: Response) {
         try {
+            console.log("\n=== LOGIN START ===");
             const user = await this.authService.login(loginDto);
+            console.log("User logged in:", user.id);
 
             const token = this.authService.generateToken(user);
+            console.log("Token generated, length:", token.length);
 
-            // Сохраняем JWT токен в httpOnly cookie
+            console.log("Setting cookie with options:", {
+                httpOnly: true,
+                secure: false,
+                sameSite: "lax",
+                path: "/",
+                maxAge: 30 * 24 * 60 * 60 * 1000,
+            });
+
             res.cookie("token", token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
+                secure: false,
                 sameSite: "lax",
-                maxAge: 30 * 24 * 60 * 60 * 1000, // 30 дней
+                path: "/",
+                maxAge: 30 * 24 * 60 * 60 * 1000,
             });
 
             res.cookie("userId", user.id.toString(), {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
+                secure: false,
                 sameSite: "lax",
+                path: "/",
                 maxAge: 30 * 24 * 60 * 60 * 1000,
             });
 
+            console.log("Cookies set, sending response");
             const { password, ...userWithoutPassword } = user;
 
             return res.status(HttpStatus.OK).json({
                 message: "Успешный вход в систему",
+                token,
                 user: userWithoutPassword,
             });
         } catch (error) {
+            console.error("=== LOGIN ERROR ===", error);
             return res.status(HttpStatus.UNAUTHORIZED).json({
                 message: error.message,
             });
@@ -123,18 +143,18 @@ export class AuthController {
     @Post("logout")
     async logout(@Res() res: Response) {
         try {
-            // Очищаем cookie userId
             res.clearCookie("userId", {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
+                secure: false,
                 sameSite: "lax",
+                path: "/",
             });
 
-            // Очищаем cookie token
             res.clearCookie("token", {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
+                secure: false,
                 sameSite: "lax",
+                path: "/",
             });
 
             return res.status(HttpStatus.OK).json({
@@ -143,6 +163,67 @@ export class AuthController {
         } catch (error) {
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
                 message: "Ошибка при выходе из системы",
+            });
+        }
+    }
+
+    @Patch("profile")
+    @UseGuards(JwtAuthGuard)
+    async updateProfile(
+        @Body() updateDto: UpdateProfileDto,
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        try {
+            const userId = req["user"].sub;
+            const user = await this.authService.updateProfile(
+                userId,
+                updateDto,
+            );
+            const { password, ...userWithoutPassword } = user;
+            return res.status(HttpStatus.OK).json({
+                message: "Профиль успешно обновлён",
+                user: userWithoutPassword,
+            });
+        } catch (error) {
+            return res.status(HttpStatus.BAD_REQUEST).json({
+                message: error.message,
+            });
+        }
+    }
+
+    @Patch("grading-criteria")
+    async updateGradingCriteria(
+        @Body() updateDto: UpdateGradingCriteriaDto & { userId?: string },
+        @Res() res: Response,
+    ) {
+        try {
+            console.log("=== GRADING-CRITERIA PATCH ===");
+            console.log("Body:", updateDto);
+            
+            const userId = updateDto.userId ? parseInt(updateDto.userId) : null;
+            if (!userId) {
+                console.log("❌ No userId provided");
+                return res.status(HttpStatus.BAD_REQUEST).json({
+                    message: "UserId не предоставлен",
+                });
+            }
+            
+            console.log("Updating grading criteria for userId:", userId);
+            const user = await this.authService.updateGradingCriteria(
+                userId,
+                updateDto,
+            );
+            console.log("✅ Grading criteria updated successfully");
+            const { password, ...userWithoutPassword } = user;
+            return res.status(HttpStatus.OK).json({
+                message: "Критерии оценок успешно обновлены",
+                user: userWithoutPassword,
+            });
+        } catch (error) {
+            console.error("Error updating grading criteria:", error);
+            return res.status(HttpStatus.BAD_REQUEST).json({
+                message: error.message,
             });
         }
     }

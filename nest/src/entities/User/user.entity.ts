@@ -43,6 +43,17 @@ export class User {
     @Column("boolean", { default: false })
     isAdmin: boolean = false;
 
+    @Column({ type: "text", nullable: true })
+    avatar: string;
+
+    @Column({ type: "jsonb", nullable: true, default: null })
+    gradingCriteria: {
+        excellent: number;
+        good: number;
+        satisfactory: number;
+        poor: number;
+    };
+
     @CreateDateColumn()
     createdAt: Date;
 

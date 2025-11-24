@@ -48,19 +48,19 @@
                 font-weight: 700;
 
                 &.excellent {
-                    color: #10b981;
+                    color: #059669;
                 }
 
                 &.good {
-                    color: #eab308;
+                    color: #d97706;
                 }
 
                 &.fair {
-                    color: #f59e0b;
+                    color: #dc2626;
                 }
 
                 &.poor {
-                    color: #ef4444;
+                    color: #4b5563;
                 }
             }
         }
@@ -68,7 +68,7 @@
 
     .stats {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 32px;
         flex: 1;
 
@@ -363,6 +363,33 @@
     }
 }
 
+.grade {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    display: inline-block;
+
+    &.grade5 {
+        background: #f0fdf4;
+        color: #059669;
+    }
+
+    &.grade4 {
+        background: #fffbeb;
+        color: #d97706;
+    }
+
+    &.grade3 {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    &.grade2 {
+        background: #f3f4f6;
+        color: #4b5563;
+    }
+}
+
 .actions {
     display: flex;
     gap: 16px;
@@ -409,7 +436,7 @@
         }
 
         .stats {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             width: 100%;
 

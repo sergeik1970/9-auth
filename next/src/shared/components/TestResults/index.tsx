@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "@/shared/store/store";
 import { TestResults as TestResultsType } from "@/shared/types/test";
 import Button from "@/shared/components/Button";
 import styles from "./index.module.scss";
@@ -12,19 +14,50 @@ interface TestResultsProps {
 
 export const TestResults: React.FC<TestResultsProps> = ({ results, onRetry, onGoBack }) => {
     const [selectedQuestionIndex, setSelectedQuestionIndex] = useState<number | null>(null);
+    const gradingCriteria = useSelector(
+        (state: RootState) => state.auth.user?.gradingCriteria
+    );
+
+    const getGrade = (percentage: number): { grade: number; label: string } => {
+        if (!gradingCriteria) {
+            if (percentage >= 85) return { grade: 5, label: "Отлично" };
+            if (percentage >= 70) return { grade: 4, label: "Хорошо" };
+            if (percentage >= 50) return { grade: 3, label: "Удовлетворительно" };
+            return { grade: 2, label: "Неудовлетворительно" };
+        }
+
+        if (percentage >= gradingCriteria.excellent) return { grade: 5, label: "Отлично" };
+        if (percentage >= gradingCriteria.good) return { grade: 4, label: "Хорошо" };
+        if (percentage >= gradingCriteria.satisfactory) return { grade: 3, label: "Удовлетворительно" };
+        return { grade: 2, label: "Неудовлетворительно" };
+    };
 
     const getResultColor = (percentage: number) => {
-        if (percentage >= 85) return "#10b981";
-        if (percentage >= 70) return "#eab308";
-        if (percentage >= 50) return "#f59e0b";
-        return "#ef4444";
+        if (!gradingCriteria) {
+            if (percentage >= 85) return "#10b981";
+            if (percentage >= 70) return "#eab308";
+            if (percentage >= 50) return "#f59e0b";
+            return "#ef4444";
+        }
+
+        if (percentage >= gradingCriteria.excellent) return "#22c55e";
+        if (percentage >= gradingCriteria.good) return "#f59e0b";
+        if (percentage >= gradingCriteria.satisfactory) return "#ef4444";
+        return "#6b7280";
     };
 
     const getResultStatus = (percentage: number) => {
-        if (percentage >= 85) return "excellent";
-        if (percentage >= 70) return "good";
-        if (percentage >= 50) return "fair";
-        return "poor";
+        const { grade } = getGrade(percentage);
+        switch (grade) {
+            case 5:
+                return "excellent";
+            case 4:
+                return "good";
+            case 3:
+                return "fair";
+            default:
+                return "poor";
+        }
     };
 
     const formatTime = (seconds: number) => {
@@ -100,6 +133,18 @@ export const TestResults: React.FC<TestResultsProps> = ({ results, onRetry, onGo
                             <div className={styles.stat}>
                                 <span className={styles.label}>Баллы</span>
                                 <span className={styles.value}>{results.score}</span>
+                            </div>
+                            <div className={styles.stat}>
+                                <span className={styles.label}>Оценка</span>
+                                <span
+                                    className={clsx(
+                                        styles.value,
+                                        styles.grade,
+                                        styles[`grade${getGrade(results.percentage).grade}`],
+                                    )}
+                                >
+                                    {getGrade(results.percentage).grade}
+                                </span>
                             </div>
                             <div className={styles.stat}>
                                 <span className={styles.label}>Время</span>

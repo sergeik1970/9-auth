@@ -8,7 +8,7 @@ import TestInfoForm, { TestInfoData } from "@/shared/components/TestInfoForm";
 import Questions from "@/shared/components/Questions";
 import { QuestionFormData } from "@/shared/types/question";
 import styles from "./index.module.scss";
-import { getTestById } from "@/shared/store/slices/test";
+import { getTestById, updateTest } from "@/shared/store/slices/test";
 
 interface EditTestProps {
     testId: number;
@@ -16,7 +16,7 @@ interface EditTestProps {
 
 interface SavePayload {
     title: string;
-    description?: string;
+    description: string;
     timeLimit?: number;
     questions: QuestionFormData[];
 }
@@ -43,16 +43,19 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
         if (selectedTest) {
             setTestInfo({
                 title: selectedTest.title,
-                description: selectedTest.description,
+                description: selectedTest.description || "",
                 timeLimit: selectedTest.timeLimit,
             });
 
-            const formattedQuestions = selectedTest.questions.map((q) => ({
-                id: q.id,
+            const formattedQuestions = (selectedTest.questions || []).map((q) => ({
                 text: q.text,
                 type: q.type as "single_choice" | "multiple_choice" | "text_input",
                 order: q.order,
-                options: q.options || [],
+                options: (q.options || []).map((opt) => ({
+                    text: opt.text,
+                    isCorrect: opt.isCorrect,
+                    order: opt.order,
+                })),
                 correctTextAnswer: q.correctTextAnswer,
             }));
             setQuestions(formattedQuestions);
@@ -71,29 +74,19 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
     const handleConfirmSave = async () => {
         setIsSaving(true);
         try {
-            const payload: SavePayload = {
+            const testData: SavePayload = {
                 title: testInfo.title,
                 description: testInfo.description,
                 timeLimit: testInfo.timeLimit,
                 questions: questions,
             };
 
-            const response = await fetch(
-                `/api/tests/${testId}`,
-                {
-                    method: "PATCH",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    credentials: "include",
-                    body: JSON.stringify(payload),
-                },
-            );
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || "Ошибка при сохранении теста");
-            }
+            const result = await dispatch(
+                updateTest({
+                    testId,
+                    testData,
+                }),
+            ).unwrap();
 
             router.push("/dashboard");
         } catch (error) {

@@ -268,9 +268,7 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
                             </Button>
                         )}
                         {currentQuestionIndex < questions.length - 1 && (
-                            <Button onClick={handleNext}>
-                                Далее →
-                            </Button>
+                            <Button onClick={handleNext}>Далее →</Button>
                         )}
                     </div>
 

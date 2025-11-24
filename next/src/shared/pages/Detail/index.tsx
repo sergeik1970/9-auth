@@ -1,5 +1,8 @@
 import React, { ReactElement, useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { useSelector } from "@/shared/store/store";
+import { selectAuth } from "@/shared/store/slices/auth";
+import { selectTest } from "@/shared/store/slices/test";
 import TestPreview from "@/shared/components/TestPreview";
 import styles from "./index.module.scss";
 
@@ -8,6 +11,8 @@ const TestDetailPage = (): ReactElement => {
     const [id, setId] = useState<string | number | null>(null);
     const [attemptId, setAttemptId] = useState<number | null>(null);
     const [isStarting, setIsStarting] = useState(false);
+    const { user } = useSelector(selectAuth);
+    const { selectedTest } = useSelector(selectTest);
 
     useEffect(() => {
         if (!router.isReady) return;
@@ -45,13 +50,18 @@ const TestDetailPage = (): ReactElement => {
         console.error("Ошибка при загрузке теста", error);
     };
 
+    const isOwner =
+        selectedTest &&
+        user &&
+        (selectedTest.creator?.id === user.id || selectedTest.creatorId === user.id);
+
     return (
         <div className={styles.container}>
             <h1 className={styles.title}>Детали теста</h1>
             {id ? (
                 <TestPreview
                     testId={Number(id)}
-                    isOwner={true}
+                    isOwner={!!isOwner}
                     onStartTest={handleStartTest}
                     onError={handleError}
                     isStarting={isStarting}

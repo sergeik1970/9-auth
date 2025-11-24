@@ -9,11 +9,13 @@ import {
 import auth from "./slices/auth";
 import deals from "./slices/deals";
 import test from "./slices/test";
+import settings from "./slices/settings";
 
 const rootReducer = combineReducers({
     auth,
     deals,
     test,
+    settings,
 });
 
 export const makeStore = () => {

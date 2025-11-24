@@ -10,12 +10,10 @@ import { RootState } from "../store";
 
 const initialState: AuthState = {
     user: null,
-    // role: "",
-    // id: 1, // Запрос который получает инфe о пользователе
-    // },
     isAuthenticated: false,
     loading: false,
     error: null,
+    initialized: false,
 };
 
 export const registerUser = createAsyncThunk(
@@ -32,9 +30,6 @@ export const registerUser = createAsyncThunk(
             });
 
             const data = await response.json();
-            console.log("registerUser response:", data);
-            console.log("registerUser data.user:", data.user);
-            console.log("registerUser data.user?.role:", data.user?.role);
 
             if (!response.ok) {
                 return rejectWithValue(data.message || "Ошибка регистрации");
@@ -42,7 +37,6 @@ export const registerUser = createAsyncThunk(
 
             return data.user;
         } catch (error) {
-            console.error("registerUser error:", error);
             return rejectWithValue("Ошибка регистрации в catch");
         }
     },
@@ -68,10 +62,6 @@ export const loginUser = createAsyncThunk(
                 return rejectWithValue(data.message || "Ошибка входа");
             }
 
-            // if (data.token) {
-            //     localStorage.setItem("token", data.token);
-            // }
-
             return data.user;
         } catch (error) {
             return rejectWithValue("Ошибка входа в catch");
@@ -89,8 +79,6 @@ export const logoutUser = createAsyncThunk("auth/logout", async (_, { rejectWith
             return rejectWithValue("Ошибка выхода");
         }
 
-        // localStorage.removeItem("token");
-
         return null;
     } catch (error) {
         return isRejectedWithValue("Ошибка соединения с сервером в catch");
@@ -101,26 +89,12 @@ export const getCurrentUser = createAsyncThunk(
     "auth/getCurrentUser",
     async (_, { rejectWithValue }) => {
         try {
-            // Получаем токен
-            // Токен не получаем, он теперь в httpOnly cookie
-            // const token = localStorage.getItem("token");
-
-            // if (!token) {
-            //     return rejectWithValue("Токен не найден");
-            // }
-
             const response = await fetch(createApiUrl(API_ENDPOINTS.auth.me), {
                 method: "GET",
-                // headers: {
-                //     Authorization: `Bearer ${token}`,
-                // },
                 credentials: "include",
             });
 
             const data = await response.json();
-            console.log("getCurrentUser response:", data);
-            console.log("getCurrentUser data.user:", data.user);
-            console.log("getCurrentUser data.user?.role:", data.user?.role);
 
             if (!response.ok) {
                 return rejectWithValue(data.message || "Пользователь не авторизован");
@@ -128,7 +102,6 @@ export const getCurrentUser = createAsyncThunk(
 
             return data.user;
         } catch (error) {
-            console.error("getCurrentUser error:", error);
             return rejectWithValue("Ошибка соединения с сервером в catch");
         }
     },
@@ -208,11 +181,13 @@ const authSlice = createSlice({
                 state.user = action.payload;
                 state.isAuthenticated = true;
                 state.error = null;
+                state.initialized = true;
             })
             .addCase(getCurrentUser.rejected, (state, action) => {
                 state.loading = false;
                 state.user = null;
                 state.isAuthenticated = false;
+                state.initialized = true;
                 // state.error = action.payload as string;
             });
     },

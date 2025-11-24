@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "@/shared/store/store";
 import LoadingState from "@/shared/components/LoadingState";
 import EmptyState from "@/shared/components/EmptyState";
+import Button from "@/shared/components/Button";
 import TestCard from "@/shared/components/TestCard";
 import { isTeacher, type UserRole } from "@/shared/utils/roles";
 import { getTests, getActiveAttempts, selectTest } from "@/shared/store/slices/test";
@@ -73,7 +74,23 @@ const TestList = ({ userRole, onCreateTest, onError }: TestListProps): ReactElem
                         disabled={isLoading}
                         className={`${styles.refreshIcon} ${isRefreshing ? styles.spinning : ""}`}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-refresh-ccw-icon lucide-refresh-ccw"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-refresh-ccw-icon lucide-refresh-ccw"
+                        >
+                            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                            <path d="M3 3v5h5" />
+                            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                            <path d="M16 16h5v5" />
+                        </svg>
                     </button>
                     {/* {isUserTeacher && (
                         <Button variant="primary" onClick={handleCreateTest}>

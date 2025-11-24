@@ -106,7 +106,9 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
                     if (correctOptions.length === 0) {
                         errors.push(`Вопрос ${index + 1}: не отмечен правильный ответ`);
                     } else if (question.type === "multiple_choice" && correctOptions.length < 2) {
-                        errors.push(`Вопрос ${index + 1}: минимум два правильных ответа для множественного выбора`);
+                        errors.push(
+                            `Вопрос ${index + 1}: минимум два правильных ответа для множественного выбора`,
+                        );
                     }
                 }
             }

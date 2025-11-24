@@ -141,10 +141,60 @@ export class TestService {
             );
         }
 
-        // Исключаем поле questions, так как оно не может быть обновлено напрямую
         const { questions, ...testUpdateData } = updateData;
 
         await this.testRepository.update(id, testUpdateData);
+
+        // Обновляем вопросы если они были переданы
+        if (questions && questions.length > 0) {
+            // Получаем все вопросы текущего теста
+            const oldQuestions = await this.questionRepository.find({
+                where: { testId: id },
+            });
+
+            // Удаляем ответы на все вопросы этого теста перед удалением вопросов
+            for (const question of oldQuestions) {
+                await this.questionRepository
+                    .createQueryBuilder()
+                    .delete()
+                    .from("test_answers")
+                    .where("questionId = :questionId", {
+                        questionId: question.id,
+                    })
+                    .execute();
+            }
+
+            // Удаляем старые вопросы и их варианты
+            await this.questionRepository.delete({ testId: id });
+
+            // Создаём новые вопросы
+            for (const questionDto of questions) {
+                const question = this.questionRepository.create({
+                    text: questionDto.text,
+                    type: questionDto.type as QuestionType,
+                    order: questionDto.order,
+                    correctTextAnswer: questionDto.correctTextAnswer,
+                    testId: id,
+                });
+
+                const savedQuestion =
+                    await this.questionRepository.save(question);
+
+                // Если есть варианты ответов
+                if (questionDto.options && questionDto.options.length > 0) {
+                    const options = questionDto.options.map((opt) =>
+                        this.questionOptionRepository.create({
+                            text: opt.text,
+                            isCorrect: opt.isCorrect,
+                            order: opt.order,
+                            questionId: savedQuestion.id,
+                        }),
+                    );
+                    await this.questionOptionRepository.save(options);
+                }
+            }
+        }
+
         return this.getTestById(id);
     }
 

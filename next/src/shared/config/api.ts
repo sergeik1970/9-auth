@@ -1,5 +1,4 @@
-export const API_BASE_URL =
-    process.env.NODE_ENV === "production" ? "https://будетпозже" : "http://localhost:3001";
+export const API_BASE_URL = "";
 
 export const API_ENDPOINTS = {
     auth: {

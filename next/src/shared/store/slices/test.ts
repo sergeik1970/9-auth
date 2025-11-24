@@ -100,6 +100,47 @@ export const createTest = createAsyncThunk(
     },
 );
 
+export const updateTest = createAsyncThunk(
+    "tests/update",
+    async (
+        { testId, testData }: { testId: number; testData: CreateTestData },
+        { rejectWithValue },
+    ) => {
+        try {
+            const cleanedData = {
+                ...testData,
+                questions: testData.questions.map((question) => ({
+                    ...question,
+                    options: question.options
+                        ? question.options.filter((option) => option.text.trim() !== "")
+                        : question.options,
+                })),
+            };
+
+            const response = await fetch(`/api/tests/${testId}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify(cleanedData),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                return rejectWithValue(data.message || data.error || "Ошибка при обновлении теста");
+            }
+
+            return data;
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : "Ошибка при обновлении теста",
+            );
+        }
+    },
+);
+
 export const getActiveAttempts = createAsyncThunk(
     "tests/getActiveAttempts",
     async (_, { rejectWithValue }) => {
@@ -162,6 +203,26 @@ const testsSlice = createSlice({
                 state.error = null;
             })
             .addCase(createTest.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+        builder
+            .addCase(updateTest.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(updateTest.fulfilled, (state, action) => {
+                state.loading = false;
+                const index = state.items.findIndex((test) => test.id === action.payload.id);
+                if (index !== -1) {
+                    state.items[index] = action.payload;
+                }
+                if (state.selectedTest && state.selectedTest.id === action.payload.id) {
+                    state.selectedTest = action.payload;
+                }
+                state.error = null;
+            })
+            .addCase(updateTest.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             });

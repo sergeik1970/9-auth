@@ -113,8 +113,8 @@ const TestPreview = ({
                 )}
             </div>
 
-            {onStartTest && (
-                <div className={styles.actions}>
+            <div className={styles.actions}>
+                {onStartTest && (
                     <Button
                         onClick={onStartTest}
                         disabled={isStarting}
@@ -126,8 +126,13 @@ const TestPreview = ({
                               ? "Продолжить тест"
                               : "Начать тест"}
                     </Button>
-                </div>
-            )}
+                )}
+                {isOwner && test.id && (
+                    <Button onClick={() => router.push(`/tests/${test.id}/edit`)} variant="outline">
+                        Редактировать
+                    </Button>
+                )}
+            </div>
         </div>
     );
 };

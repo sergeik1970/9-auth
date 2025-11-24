@@ -9,6 +9,7 @@ export interface Test {
     status: "draft" | "active" | "completed";
     questions?: Question[];
     creator?: User;
+    creatorId?: number;
     createdAt?: string;
     updatedAt?: string;
 }
