@@ -77,6 +77,13 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
     };
 
     useEffect(() => {
+        return () => {
+            dispatch(clearSuccess() as any);
+            dispatch(clearError() as any);
+        };
+    }, [dispatch]);
+
+    useEffect(() => {
         if (success) {
             const timer = setTimeout(() => {
                 dispatch(clearSuccess() as any);

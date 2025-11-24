@@ -228,6 +228,13 @@ export default function GradingCriteriaComponent({
     };
 
     useEffect(() => {
+        return () => {
+            dispatch(clearSuccess() as any);
+            dispatch(clearError() as any);
+        };
+    }, [dispatch]);
+
+    useEffect(() => {
         if (success) {
             const timer = setTimeout(() => {
                 dispatch(clearSuccess() as any);
