@@ -30,6 +30,13 @@ const CRITERIA_LABELS = {
     poor: "Неудовлетворительно (2)",
 };
 
+const CRITERIA_LABELS_SHORT = {
+    excellent: "Отлично (5)",
+    good: "Хорошо (4)",
+    satisfactory: "Удовл. (3)",
+    poor: "Неудовл. (2)",
+};
+
 interface GradingCriteriaProps {
     initialCriteria?: GradingCriteria | null;
     onClose?: () => void;
@@ -322,7 +329,7 @@ export default function GradingCriteriaComponent({
                     <h3>Предпросмотр шкалы</h3>
                     <div className={styles.previewBars}>
                         {(
-                            Object.entries(CRITERIA_LABELS) as Array<
+                            Object.entries(CRITERIA_LABELS_SHORT) as Array<
                                 [keyof GradingCriteria, string]
                             >
                         ).map(([key, label]) => (

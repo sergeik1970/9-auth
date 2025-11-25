@@ -60,15 +60,11 @@ const Sidebar = ({ isOpen = false, onClose, isDesktop = false }: SideBarProps): 
     const getActiveMenuItem = (href: string) => {
         const currentPath = router.asPath;
 
-        if (href === "/dashboard" && currentPath === "dashboard") {
-            return true;
+        if (href === "/dashboard") {
+            return currentPath === "/dashboard";
         }
 
-        if (href === "/dashboard" && currentPath.startsWith("/dashboard")) {
-            return true;
-        }
-
-        return false;
+        return currentPath.startsWith(href);
     };
 
     const handleNavigation = (href: string) => {

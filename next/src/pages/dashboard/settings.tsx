@@ -59,7 +59,11 @@ export default function SettingsPage() {
               }`}
               onClick={() => setActiveTab("profile")}
             >
-              👤 Профиль
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline", marginRight: "8px", verticalAlign: "middle" }}>
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              Профиль
             </button>
             <button
               className={`${styles.tab} ${
@@ -67,7 +71,18 @@ export default function SettingsPage() {
               }`}
               onClick={() => setActiveTab("grading")}
             >
-              📊 Критерии оценок
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline", marginRight: "8px", verticalAlign: "middle" }}>
+                <path d="M10 5H3"/>
+                <path d="M12 19H3"/>
+                <path d="M14 3v4"/>
+                <path d="M16 17v4"/>
+                <path d="M21 12h-9"/>
+                <path d="M21 19h-5"/>
+                <path d="M21 5h-7"/>
+                <path d="M8 10v4"/>
+                <path d="M8 12H3"/>
+              </svg>
+              Критерии оценок
             </button>
           </div>
 

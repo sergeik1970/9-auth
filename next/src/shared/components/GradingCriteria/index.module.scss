@@ -137,24 +137,24 @@
 }
 
 .previewBars {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 90px 1fr 35px;
   gap: 8px;
+  align-items: center;
 }
 
 .bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: contents;
 
   .label {
-    width: 80px;
-    font-size: 13px;
+    font-size: 12px;
     color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .barContainer {
-    flex: 1;
     height: 24px;
     background: #e0e0e0;
     border-radius: 4px;
@@ -174,7 +174,6 @@
   }
 
   .percent {
-    width: 40px;
     text-align: right;
     font-size: 13px;
     color: #333;
