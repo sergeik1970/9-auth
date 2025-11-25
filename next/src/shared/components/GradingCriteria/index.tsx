@@ -47,17 +47,28 @@ export default function GradingCriteriaComponent({
     const success = useSelector(selectSettingsSuccess);
 
     const [criteria, setCriteria] = useState<GradingCriteria>(initialCriteria || DEFAULT_CRITERIA);
+    const [inputValues, setInputValues] = useState<Partial<Record<keyof GradingCriteria, string>>>({});
 
     const handleChange = (key: keyof GradingCriteria, value: string) => {
+        setInputValues((prev) => ({ ...prev, [key]: value }));
+        
         if (value === "") {
-            setCriteria((prev) => ({ ...prev, [key]: 0 }));
             return;
         }
         
-        const numValue = parseInt(value);
-        if (!isNaN(numValue) && numValue <= 100) {
+        const numValue = parseInt(value, 10);
+        if (!isNaN(numValue) && numValue <= 100 && numValue >= 0) {
             setCriteria((prev) => ({ ...prev, [key]: numValue }));
         }
+    };
+
+    const handleInputBlur = (key: keyof GradingCriteria) => {
+        setInputValues((prev) => {
+            const updated = { ...prev };
+            delete updated[key];
+            return updated;
+        });
+        handleBlur(key);
     };
 
     const incrementValue = (key: keyof GradingCriteria) => {
@@ -159,26 +170,22 @@ export default function GradingCriteriaComponent({
             if (key === "excellent") {
                 updated.excellent = Math.max(0, Math.min(100, value));
                 if (updated.excellent <= updated.good) {
-                    updated.good = updated.excellent - 1;
+                    updated.good = Math.max(0, updated.excellent - 1);
                     if (updated.good <= updated.satisfactory) {
-                        updated.satisfactory = updated.good - 1;
-                        if (updated.satisfactory < 0) updated.satisfactory = 0;
+                        updated.satisfactory = Math.max(0, updated.good - 1);
                     }
                 }
             } else if (key === "good") {
                 updated.good = Math.max(0, value);
                 if (updated.good >= updated.excellent) {
-                    updated.good = updated.excellent - 1;
-                    if (updated.good < 0) updated.good = 0;
+                    updated.good = Math.max(0, updated.excellent - 1);
                 } else if (updated.good <= updated.satisfactory) {
-                    updated.satisfactory = updated.good - 1;
-                    if (updated.satisfactory < 0) updated.satisfactory = 0;
+                    updated.satisfactory = Math.max(0, updated.good - 1);
                 }
             } else if (key === "satisfactory") {
                 updated.satisfactory = Math.max(0, value);
                 if (updated.satisfactory >= updated.good) {
-                    updated.satisfactory = updated.good - 1;
-                    if (updated.satisfactory < 0) updated.satisfactory = 0;
+                    updated.satisfactory = Math.max(0, updated.good - 1);
                 }
             }
 
@@ -298,11 +305,11 @@ export default function GradingCriteriaComponent({
                                 </div>
                                 <input
                                     type="number"
-                                    value={criteria[key]}
+                                    value={inputValues[key] !== undefined ? inputValues[key] : criteria[key]}
                                     onChange={(e) =>
                                         handleChange(key, e.target.value)
                                     }
-                                    onBlur={() => handleBlur(key)}
+                                    onBlur={() => handleInputBlur(key)}
                                     disabled={loading}
                                 />
                                 <span className={styles.percent}>%</span>
