@@ -10,12 +10,14 @@ import auth from "./slices/auth";
 import deals from "./slices/deals";
 import test from "./slices/test";
 import settings from "./slices/settings";
+import users from "./slices/users";
 
 const rootReducer = combineReducers({
     auth,
     deals,
     test,
     settings,
+    users,
 });
 
 export const makeStore = () => {
