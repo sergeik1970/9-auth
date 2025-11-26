@@ -2,9 +2,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 12px;
-    border-radius: 10px;
-    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -13,6 +13,7 @@
     line-height: 1;
     user-select: none;
     cursor: default;
+    white-space: nowrap;
 
     // Варианты статусов
     &.statusDraft {
@@ -44,13 +45,22 @@
             background-color: #bfdbfe;
         }
     }
+
+    &.statusArchived {
+        background-color: #f3e8ff;
+        color: #6b21a8;
+        border-color: #d8b4fe;
+
+        &:hover {
+            background-color: #e9d5ff;
+        }
+    }
 }
 
 // Адаптивность
 @media (max-width: 768px) {
     .testStatus {
-        font-size: 11px;
         padding: 3px 8px;
-        border-radius: 8px;
+        font-size: 10px;
     }
 }

@@ -200,7 +200,7 @@ export class AuthController {
         try {
             console.log("=== GRADING-CRITERIA PATCH ===");
             console.log("Body:", updateDto);
-            
+
             const userId = updateDto.userId ? parseInt(updateDto.userId) : null;
             if (!userId) {
                 console.log("❌ No userId provided");
@@ -208,7 +208,7 @@ export class AuthController {
                     message: "UserId не предоставлен",
                 });
             }
-            
+
             console.log("Updating grading criteria for userId:", userId);
             const user = await this.authService.updateGradingCriteria(
                 userId,

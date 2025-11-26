@@ -60,6 +60,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 error: error instanceof Error ? error.message : "Failed to update test",
             });
         }
+    } else if (req.method === "DELETE") {
+        try {
+            const response = await fetch(`${API_URL}/api/tests/${testId}`, {
+                method: "DELETE",
+                headers,
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || `API error: ${response.status}`);
+            }
+
+            res.status(204).end();
+        } catch (error) {
+            console.error("Error deleting test:", error);
+            res.status(500).json({
+                error: error instanceof Error ? error.message : "Failed to delete test",
+            });
+        }
     } else {
         res.status(405).json({ error: "Method not allowed" });
     }

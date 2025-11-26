@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useSelector } from "@/shared/store/store";
 import { selectAuth } from "@/shared/store/slices/auth";
@@ -8,9 +8,14 @@ import TestList from "@/shared/components/TestList";
 
 const Main = () => {
     const router = useRouter();
+    const [isHydrated, setIsHydrated] = useState(false);
     const { user } = useSelector(selectAuth);
 
-    if (!router.isReady) {
+    useEffect(() => {
+        setIsHydrated(true);
+    }, []);
+
+    if (!router.isReady || !isHydrated) {
         return <div>Загрузка...</div>;
     }
 

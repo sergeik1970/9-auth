@@ -11,7 +11,7 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps): ReactElement => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isDesktop, setIsDesktop] = useState(true);
-    const [isMounted, setIsMounted] = useState(false);
+    const [isHydrated, setIsHydrated] = useState(false);
 
     // Определяем, является ли текущий размер экрана десктопным (>1200px)
     useEffect(() => {
@@ -27,7 +27,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps): ReactElement => {
 
         // Проверяем при первой загрузке
         checkIfDesktop();
-        setIsMounted(true);
+        setIsHydrated(true);
 
         // Добавляем слушатель изменения размера окна
         window.addEventListener("resize", checkIfDesktop);
@@ -49,12 +49,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps): ReactElement => {
     return (
         <div className={styles.layoutContainer}>
             {/* MobileHeader теперь вне основного layout и будет фиксирован вверху экрана */}
-            {isMounted && !isDesktop && <MobileHeader onMenuClick={toggleSidebar} />}
+            {isHydrated && !isDesktop && <MobileHeader onMenuClick={toggleSidebar} />}
 
             <div className={styles.layout}>
                 <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} isDesktop={isDesktop} />
 
-                {!isDesktop && (
+                {isHydrated && !isDesktop && (
                     <div
                         className={`${styles.overlay} ${isSidebarOpen ? styles.visible : ""}`}
                         onClick={closeSidebar}
@@ -62,7 +62,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps): ReactElement => {
                 )}
 
                 <main
-                    className={`${styles.main} ${isDesktop && isSidebarOpen ? styles.withSidebar : ""} ${!isDesktop ? styles.withMobileHeader : ""}`}
+                    className={`${styles.main} ${isDesktop && isSidebarOpen ? styles.withSidebar : ""} ${isHydrated && !isDesktop ? styles.withMobileHeader : ""}`}
                 >
                     <div className={styles.content}>{children}</div>
                 </main>

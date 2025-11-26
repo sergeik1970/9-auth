@@ -1,10 +1,12 @@
-import React, { ReactElement, useEffect } from "react";
+import React, { ReactElement, useEffect, useState } from "react";
 import Button from "@/shared/components/Button";
-import { getTestById, getTests, selectTest } from "@/shared/store/slices/test";
+import { getTestById, getTests, selectTest, publishTest, completeTest, archiveTest } from "@/shared/store/slices/test";
 import styles from "./index.module.scss";
 import { useDispatch, useSelector } from "@/shared/store/store";
 import { useRouter } from "next/router";
 import LoadingState from "@/shared/components/LoadingState";
+import TestStatus from "@/shared/components/TestStatus";
+import { selectAuth } from "@/shared/store/slices/auth";
 
 interface TestPreviewProps {
     isOwner?: boolean;
@@ -61,7 +63,11 @@ const TestPreview = ({
 }: TestPreviewProps): ReactElement => {
     const dispatch = useDispatch();
     const router = useRouter();
+    const { user } = useSelector(selectAuth);
     const { selectedTest: test, selectedLoading: isLoading, error } = useSelector(selectTest);
+    const [isPublishing, setIsPublishing] = useState(false);
+    const [isCompleting, setIsCompleting] = useState(false);
+    const [isArchiving, setIsArchiving] = useState(false);
 
     // Получаем ID теста из URL, если не передан через props
     const id = testId || (router.query.id ? Number(router.query.id) : undefined);
@@ -79,6 +85,48 @@ const TestPreview = ({
         }
     }, [error, onError]);
 
+    const handlePublish = async () => {
+        if (!test?.id) return;
+        try {
+            setIsPublishing(true);
+            await dispatch(publishTest(test.id)).unwrap();
+            await dispatch(getTestById(test.id));
+        } catch (err) {
+            console.error("Error publishing test:", err);
+            alert(err instanceof Error ? err.message : "Ошибка при публикации теста");
+        } finally {
+            setIsPublishing(false);
+        }
+    };
+
+    const handleComplete = async () => {
+        if (!test?.id) return;
+        try {
+            setIsCompleting(true);
+            await dispatch(completeTest(test.id)).unwrap();
+            await dispatch(getTestById(test.id));
+        } catch (err) {
+            console.error("Error completing test:", err);
+            alert(err instanceof Error ? err.message : "Ошибка при завершении теста");
+        } finally {
+            setIsCompleting(false);
+        }
+    };
+
+    const handleArchive = async () => {
+        if (!test?.id) return;
+        try {
+            setIsArchiving(true);
+            await dispatch(archiveTest(test.id)).unwrap();
+            await dispatch(getTestById(test.id));
+        } catch (err) {
+            console.error("Error archiving test:", err);
+            alert(err instanceof Error ? err.message : "Ошибка при архивировании теста");
+        } finally {
+            setIsArchiving(false);
+        }
+    };
+
     if (isLoading) {
         return <LoadingState message="Загрузка теста..." />;
     }
@@ -90,7 +138,10 @@ const TestPreview = ({
     return (
         <div className={styles.content}>
             <div className={styles.info}>
-                <h2 className={styles.title}>{test.title}</h2>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+                    <h2 className={styles.title} style={{ margin: 0 }}>{test.title}</h2>
+                    <TestStatus status={test.status} />
+                </div>
                 <div className={styles.infoItem}>
                     <strong>Описание:</strong>
                     <p>{test.description || "Описание не указано"}</p>
@@ -125,6 +176,33 @@ const TestPreview = ({
                             : isActiveAttempt
                               ? "Продолжить тест"
                               : "Начать тест"}
+                    </Button>
+                )}
+                {isOwner && test.id && (test.status === "draft" || test.status === "completed" || test.status === "archived") && (
+                    <Button
+                        onClick={handlePublish}
+                        disabled={isPublishing}
+                        variant="primary"
+                    >
+                        {isPublishing ? "Публикация..." : "Опубликовать"}
+                    </Button>
+                )}
+                {isOwner && test.id && test.status === "active" && (
+                    <Button
+                        onClick={handleComplete}
+                        disabled={isCompleting}
+                        variant="primary"
+                    >
+                        {isCompleting ? "Завершение..." : "Завершить"}
+                    </Button>
+                )}
+                {isOwner && test.id && test.status === "completed" && (
+                    <Button
+                        onClick={handleArchive}
+                        disabled={isArchiving}
+                        variant="primary"
+                    >
+                        {isArchiving ? "Архивирование..." : "Архивировать"}
                     </Button>
                 )}
                 {isOwner && test.id && (

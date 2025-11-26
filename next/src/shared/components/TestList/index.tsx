@@ -18,6 +18,7 @@ interface TestListProps {
 const TestList = ({ userRole, onCreateTest, onError }: TestListProps): ReactElement => {
     const router = useRouter();
     const [isRefreshing, setIsRefreshing] = React.useState(false);
+    const [isHydrated, setIsHydrated] = React.useState(false);
 
     const {
         items: tests,
@@ -33,6 +34,10 @@ const TestList = ({ userRole, onCreateTest, onError }: TestListProps): ReactElem
     const isUserTeacher = userRole && isTeacher(userRole);
 
     const dispatch = useDispatch();
+
+    React.useEffect(() => {
+        setIsHydrated(true);
+    }, []);
 
     useEffect(() => {
         dispatch(getTests());
@@ -61,9 +66,10 @@ const TestList = ({ userRole, onCreateTest, onError }: TestListProps): ReactElem
         setTimeout(() => setIsRefreshing(false), 600);
     };
 
-    if (isLoading) {
+    if (isLoading || !isHydrated) {
         return <LoadingState message="Загрузка тестов..." />;
     }
+
     return (
         <div className={styles.testContainer}>
             <div className={styles.header}>

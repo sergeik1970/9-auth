@@ -1,6 +1,6 @@
-import React, { ReactElement } from "react";
+import React, { ReactElement, useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { useSelector } from "@/shared/store/store";
+import { useSelector, useDispatch } from "@/shared/store/store";
 import Button from "@/shared/components/Button";
 import type { Test } from "@/shared/types/test";
 import { isTeacher } from "@/shared/utils/roles";
@@ -8,10 +8,10 @@ import styles from "./index.module.scss";
 import { User } from "@/shared/types/auth";
 import { selectAuth } from "@/shared/store/slices/auth";
 import TestStatus, { TestStatus as TestStatusType } from "@/shared/components/TestStatus";
+import { publishTest, completeTest } from "@/shared/store/slices/test";
 
 interface TestCardProps {
     test: Test;
-    // showCreator?: boolean;
     className?: string;
     creator?: User;
     onUpdate: () => void;
@@ -61,16 +61,27 @@ const TestCard = ({
     creator,
     isActiveAttempt = false,
     attemptId,
+    onUpdate,
 }: TestCardProps): ReactElement => {
     const { user } = useSelector(selectAuth);
     const router = useRouter();
+    const dispatch = useDispatch();
+    const [isActionLoading, setIsActionLoading] = useState(false);
+    const [isHydrated, setIsHydrated] = useState(false);
+
+    useEffect(() => {
+        setIsHydrated(true);
+    }, []);
 
     const shouldShowStatus = (status: TestStatusType): boolean => {
         if (status === "draft" && test.creator?.id !== user?.id) {
-            return false; // скрываем черновик, если ты не создатель
+            return false;
         }
         return true;
     };
+
+    const isCreator = user?.id === test.creator?.id;
+    const isTeacherUser = user?.role && isTeacher(user.role);
 
     const handleViewTest = () => {
         if (isActiveAttempt && attemptId) {
@@ -80,12 +91,37 @@ const TestCard = ({
         }
     };
 
+    const handlePublish = async () => {
+        try {
+            setIsActionLoading(true);
+            await dispatch(publishTest(test.id!)).unwrap();
+            onUpdate?.();
+        } catch (error) {
+            console.error("Error publishing test:", error);
+            alert(error instanceof Error ? error.message : "Ошибка при публикации теста");
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
+    const handleComplete = async () => {
+        try {
+            setIsActionLoading(true);
+            await dispatch(completeTest(test.id!)).unwrap();
+            onUpdate?.();
+        } catch (error) {
+            console.error("Error completing test:", error);
+            alert(error instanceof Error ? error.message : "Ошибка при завершении теста");
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
     return (
         <div className={`${styles.testCard} ${className || ""}`}>
             <div className={styles.testInfo}>
                 <div className={styles.testHeader}>
                     <h3 className={styles.testName}>{test.title}</h3>
-                    <TestStatus status={test.status} shouldShow={shouldShowStatus} />
                 </div>
 
                 {test.description && <p className={styles.testDescription}>{test.description}</p>}
@@ -112,20 +148,66 @@ const TestCard = ({
                             {formatTime(test.timeLimit)}
                         </span>
                     )}
-                    {user?.role && isTeacher(user.role) && test.creator?.name && (
+                    {isHydrated && user?.role && isTeacher(user.role) && test.creator?.name && (
                         <span className={styles.metaItem}>👨‍🏫 {test.creator.name}</span>
                     )}
                 </div>
             </div>
 
             <div className={styles.testActions}>
-                <Button
-                    variant={isActiveAttempt ? "primary" : "outline"}
-                    size="small"
-                    onClick={handleViewTest}
-                >
-                    {isActiveAttempt ? "Продолжить тест" : "Подробнее"}
-                </Button>
+                <TestStatus status={test.status} />
+                {isCreator && isTeacherUser && isHydrated ? (
+                    <div className={styles.actionButtons}>
+                        {test.status === "draft" && (
+                            <Button
+                                variant="primary"
+                                size="small"
+                                onClick={handlePublish}
+                                disabled={isActionLoading}
+                            >
+                                {isActionLoading ? "Публикация..." : "Опубликовать"}
+                            </Button>
+                        )}
+                        {test.status === "active" && (
+                            <Button
+                                variant="primary"
+                                size="small"
+                                onClick={handleComplete}
+                                disabled={isActionLoading}
+                            >
+                                {isActionLoading ? "Завершение..." : "Завершить"}
+                            </Button>
+                        )}
+                        {(test.status === "draft" || test.status === "completed") && (
+                            <Button
+                                variant="outline"
+                                size="small"
+                                onClick={handleViewTest}
+                                disabled={isActionLoading}
+                            >
+                                Редактировать
+                            </Button>
+                        )}
+                        {test.status === "active" && (
+                            <Button
+                                variant="outline"
+                                size="small"
+                                onClick={handleViewTest}
+                                disabled={isActionLoading}
+                            >
+                                Подробнее
+                            </Button>
+                        )}
+                    </div>
+                ) : (
+                    <Button
+                        variant={isActiveAttempt ? "primary" : "outline"}
+                        size="small"
+                        onClick={handleViewTest}
+                    >
+                        {isActiveAttempt ? "Продолжить тест" : "Подробнее"}
+                    </Button>
+                )}
             </div>
         </div>
     );

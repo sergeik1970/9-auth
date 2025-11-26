@@ -6,7 +6,7 @@ export interface Test {
     title: string;
     description?: string;
     timeLimit?: number;
-    status: "draft" | "active" | "completed";
+    status: "draft" | "active" | "completed" | "archived";
     questions?: Question[];
     creator?: User;
     creatorId?: number;

@@ -36,12 +36,18 @@ export class TestAttemptService {
 
     async createAttempt(testId: number, user: JwtPayload): Promise<any> {
         console.log("createAttempt called - testId:", testId, "user:", user);
-        
+
         const test = await this.testRepository.findOne({
             where: { id: testId },
         });
         if (!test) {
             throw new NotFoundException(`Тест с ID ${testId} не найден`);
+        }
+
+        if (test.status !== "active") {
+            throw new ForbiddenException(
+                `Тест должен быть активным для прохождения. Текущий статус: ${test.status}`,
+            );
         }
 
         const attempt = this.attemptRepository.create({
@@ -54,7 +60,7 @@ export class TestAttemptService {
         console.log("Creating attempt with userId:", user.sub);
         const savedAttempt = await this.attemptRepository.save(attempt);
         console.log("Attempt created:", savedAttempt);
-        
+
         return {
             ...savedAttempt,
             serverTime: new Date().getTime(),
@@ -111,7 +117,7 @@ export class TestAttemptService {
 
     async getActiveAttempts(user: JwtPayload): Promise<any[]> {
         console.log("getActiveAttempts called with user:", user);
-        
+
         const attempts = await this.attemptRepository.find({
             where: { userId: user.sub, status: AttemptStatus.IN_PROGRESS },
             relations: ["test"],
@@ -128,7 +134,10 @@ export class TestAttemptService {
             return elapsedMs <= timeLimitMs;
         });
 
-        console.log("Active attempts after time validation:", activeAttempts.length);
+        console.log(
+            "Active attempts after time validation:",
+            activeAttempts.length,
+        );
 
         return activeAttempts.map((attempt) => ({
             id: attempt.id,

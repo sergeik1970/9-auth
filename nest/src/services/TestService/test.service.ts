@@ -103,8 +103,21 @@ export class TestService {
     }
 
     // Получение всех тестов
-    async getAllTests(): Promise<Test[]> {
+    async getAllTests(user?: JwtPayload): Promise<Test[]> {
+        // Если пользователь преподаватель, показываем его собственные тесты
+        if (user && user.role === "teacher") {
+            return this.testRepository.find({
+                where: { creatorId: user.sub },
+                relations: ["questions", "questions.options"],
+                order: {
+                    createdAt: "DESC",
+                },
+            });
+        }
+
+        // Студентам и неавторизованным пользователям показываем только активные тесты
         return this.testRepository.find({
+            where: { status: TestStatus.ACTIVE },
             relations: ["questions", "questions.options"],
             order: {
                 createdAt: "DESC",
@@ -143,10 +156,9 @@ export class TestService {
 
         const { questions, ...testUpdateData } = updateData;
 
-        await this.testRepository.update(id, testUpdateData);
-
         // Обновляем вопросы если они были переданы
         if (questions && questions.length > 0) {
+
             // Получаем все вопросы текущего теста
             const oldQuestions = await this.questionRepository.find({
                 where: { testId: id },
@@ -193,7 +205,91 @@ export class TestService {
                     await this.questionOptionRepository.save(options);
                 }
             }
+
+            testUpdateData["status"] = TestStatus.DRAFT;
         }
+
+        await this.testRepository.update(id, testUpdateData);
+
+        return this.getTestById(id);
+    }
+
+    // Публикация теста (DRAFT -> ACTIVE)
+    async publishTest(id: number, user: JwtPayload): Promise<Test> {
+        const test = await this.getTestById(id);
+
+        // Проверка, что пользователь - создатель теста
+        if (test.creatorId !== user.sub) {
+            throw new ForbiddenException(
+                "Вы можете публиковать только свои тесты",
+            );
+        }
+
+        // Проверка, что тест в статусе DRAFT, COMPLETED или ARCHIVED
+        if (
+            test.status !== TestStatus.DRAFT &&
+            test.status !== TestStatus.COMPLETED &&
+            test.status !== TestStatus.ARCHIVED
+        ) {
+            throw new ForbiddenException(
+                "Тест должен быть в статусе DRAFT, COMPLETED или ARCHIVED для публикации",
+            );
+        }
+
+        // Проверка, что у теста есть вопросы
+        if (!test.questions || test.questions.length === 0) {
+            throw new ForbiddenException(
+                "Тест должен содержать хотя бы один вопрос",
+            );
+        }
+
+        await this.testRepository.update(id, { status: TestStatus.ACTIVE });
+
+        return this.getTestById(id);
+    }
+
+    // Завершение теста (ACTIVE -> COMPLETED)
+    async completeTest(id: number, user: JwtPayload): Promise<Test> {
+        const test = await this.getTestById(id);
+
+        // Проверка, что пользователь - создатель теста
+        if (test.creatorId !== user.sub) {
+            throw new ForbiddenException(
+                "Вы можете завершать только свои тесты",
+            );
+        }
+
+        // Проверка, что тест в статусе ACTIVE
+        if (test.status !== TestStatus.ACTIVE) {
+            throw new ForbiddenException(
+                "Тест должен быть в статусе ACTIVE для завершения",
+            );
+        }
+
+        await this.testRepository.update(id, { status: TestStatus.COMPLETED });
+
+        return this.getTestById(id);
+    }
+
+    // Архивирование теста (COMPLETED -> ARCHIVED)
+    async archiveTest(id: number, user: JwtPayload): Promise<Test> {
+        const test = await this.getTestById(id);
+
+        // Проверка, что пользователь - создатель теста
+        if (test.creatorId !== user.sub) {
+            throw new ForbiddenException(
+                "Вы можете архивировать только свои тесты",
+            );
+        }
+
+        // Проверка, что тест в статусе COMPLETED
+        if (test.status !== TestStatus.COMPLETED) {
+            throw new ForbiddenException(
+                "Тест должен быть в статусе COMPLETED для архивирования",
+            );
+        }
+
+        await this.testRepository.update(id, { status: TestStatus.ARCHIVED });
 
         return this.getTestById(id);
     }

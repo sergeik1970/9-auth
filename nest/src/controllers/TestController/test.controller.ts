@@ -27,8 +27,9 @@ export class TestController {
     ) {}
 
     @Get()
-    getAllTests() {
-        return this.testService.getAllTests();
+    @UseGuards(JwtAuthGuard)
+    getAllTests(@Req() req: any) {
+        return this.testService.getAllTests(req.user);
     }
 
     @Get("active-attempts")
@@ -57,6 +58,24 @@ export class TestController {
         @Req() req: any,
     ) {
         return this.testService.updateTest(id, updateData, req.user);
+    }
+
+    @Post(":id/publish")
+    @UseGuards(JwtAuthGuard)
+    publishTest(@Param("id", ParseIntPipe) id: number, @Req() req: any) {
+        return this.testService.publishTest(id, req.user);
+    }
+
+    @Post(":id/complete")
+    @UseGuards(JwtAuthGuard)
+    completeTest(@Param("id", ParseIntPipe) id: number, @Req() req: any) {
+        return this.testService.completeTest(id, req.user);
+    }
+
+    @Post(":id/archive")
+    @UseGuards(JwtAuthGuard)
+    archiveTest(@Param("id", ParseIntPipe) id: number, @Req() req: any) {
+        return this.testService.archiveTest(id, req.user);
     }
 
     @Delete(":id")

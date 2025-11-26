@@ -66,9 +66,16 @@
 
 .testActions {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    align-items: center;
+    gap: 0.75rem;
     flex-shrink: 0;
+}
+
+.actionButtons {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
 }
 
 /* Адаптивность */
@@ -94,7 +101,8 @@
     }
     
     .testActions {
-        flex-direction: row;
-        justify-content: flex-end;
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-start;
     }
 }

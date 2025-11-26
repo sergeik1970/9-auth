@@ -1,7 +1,7 @@
 import React, { ReactElement } from "react";
 import styles from "./index.module.scss";
 
-export type TestStatus = "draft" | "active" | "completed";
+export type TestStatus = "draft" | "active" | "completed" | "archived";
 
 export interface TestStatusProps {
     status: TestStatus;
@@ -22,6 +22,8 @@ const TestStatus = ({ status, className, shouldShow }: TestStatusProps): ReactEl
                 return "Активный";
             case "completed":
                 return "Завершён";
+            case "archived":
+                return "Архивирован";
             default:
                 return status;
         }
@@ -34,6 +36,8 @@ const TestStatus = ({ status, className, shouldShow }: TestStatusProps): ReactEl
                 return styles.statusActive;
             case "completed":
                 return styles.statusCompleted;
+            case "archived":
+                return styles.statusArchived;
             default:
                 return "";
         }

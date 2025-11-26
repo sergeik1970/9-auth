@@ -29,7 +29,9 @@ const initialState: TestsState = {
 // Создание асинхронного thunk для получения тестов
 export const getTests = createAsyncThunk("tests/getTests", async (_, { rejectWithValue }) => {
     try {
-        const response = await fetch(createApiUrl("/api/tests"));
+        const response = await fetch(createApiUrl("/api/tests"), {
+            credentials: "include",
+        });
 
         if (!response.ok) {
             throw new Error(`Ошибка при загрузке тестов: ${response.status}`);
@@ -46,7 +48,9 @@ export const getTestById = createAsyncThunk(
     "tests/getTestById",
     async (id: number, { rejectWithValue }) => {
         try {
-            const response = await fetch(`${createApiUrl(API_ENDPOINTS.tests.getById(id))}`);
+            const response = await fetch(`${createApiUrl(API_ENDPOINTS.tests.getById(id))}`, {
+                credentials: "include",
+            });
 
             if (!response.ok) {
                 throw new Error(`Ошибка при загрузке теста по ID: ${response.status}`);
@@ -168,6 +172,78 @@ export const getActiveAttempts = createAsyncThunk(
     },
 );
 
+export const publishTest = createAsyncThunk(
+    "tests/publish",
+    async (testId: number, { rejectWithValue }) => {
+        try {
+            const response = await fetch(`/api/tests/${testId}/publish`, {
+                method: "POST",
+                credentials: "include",
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                return rejectWithValue(data.message || data.error || "Ошибка при публикации теста");
+            }
+
+            return data;
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : "Ошибка при публикации теста",
+            );
+        }
+    },
+);
+
+export const completeTest = createAsyncThunk(
+    "tests/complete",
+    async (testId: number, { rejectWithValue }) => {
+        try {
+            const response = await fetch(`/api/tests/${testId}/complete`, {
+                method: "POST",
+                credentials: "include",
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                return rejectWithValue(data.message || data.error || "Ошибка при завершении теста");
+            }
+
+            return data;
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : "Ошибка при завершении теста",
+            );
+        }
+    },
+);
+
+export const archiveTest = createAsyncThunk(
+    "tests/archive",
+    async (testId: number, { rejectWithValue }) => {
+        try {
+            const response = await fetch(`/api/tests/${testId}/archive`, {
+                method: "POST",
+                credentials: "include",
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                return rejectWithValue(data.message || data.error || "Ошибка при архивировании теста");
+            }
+
+            return data;
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : "Ошибка при архивировании теста",
+            );
+        }
+    },
+);
+
 // Создание слайса
 const testsSlice = createSlice({
     name: "test",
@@ -251,6 +327,66 @@ const testsSlice = createSlice({
             .addCase(getActiveAttempts.rejected, (state) => {
                 state.activeAttemptsLoading = false;
                 state.activeAttempts = [];
+            });
+        builder
+            .addCase(publishTest.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(publishTest.fulfilled, (state, action) => {
+                state.loading = false;
+                const index = state.items.findIndex((test) => test.id === action.payload.id);
+                if (index !== -1) {
+                    state.items[index] = action.payload;
+                }
+                if (state.selectedTest && state.selectedTest.id === action.payload.id) {
+                    state.selectedTest = action.payload;
+                }
+                state.error = null;
+            })
+            .addCase(publishTest.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+        builder
+            .addCase(completeTest.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(completeTest.fulfilled, (state, action) => {
+                state.loading = false;
+                const index = state.items.findIndex((test) => test.id === action.payload.id);
+                if (index !== -1) {
+                    state.items[index] = action.payload;
+                }
+                if (state.selectedTest && state.selectedTest.id === action.payload.id) {
+                    state.selectedTest = action.payload;
+                }
+                state.error = null;
+            })
+            .addCase(completeTest.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+        builder
+            .addCase(archiveTest.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(archiveTest.fulfilled, (state, action) => {
+                state.loading = false;
+                const index = state.items.findIndex((test) => test.id === action.payload.id);
+                if (index !== -1) {
+                    state.items[index] = action.payload;
+                }
+                if (state.selectedTest && state.selectedTest.id === action.payload.id) {
+                    state.selectedTest = action.payload;
+                }
+                state.error = null;
+            })
+            .addCase(archiveTest.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
             });
     },
 });

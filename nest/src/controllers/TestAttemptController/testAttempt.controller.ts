@@ -20,7 +20,10 @@ export class TestAttemptController {
     @Post(":testId/attempts")
     @UseGuards(JwtAuthGuard)
     @HttpCode(HttpStatus.CREATED)
-    createAttempt(@Param("testId", ParseIntPipe) testId: number, @Req() req: any) {
+    createAttempt(
+        @Param("testId", ParseIntPipe) testId: number,
+        @Req() req: any,
+    ) {
         return this.attemptService.createAttempt(testId, req.user);
     }
 

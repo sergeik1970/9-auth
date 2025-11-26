@@ -16,6 +16,7 @@ export enum TestStatus {
     DRAFT = "draft",
     ACTIVE = "active",
     COMPLETED = "completed",
+    ARCHIVED = "archived",
 }
 
 @Entity("tests")
