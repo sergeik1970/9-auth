@@ -54,15 +54,17 @@ export default function GradingCriteriaComponent({
     const success = useSelector(selectSettingsSuccess);
 
     const [criteria, setCriteria] = useState<GradingCriteria>(initialCriteria || DEFAULT_CRITERIA);
-    const [inputValues, setInputValues] = useState<Partial<Record<keyof GradingCriteria, string>>>({});
+    const [inputValues, setInputValues] = useState<Partial<Record<keyof GradingCriteria, string>>>(
+        {},
+    );
 
     const handleChange = (key: keyof GradingCriteria, value: string) => {
         setInputValues((prev) => ({ ...prev, [key]: value }));
-        
+
         if (value === "") {
             return;
         }
-        
+
         const numValue = parseInt(value, 10);
         if (!isNaN(numValue) && numValue <= 100 && numValue >= 0) {
             setCriteria((prev) => ({ ...prev, [key]: numValue }));
@@ -312,10 +314,12 @@ export default function GradingCriteriaComponent({
                                 </div>
                                 <input
                                     type="number"
-                                    value={inputValues[key] !== undefined ? inputValues[key] : criteria[key]}
-                                    onChange={(e) =>
-                                        handleChange(key, e.target.value)
+                                    value={
+                                        inputValues[key] !== undefined
+                                            ? inputValues[key]
+                                            : criteria[key]
                                     }
+                                    onChange={(e) => handleChange(key, e.target.value)}
                                     onBlur={() => handleInputBlur(key)}
                                     disabled={loading}
                                 />

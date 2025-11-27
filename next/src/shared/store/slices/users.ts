@@ -36,10 +36,10 @@ export const fetchStudents = createAsyncThunk(
             return data as Student[];
         } catch (error) {
             return rejectWithValue(
-                error instanceof Error ? error.message : "Failed to fetch students"
+                error instanceof Error ? error.message : "Failed to fetch students",
             );
         }
-    }
+    },
 );
 
 const usersSlice = createSlice({

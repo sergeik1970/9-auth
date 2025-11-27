@@ -57,7 +57,12 @@ const TestDetailPage = (): ReactElement => {
 
     return (
         <div className={styles.container}>
-            <h1 className={styles.title}>Детали теста</h1>
+            <div className={styles.header}>
+                <button className={styles.backButton} onClick={() => router.back()}>
+                    ← Назад
+                </button>
+                <h1 className={styles.title}>Детали теста</h1>
+            </div>
             {id ? (
                 <TestPreview
                     testId={Number(id)}

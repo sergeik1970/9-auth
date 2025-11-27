@@ -145,6 +145,90 @@ export const updateTest = createAsyncThunk(
     },
 );
 
+export const autoSaveTest = createAsyncThunk(
+    "tests/autoSave",
+    async (
+        { testId, testData }: { testId: number; testData: CreateTestData },
+        { rejectWithValue },
+    ) => {
+        try {
+            const cleanedData = {
+                ...testData,
+                questions: testData.questions.map((question) => ({
+                    ...question,
+                    options: question.options
+                        ? question.options.filter((option) => option.text.trim() !== "")
+                        : question.options,
+                })),
+            };
+
+            const response = await fetch(`/api/tests/${testId}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify(cleanedData),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                return rejectWithValue(data.message || data.error || "Ошибка при автосохранении");
+            }
+
+            return await response.json();
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : "Ошибка при автосохранении",
+            );
+        }
+    },
+);
+
+export const saveTestAsDraft = createAsyncThunk(
+    "tests/saveAsDraft",
+    async (
+        { testId, testData }: { testId: number; testData: CreateTestData },
+        { rejectWithValue },
+    ) => {
+        try {
+            const cleanedData = {
+                ...testData,
+                status: "draft",
+                questions: testData.questions.map((question) => ({
+                    ...question,
+                    options: question.options
+                        ? question.options.filter((option) => option.text.trim() !== "")
+                        : question.options,
+                })),
+            };
+
+            const response = await fetch(`/api/tests/${testId}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify(cleanedData),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                return rejectWithValue(
+                    data.message || data.error || "Ошибка при сохранении черновика",
+                );
+            }
+
+            return data;
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : "Ошибка при сохранении черновика",
+            );
+        }
+    },
+);
+
 export const getActiveAttempts = createAsyncThunk(
     "tests/getActiveAttempts",
     async (_, { rejectWithValue }) => {
@@ -232,7 +316,9 @@ export const archiveTest = createAsyncThunk(
             const data = await response.json();
 
             if (!response.ok) {
-                return rejectWithValue(data.message || data.error || "Ошибка при архивировании теста");
+                return rejectWithValue(
+                    data.message || data.error || "Ошибка при архивировании теста",
+                );
             }
 
             return data;

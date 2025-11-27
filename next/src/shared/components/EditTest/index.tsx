@@ -8,7 +8,8 @@ import TestInfoForm, { TestInfoData } from "@/shared/components/TestInfoForm";
 import Questions from "@/shared/components/Questions";
 import { QuestionFormData } from "@/shared/types/question";
 import styles from "./index.module.scss";
-import { getTestById, updateTest } from "@/shared/store/slices/test";
+import { getTestById, updateTest, autoSaveTest, saveTestAsDraft } from "@/shared/store/slices/test";
+import { getTestValidationErrors } from "@/shared/utils/testValidation";
 
 interface EditTestProps {
     testId: number;
@@ -20,6 +21,8 @@ interface SavePayload {
     timeLimit?: number;
     questions: QuestionFormData[];
 }
+
+const AUTO_SAVE_DELAY = 3000;
 
 const EditTest = ({ testId }: EditTestProps): ReactElement => {
     const dispatch = useDispatch();
@@ -33,6 +36,9 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [isValidationOpen, setIsValidationOpen] = useState(false);
+    const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+    const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
     const { selectedTest } = useSelector((state) => state.test);
 
     useEffect(() => {
@@ -62,6 +68,45 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
             setIsLoading(false);
         }
     }, [selectedTest]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        if (autoSaveTimeout) {
+            clearTimeout(autoSaveTimeout);
+        }
+
+        if (!selectedTest || isSaving) {
+            return;
+        }
+
+        setAutoSaveStatus("saving");
+
+        const timeout = setTimeout(async () => {
+            try {
+                await dispatch(
+                    autoSaveTest({
+                        testId: selectedTest.id!,
+                        testData: {
+                            title: testInfo.title,
+                            description: testInfo.description,
+                            timeLimit: testInfo.timeLimit,
+                            questions,
+                        },
+                    }),
+                ).unwrap();
+
+                setAutoSaveStatus("saved");
+                setTimeout(() => setAutoSaveStatus("idle"), 2000);
+            } catch (error) {
+                console.error("Auto-save error:", error);
+                setAutoSaveStatus("idle");
+            }
+        }, AUTO_SAVE_DELAY);
+
+        setAutoSaveTimeout(timeout);
+
+        return () => clearTimeout(timeout);
+    }, [testInfo, questions, selectedTest, isSaving, dispatch]);
 
     const handleSaveClick = () => {
         const errors = getValidationErrors();
@@ -98,47 +143,40 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
         }
     };
 
+    const handleSaveDraft = async () => {
+        setIsSaving(true);
+        try {
+            const testData: SavePayload = {
+                title: testInfo.title,
+                description: testInfo.description,
+                timeLimit: testInfo.timeLimit,
+                questions: questions,
+            };
+
+            await dispatch(
+                saveTestAsDraft({
+                    testId,
+                    testData,
+                }),
+            ).unwrap();
+
+            alert("Тест сохранен как черновик");
+            router.push("/dashboard");
+        } catch (error) {
+            console.error("Error saving draft:", error);
+            alert(error instanceof Error ? error.message : "Ошибка при сохранении черновика");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const getValidationErrors = () => {
-        const errors: string[] = [];
-
-        if (!testInfo.title.trim()) {
-            errors.push("Название теста");
-        }
-        if (!testInfo.timeLimit || testInfo.timeLimit <= 0) {
-            errors.push("Время для прохождения теста");
-        }
-        if (questions.length === 0) {
-            errors.push("Минимум один вопрос");
-        }
-
-        questions.forEach((question, index) => {
-            if (!question.text.trim()) {
-                errors.push(`Вопрос ${index + 1}: текст вопроса`);
-            }
-
-            if (question.type === "text_input") {
-                if (!question.correctTextAnswer?.trim()) {
-                    errors.push(`Вопрос ${index + 1}: правильный ответ`);
-                }
-            } else {
-                const filledOptions = question.options?.filter((opt) => opt.text.trim()) || [];
-
-                if (filledOptions.length < 2) {
-                    errors.push(`Вопрос ${index + 1}: минимум два варианта ответа`);
-                } else {
-                    const correctOptions = filledOptions.filter((opt) => opt.isCorrect);
-                    if (correctOptions.length === 0) {
-                        errors.push(`Вопрос ${index + 1}: не отмечен правильный ответ`);
-                    } else if (question.type === "multiple_choice" && correctOptions.length < 2) {
-                        errors.push(
-                            `Вопрос ${index + 1}: минимум два правильных ответа для множественного выбора`,
-                        );
-                    }
-                }
-            }
+        return getTestValidationErrors({
+            title: testInfo.title,
+            description: testInfo.description,
+            timeLimit: testInfo.timeLimit,
+            questions,
         });
-
-        return errors;
     };
 
     const validationErrors = getValidationErrors();
@@ -164,6 +202,7 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
         if (element) {
             element.scrollIntoView({ behavior: "smooth", block: "center" });
         }
+        setIsValidationOpen(false);
     };
 
     if (isLoading) {
@@ -173,9 +212,81 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
     return (
         <div className={styles.editTest}>
             <div className={styles.header}>
-                <h1 className={styles.title}>Редактирование теста</h1>
-                <p className={styles.description}>Измените информацию о тесте и вопросы</p>
+                <div className={styles.headerContent}>
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                        }}
+                    >
+                        <div>
+                            <h1 className={styles.title}>Редактирование теста</h1>
+                            <p className={styles.description}>
+                                Измените информацию о тесте и вопросы
+                            </p>
+                        </div>
+                        {autoSaveStatus !== "idle" && (
+                            <div
+                                style={{
+                                    fontSize: "13px",
+                                    color: autoSaveStatus === "saved" ? "#22c55e" : "#6b7280",
+                                    marginTop: "4px",
+                                    fontWeight: 500,
+                                }}
+                            >
+                                {autoSaveStatus === "saving" && "💾 Сохраняется..."}
+                                {autoSaveStatus === "saved" && "✓ Сохранено"}
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
+
+            {validationErrors.length > 0 && (
+                <div
+                    className={`${styles.floatingValidationPanel} ${isValidationOpen ? styles.open : ""}`}
+                >
+                    <button
+                        className={styles.validationToggleButton}
+                        onClick={() => setIsValidationOpen(!isValidationOpen)}
+                        title="Показать ошибки валидации"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="16" x2="12" y2="12" />
+                            <line x1="12" y1="8" x2="12.01" y2="8" />
+                        </svg>
+                        <span className={styles.errorCount}>{validationErrors.length}</span>
+                    </button>
+                    {isValidationOpen && (
+                        <div className={styles.validationContent}>
+                            <p className={styles.validationTitle}>Не заполнено:</p>
+                            <ul>
+                                {validationErrors.map((error, idx) => (
+                                    <li
+                                        key={idx}
+                                        onClick={() => handleErrorClick(error)}
+                                        className={styles.errorItem}
+                                    >
+                                        {error}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
                 <TestInfoForm data={testInfo} onChange={setTestInfo} disabled={isSaving} />
@@ -206,6 +317,9 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
                             disabled={isSaving}
                         >
                             Отмена
+                        </Button>
+                        <Button onClick={handleSaveDraft} variant="outline" disabled={isSaving}>
+                            {isSaving ? "Сохранение..." : "Сохранить как черновик"}
                         </Button>
                         <Button
                             onClick={handleSaveClick}

@@ -7,7 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log("Method:", req.method);
     console.log("Cookies:", Object.keys(req.cookies));
     console.log("UserId cookie:", req.cookies.userId);
-    
+
     const userId = req.cookies.userId;
 
     if (!userId) {
@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         try {
             console.log("Updating grading criteria for userId:", userId);
             console.log("Body:", JSON.stringify(req.body));
-            
+
             const response = await fetch(createApiUrl("/api/auth/grading-criteria"), {
                 method: "PATCH",
                 headers: {

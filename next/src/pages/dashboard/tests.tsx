@@ -6,7 +6,7 @@ import DashboardLayout from "@/shared/components/DashboardLayout";
 import DashboardHeader from "@/shared/components/DashboardHeader";
 import TestList from "@/shared/components/TestList";
 
-const Main = () => {
+const MyTests = () => {
     const router = useRouter();
     const [isHydrated, setIsHydrated] = useState(false);
     const { user } = useSelector(selectAuth);
@@ -19,16 +19,12 @@ const Main = () => {
         return <div>Загрузка...</div>;
     }
 
-    console.log("Dashboard - user:", user);
-    console.log("Dashboard - user?.role:", user?.role);
-    console.log("Dashboard - typeof user?.role:", typeof user?.role);
-
     return (
         <DashboardLayout>
             <DashboardHeader />
-            <TestList userRole={user?.role} isMainDashboard={true} />
+            <TestList userRole={user?.role} />
         </DashboardLayout>
     );
 };
 
-export default Main;
+export default MyTests;

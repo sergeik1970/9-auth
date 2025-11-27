@@ -196,7 +196,7 @@ const Questions: React.FC<QuestionsProps> = ({
                             onClick={handleAddQuestion}
                             disabled={disabled}
                         >
-                            Добавить еще один вопрос
+                            Добавить вопрос
                         </Button>
                     </div>
                 </>

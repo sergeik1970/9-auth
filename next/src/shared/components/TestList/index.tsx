@@ -13,12 +13,20 @@ interface TestListProps {
     userRole?: UserRole;
     onCreateTest?: () => void;
     onError?: (error: string) => void;
+    isMainDashboard?: boolean;
 }
 
-const TestList = ({ userRole, onCreateTest, onError }: TestListProps): ReactElement => {
+const TestList = ({
+    userRole,
+    onCreateTest,
+    onError,
+    isMainDashboard = false,
+}: TestListProps): ReactElement => {
     const router = useRouter();
     const [isRefreshing, setIsRefreshing] = React.useState(false);
     const [isHydrated, setIsHydrated] = React.useState(false);
+    const [isDraftsOpen, setIsDraftsOpen] = React.useState(false);
+    const [isArchivedOpen, setIsArchivedOpen] = React.useState(false);
 
     const {
         items: tests,
@@ -27,9 +35,6 @@ const TestList = ({ userRole, onCreateTest, onError }: TestListProps): ReactElem
         activeAttempts,
         activeAttemptsLoading,
     } = useSelector(selectTest);
-
-    console.log("TestList - activeAttempts:", activeAttempts);
-    console.log("TestList - activeAttemptsLoading:", activeAttemptsLoading);
 
     const isUserTeacher = userRole && isTeacher(userRole);
 
@@ -65,6 +70,19 @@ const TestList = ({ userRole, onCreateTest, onError }: TestListProps): ReactElem
         dispatch(getActiveAttempts());
         setTimeout(() => setIsRefreshing(false), 600);
     };
+
+    const sortByUpdated = (testArray: typeof tests) => {
+        return [...testArray].sort((a, b) => {
+            const aUpdated = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+            const bUpdated = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+            return bUpdated - aUpdated;
+        });
+    };
+
+    const activeTests = sortByUpdated(tests.filter((t) => t.status === "active"));
+    const completedTests = sortByUpdated(tests.filter((t) => t.status === "completed"));
+    const draftTests = sortByUpdated(tests.filter((t) => t.status === "draft"));
+    const archivedTests = sortByUpdated(tests.filter((t) => t.status === "archived"));
 
     if (isLoading || !isHydrated) {
         return <LoadingState message="Загрузка тестов..." />;
@@ -123,7 +141,6 @@ const TestList = ({ userRole, onCreateTest, onError }: TestListProps): ReactElem
                             <TestCard
                                 key={`attempt-${attempt.id}`}
                                 test={attempt.test}
-                                creator={attempt.test.creator}
                                 onUpdate={handleRefresh}
                                 isActiveAttempt={true}
                                 attemptId={attempt.id}
@@ -133,36 +150,190 @@ const TestList = ({ userRole, onCreateTest, onError }: TestListProps): ReactElem
                 </div>
             )}
 
-            {tests.length === 0 && activeAttempts.length === 0 ? (
+            {isUserTeacher ? (
+                // Вид для учителя
+                isMainDashboard ? (
+                    // На главной странице показываем только активные и завершенные
+                    activeTests.length === 0 && completedTests.length === 0 ? (
+                        <EmptyState
+                            title="У вас пока не тестов"
+                            message="Создайте свой первый тест, чтобы начать работу!"
+                            actionText="Создать первый тест"
+                            onAction={handleCreateTest}
+                            icon="📝"
+                        />
+                    ) : (
+                        <div>
+                            {/* Активные тесты */}
+                            {activeTests.length > 0 && (
+                                <div className={styles.testSection}>
+                                    <h2 className={styles.sectionTitle}>Активные тесты</h2>
+                                    <div className={styles.testList}>
+                                        {activeTests.map((test) => (
+                                            <TestCard
+                                                key={test.id}
+                                                test={test}
+                                                onUpdate={handleRefresh}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Завершенные тесты */}
+                            {completedTests.length > 0 && (
+                                <div className={styles.testSection}>
+                                    <h2 className={styles.sectionTitle}>Завершенные тесты</h2>
+                                    <div className={styles.testList}>
+                                        {completedTests.map((test) => (
+                                            <TestCard
+                                                key={test.id}
+                                                test={test}
+                                                onUpdate={handleRefresh}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Кнопка Все тесты */}
+                            {(draftTests.length > 0 || archivedTests.length > 0) && (
+                                <div className={`${styles.testSection} ${styles.centered}`}>
+                                    <Button
+                                        variant="primary"
+                                        onClick={() => router.push("/dashboard/tests")}
+                                    >
+                                        Все тесты
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    )
+                ) : // На странице Мои тесты показываем все
+                activeTests.length === 0 &&
+                  completedTests.length === 0 &&
+                  draftTests.length === 0 &&
+                  archivedTests.length === 0 ? (
+                    <EmptyState
+                        title="У вас пока не тестов"
+                        message="Создайте свой первый тест, чтобы начать работу!"
+                        actionText="Создать первый тест"
+                        onAction={handleCreateTest}
+                        icon="📝"
+                    />
+                ) : (
+                    <div>
+                        {/* Активные тесты */}
+                        {activeTests.length > 0 && (
+                            <div className={styles.testSection}>
+                                <h2 className={styles.sectionTitle}>Активные тесты</h2>
+                                <div className={styles.testList}>
+                                    {activeTests.map((test) => (
+                                        <TestCard
+                                            key={test.id}
+                                            test={test}
+                                            onUpdate={handleRefresh}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Завершенные тесты */}
+                        {completedTests.length > 0 && (
+                            <div className={styles.testSection}>
+                                <h2 className={styles.sectionTitle}>Завершенные тесты</h2>
+                                <div className={styles.testList}>
+                                    {completedTests.map((test) => (
+                                        <TestCard
+                                            key={test.id}
+                                            test={test}
+                                            onUpdate={handleRefresh}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Черновики */}
+                        {draftTests.length > 0 && (
+                            <div className={styles.testSection}>
+                                <button
+                                    className={styles.collapsibleHeader}
+                                    onClick={() => setIsDraftsOpen(!isDraftsOpen)}
+                                >
+                                    <span
+                                        className={`${styles.arrow} ${isDraftsOpen ? styles.open : ""}`}
+                                    >
+                                        ▶
+                                    </span>
+                                    <h2 className={styles.sectionTitle}>
+                                        Черновики ({draftTests.length})
+                                    </h2>
+                                </button>
+                                {isDraftsOpen && (
+                                    <div className={styles.testList}>
+                                        {draftTests.map((test) => (
+                                            <TestCard
+                                                key={test.id}
+                                                test={test}
+                                                onUpdate={handleRefresh}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Архивированные */}
+                        {archivedTests.length > 0 && (
+                            <div className={styles.testSection}>
+                                <button
+                                    className={styles.collapsibleHeader}
+                                    onClick={() => setIsArchivedOpen(!isArchivedOpen)}
+                                >
+                                    <span
+                                        className={`${styles.arrow} ${isArchivedOpen ? styles.open : ""}`}
+                                    >
+                                        ▶
+                                    </span>
+                                    <h2 className={styles.sectionTitle}>
+                                        Архивированные ({archivedTests.length})
+                                    </h2>
+                                </button>
+                                {isArchivedOpen && (
+                                    <div className={styles.testList}>
+                                        {archivedTests.map((test) => (
+                                            <TestCard
+                                                key={test.id}
+                                                test={test}
+                                                onUpdate={handleRefresh}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )
+            ) : // Вид для студента
+            tests.length === 0 && activeAttempts.length === 0 ? (
                 <EmptyState
-                    title={isUserTeacher ? "У вас пока не тестов" : "Нет доступных тестов"}
-                    message={
-                        isUserTeacher
-                            ? "Создайте свой первый тест, чтобы начать работу!"
-                            : "Пока нет активных тестов для прохождения"
-                    }
-                    actionText={isUserTeacher ? "Создать первый тест" : undefined}
-                    onAction={isUserTeacher ? handleCreateTest : undefined}
+                    title="Нет доступных тестов"
+                    message="Пока нет активных тестов для прохождения"
                     icon="📝"
                 />
             ) : (
-                tests.length > 0 && (
-                    <div>
-                        {activeAttempts.length > 0 && (
-                            <h2 className={styles.sectionTitle}>Все тесты</h2>
-                        )}
-                        <div className={styles.testList}>
-                            {tests.map((test) => (
-                                <TestCard
-                                    key={test.id}
-                                    test={test}
-                                    creator={test.creator}
-                                    onUpdate={handleRefresh}
-                                />
-                            ))}
-                        </div>
+                <div>
+                    {activeAttempts.length > 0 && (
+                        <h2 className={styles.sectionTitle}>Все тесты</h2>
+                    )}
+                    <div className={styles.testList}>
+                        {tests.map((test) => (
+                            <TestCard key={test.id} test={test} onUpdate={handleRefresh} />
+                        ))}
                     </div>
-                )
+                </div>
             )}
         </div>
     );

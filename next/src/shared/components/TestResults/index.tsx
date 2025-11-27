@@ -14,9 +14,7 @@ interface TestResultsProps {
 
 export const TestResults: React.FC<TestResultsProps> = ({ results, onRetry, onGoBack }) => {
     const [selectedQuestionIndex, setSelectedQuestionIndex] = useState<number | null>(null);
-    const gradingCriteria = useSelector(
-        (state: RootState) => state.auth.user?.gradingCriteria
-    );
+    const gradingCriteria = useSelector((state: RootState) => state.auth.user?.gradingCriteria);
 
     const getGrade = (percentage: number): { grade: number; label: string } => {
         if (!gradingCriteria) {
@@ -28,7 +26,8 @@ export const TestResults: React.FC<TestResultsProps> = ({ results, onRetry, onGo
 
         if (percentage >= gradingCriteria.excellent) return { grade: 5, label: "Отлично" };
         if (percentage >= gradingCriteria.good) return { grade: 4, label: "Хорошо" };
-        if (percentage >= gradingCriteria.satisfactory) return { grade: 3, label: "Удовлетворительно" };
+        if (percentage >= gradingCriteria.satisfactory)
+            return { grade: 3, label: "Удовлетворительно" };
         return { grade: 2, label: "Неудовлетворительно" };
     };
 

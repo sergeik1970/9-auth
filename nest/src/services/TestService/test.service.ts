@@ -108,7 +108,7 @@ export class TestService {
         if (user && user.role === "teacher") {
             return this.testRepository.find({
                 where: { creatorId: user.sub },
-                relations: ["questions", "questions.options"],
+                relations: ["creator", "questions", "questions.options"],
                 order: {
                     createdAt: "DESC",
                 },
@@ -118,7 +118,7 @@ export class TestService {
         // Студентам и неавторизованным пользователям показываем только активные тесты
         return this.testRepository.find({
             where: { status: TestStatus.ACTIVE },
-            relations: ["questions", "questions.options"],
+            relations: ["creator", "questions", "questions.options"],
             order: {
                 createdAt: "DESC",
             },

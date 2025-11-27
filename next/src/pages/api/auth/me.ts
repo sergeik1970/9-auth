@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             console.log("All cookies object:", req.cookies);
             console.log("Cookie keys:", Object.keys(req.cookies));
             console.log("Headers:", req.headers);
-            
+
             let token = req.cookies.token;
             console.log("Token from cookie:", token ? "YES" : "NO");
 
@@ -25,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 console.log("❌ NO TOKEN - returning 401");
                 return res.status(401).json({ error: "Unauthorized" });
             }
-            
+
             console.log("✅ Token found, forwarding to backend");
             console.log("Token length:", token.length);
 

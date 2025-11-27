@@ -1,12 +1,20 @@
 import React, { ReactElement, useEffect, useState } from "react";
 import Button from "@/shared/components/Button";
-import { getTestById, getTests, selectTest, publishTest, completeTest, archiveTest } from "@/shared/store/slices/test";
+import {
+    getTestById,
+    getTests,
+    selectTest,
+    publishTest,
+    completeTest,
+    archiveTest,
+} from "@/shared/store/slices/test";
 import styles from "./index.module.scss";
 import { useDispatch, useSelector } from "@/shared/store/store";
 import { useRouter } from "next/router";
 import LoadingState from "@/shared/components/LoadingState";
 import TestStatus from "@/shared/components/TestStatus";
 import { selectAuth } from "@/shared/store/slices/auth";
+import { getTestValidationErrors } from "@/shared/utils/testValidation";
 
 interface TestPreviewProps {
     isOwner?: boolean;
@@ -68,6 +76,7 @@ const TestPreview = ({
     const [isPublishing, setIsPublishing] = useState(false);
     const [isCompleting, setIsCompleting] = useState(false);
     const [isArchiving, setIsArchiving] = useState(false);
+    const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
     // Получаем ID теста из URL, если не передан через props
     const id = testId || (router.query.id ? Number(router.query.id) : undefined);
@@ -85,8 +94,24 @@ const TestPreview = ({
         }
     }, [error, onError]);
 
+    useEffect(() => {
+        if (test) {
+            const errors = getTestValidationErrors({
+                title: test.title,
+                description: test.description,
+                timeLimit: test.timeLimit,
+                questions: test.questions || [],
+            });
+            setValidationErrors(errors);
+        }
+    }, [test]);
+
     const handlePublish = async () => {
         if (!test?.id) return;
+        if (validationErrors.length > 0) {
+            alert("Тест не может быть опубликован. Пожалуйста, исправьте все ошибки валидации.");
+            return;
+        }
         try {
             setIsPublishing(true);
             await dispatch(publishTest(test.id)).unwrap();
@@ -101,6 +126,10 @@ const TestPreview = ({
 
     const handleComplete = async () => {
         if (!test?.id) return;
+        if (validationErrors.length > 0) {
+            alert("Тест не может быть завершен. Пожалуйста, исправьте все ошибки валидации.");
+            return;
+        }
         try {
             setIsCompleting(true);
             await dispatch(completeTest(test.id)).unwrap();
@@ -115,6 +144,10 @@ const TestPreview = ({
 
     const handleArchive = async () => {
         if (!test?.id) return;
+        if (validationErrors.length > 0) {
+            alert("Тест не может быть архивирован. Пожалуйста, исправьте все ошибки валидации.");
+            return;
+        }
         try {
             setIsArchiving(true);
             await dispatch(archiveTest(test.id)).unwrap();
@@ -138,8 +171,17 @@ const TestPreview = ({
     return (
         <div className={styles.content}>
             <div className={styles.info}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-                    <h2 className={styles.title} style={{ margin: 0 }}>{test.title}</h2>
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        marginBottom: "16px",
+                    }}
+                >
+                    <h2 className={styles.title} style={{ margin: 0 }}>
+                        {test.title}
+                    </h2>
                     <TestStatus status={test.status} />
                 </div>
                 <div className={styles.infoItem}>
@@ -164,8 +206,40 @@ const TestPreview = ({
                 )}
             </div>
 
+            {validationErrors.length > 0 && (
+                <div className={styles.validationWarning}>
+                    <div
+                        style={{
+                            color: "#991b1b",
+                            fontWeight: 600,
+                            marginBottom: "8px",
+                            fontSize: "15px",
+                        }}
+                    >
+                        ⚠️ Тест содержит ошибки валидации
+                    </div>
+                    <ul
+                        style={{
+                            margin: "0",
+                            paddingLeft: "20px",
+                            color: "#7f1d1d",
+                            fontSize: "14px",
+                        }}
+                    >
+                        {validationErrors.map((error, idx) => (
+                            <li key={idx} style={{ marginBottom: "4px" }}>
+                                {error}
+                            </li>
+                        ))}
+                    </ul>
+                    <p style={{ margin: "8px 0 0 0", fontSize: "13px", color: "#6b7280" }}>
+                        Отредактируйте тест, чтобы исправить ошибки перед изменением статуса.
+                    </p>
+                </div>
+            )}
+
             <div className={styles.actions}>
-                {onStartTest && (
+                {onStartTest && test.status === "active" && (
                     <Button
                         onClick={onStartTest}
                         disabled={isStarting}
@@ -178,20 +252,34 @@ const TestPreview = ({
                               : "Начать тест"}
                     </Button>
                 )}
-                {isOwner && test.id && (test.status === "draft" || test.status === "completed" || test.status === "archived") && (
-                    <Button
-                        onClick={handlePublish}
-                        disabled={isPublishing}
-                        variant="primary"
-                    >
-                        {isPublishing ? "Публикация..." : "Опубликовать"}
-                    </Button>
-                )}
+                {isOwner &&
+                    test.id &&
+                    (test.status === "draft" ||
+                        test.status === "completed" ||
+                        test.status === "archived") && (
+                        <Button
+                            onClick={handlePublish}
+                            disabled={isPublishing || validationErrors.length > 0}
+                            variant="primary"
+                            title={
+                                validationErrors.length > 0
+                                    ? "Тест содержит ошибки валидации. Отредактируйте тест перед публикацией."
+                                    : ""
+                            }
+                        >
+                            {isPublishing ? "Публикация..." : "Опубликовать"}
+                        </Button>
+                    )}
                 {isOwner && test.id && test.status === "active" && (
                     <Button
                         onClick={handleComplete}
-                        disabled={isCompleting}
+                        disabled={isCompleting || validationErrors.length > 0}
                         variant="primary"
+                        title={
+                            validationErrors.length > 0
+                                ? "Тест содержит ошибки валидации. Отредактируйте тест перед завершением."
+                                : ""
+                        }
                     >
                         {isCompleting ? "Завершение..." : "Завершить"}
                     </Button>
@@ -199,8 +287,13 @@ const TestPreview = ({
                 {isOwner && test.id && test.status === "completed" && (
                     <Button
                         onClick={handleArchive}
-                        disabled={isArchiving}
+                        disabled={isArchiving || validationErrors.length > 0}
                         variant="primary"
+                        title={
+                            validationErrors.length > 0
+                                ? "Тест содержит ошибки валидации. Отредактируйте тест перед архивированием."
+                                : ""
+                        }
                     >
                         {isArchiving ? "Архивирование..." : "Архивировать"}
                     </Button>

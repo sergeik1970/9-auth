@@ -9,6 +9,7 @@ import { isTeacher } from "@/shared/utils/roles";
 import { createTest } from "@/shared/store/slices/test";
 import { selectAuth } from "@/shared/store/slices/auth";
 import { QuestionFormData } from "@/shared/types/question";
+import { getTestValidationErrors } from "@/shared/utils/testValidation";
 
 export interface TestForm {
     title: string;
@@ -22,19 +23,24 @@ interface CreateTestProps {
     onError?: (error: string) => void;
 }
 
+const DRAFT_STORAGE_KEY = "createTest_draft";
+const AUTO_SAVE_DELAY = 2000;
+
 const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
     const dispatch = useDispatch();
     const router = useRouter();
     const [testInfo, setTestInfo] = useState<TestInfoData>({
-        title: "", // Начальное название пустое
+        title: "",
         description: "",
         timeLimit: undefined,
     });
     const [questions, setQuestions] = useState<QuestionFormData[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isValidationOpen, setIsValidationOpen] = useState(false);
+    const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+    const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
     const { user } = useSelector(selectAuth);
 
-    // Проверка роли
     const hasAccess = user && isTeacher(user.role);
 
     useEffect(() => {
@@ -43,12 +49,64 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
         }
     }, [hasAccess, router]);
 
+    const saveDraftToStorage = (info: TestInfoData, qs: QuestionFormData[]) => {
+        try {
+            const draftData = { testInfo: info, questions: qs };
+            localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
+            setAutoSaveStatus("saved");
+            setTimeout(() => setAutoSaveStatus("idle"), 2000);
+        } catch (error) {
+            console.error("Error saving draft to localStorage:", error);
+        }
+    };
+
+    const loadDraftFromStorage = () => {
+        try {
+            const stored = localStorage.getItem(DRAFT_STORAGE_KEY);
+            if (stored) {
+                const { testInfo: savedInfo, questions: savedQuestions } = JSON.parse(stored);
+                setTestInfo(savedInfo);
+                setQuestions(savedQuestions);
+            }
+        } catch (error) {
+            console.error("Error loading draft from localStorage:", error);
+        }
+    };
+
+    const clearDraftFromStorage = () => {
+        try {
+            localStorage.removeItem(DRAFT_STORAGE_KEY);
+        } catch (error) {
+            console.error("Error clearing draft from localStorage:", error);
+        }
+    };
+
+    useEffect(() => {
+        loadDraftFromStorage();
+    }, []);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        if (autoSaveTimeout) {
+            clearTimeout(autoSaveTimeout);
+        }
+
+        setAutoSaveStatus("saving");
+
+        const timeout = setTimeout(() => {
+            saveDraftToStorage(testInfo, questions);
+        }, AUTO_SAVE_DELAY);
+
+        setAutoSaveTimeout(timeout);
+
+        return () => clearTimeout(timeout);
+    }, [testInfo, questions]);
+
     if (!hasAccess) {
         return <div>Загрузка...</div>; // Или null, но лучше показать что-то
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
-        console.log("Form submitted!");
         e.preventDefault();
         setIsLoading(true);
 
@@ -62,10 +120,9 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
                 }),
             ).unwrap();
 
-            // После успеха - редирект на dashboard
+            clearDraftFromStorage();
             router.push("/dashboard");
         } catch (error) {
-            // Обработка ошибки
             if (onError) {
                 onError(error as string);
             }
@@ -75,46 +132,12 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
     };
 
     const getValidationErrors = () => {
-        const errors: string[] = [];
-
-        if (!testInfo.title.trim()) {
-            errors.push("Название теста");
-        }
-        if (!testInfo.timeLimit || testInfo.timeLimit <= 0) {
-            errors.push("Время для прохождения теста");
-        }
-        if (questions.length === 0) {
-            errors.push("Минимум один вопрос");
-        }
-
-        questions.forEach((question, index) => {
-            if (!question.text.trim()) {
-                errors.push(`Вопрос ${index + 1}: текст вопроса`);
-            }
-
-            if (question.type === "text_input") {
-                if (!question.correctTextAnswer?.trim()) {
-                    errors.push(`Вопрос ${index + 1}: правильный ответ`);
-                }
-            } else {
-                const filledOptions = question.options?.filter((opt) => opt.text.trim()) || [];
-
-                if (filledOptions.length < 2) {
-                    errors.push(`Вопрос ${index + 1}: минимум два варианта ответа`);
-                } else {
-                    const correctOptions = filledOptions.filter((opt) => opt.isCorrect);
-                    if (correctOptions.length === 0) {
-                        errors.push(`Вопрос ${index + 1}: не отмечен правильный ответ`);
-                    } else if (question.type === "multiple_choice" && correctOptions.length < 2) {
-                        errors.push(
-                            `Вопрос ${index + 1}: минимум два правильных ответа для множественного выбора`,
-                        );
-                    }
-                }
-            }
+        return getTestValidationErrors({
+            title: testInfo.title,
+            description: testInfo.description,
+            timeLimit: testInfo.timeLimit,
+            questions,
         });
-
-        return errors;
     };
 
     const validationErrors = getValidationErrors();
@@ -140,16 +163,88 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
         if (element) {
             element.scrollIntoView({ behavior: "smooth", block: "center" });
         }
+        setIsValidationOpen(false);
     };
 
     return (
         <div className={styles.createTest}>
             <div className={styles.header}>
-                <h1 className={styles.title}>Создание нового теста</h1>
-                <p className={styles.description}>
-                    Заполните информацию о тесте и добавьте вопросы
-                </p>
+                <div className={styles.headerContent}>
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                        }}
+                    >
+                        <div>
+                            <h1 className={styles.title}>Создание нового теста</h1>
+                            <p className={styles.description}>
+                                Заполните информацию о тесте и добавьте вопросы
+                            </p>
+                        </div>
+                        {autoSaveStatus !== "idle" && (
+                            <div
+                                style={{
+                                    fontSize: "13px",
+                                    color: autoSaveStatus === "saved" ? "#22c55e" : "#6b7280",
+                                    marginTop: "4px",
+                                    fontWeight: 500,
+                                }}
+                            >
+                                {autoSaveStatus === "saving" && "💾 Сохраняется..."}
+                                {autoSaveStatus === "saved" && "✓ Сохранено"}
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
+
+            {validationErrors.length > 0 && (
+                <div
+                    className={`${styles.floatingValidationPanel} ${isValidationOpen ? styles.open : ""}`}
+                >
+                    <button
+                        className={styles.validationToggleButton}
+                        onClick={() => setIsValidationOpen(!isValidationOpen)}
+                        title="Показать ошибки валидации"
+                        type="button"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="16" x2="12" y2="12" />
+                            <line x1="12" y1="8" x2="12.01" y2="8" />
+                        </svg>
+                        <span className={styles.errorCount}>{validationErrors.length}</span>
+                    </button>
+                    {isValidationOpen && (
+                        <div className={styles.validationContent}>
+                            <p className={styles.validationTitle}>Не заполнено:</p>
+                            <ul>
+                                {validationErrors.map((error, idx) => (
+                                    <li
+                                        key={idx}
+                                        onClick={() => handleErrorClick(error)}
+                                        className={styles.errorItem}
+                                    >
+                                        {error}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className={styles.form}>
                 <TestInfoForm data={testInfo} onChange={setTestInfo} disabled={isLoading} />

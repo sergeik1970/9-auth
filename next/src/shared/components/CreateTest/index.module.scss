@@ -5,8 +5,12 @@
 }
 
 .header {
-    text-align: center;
     margin-bottom: 32px;
+    text-align: center;
+}
+
+.headerContent {
+    display: block;
 }
 
 .title {
@@ -14,6 +18,7 @@
     font-weight: 600;
     color: #1f2937;
     margin: 0 0 8px 0;
+    text-align: center;
 }
 
 .subtitle {
@@ -26,6 +31,130 @@
     font-size: 16px;
     color: #6b7280;
     margin: 0;
+    text-align: center;
+}
+
+.floatingValidationPanel {
+    position: fixed;
+    right: 24px;
+    top: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 1000;
+    width: 48px;
+    align-items: flex-end;
+}
+
+.validationToggleButton {
+    position: relative;
+    background: #f3f4f6;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #22c55e;
+    transition: all 0.2s ease;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    transform: scale(1);
+
+    svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    &:hover {
+        background: #e5e7eb;
+        border-color: #9ca3af;
+    }
+
+    &:active {
+        background: #d1d5db;
+        transform: scale(0.95);
+    }
+
+    .floatingValidationPanel.open & {
+        background: #e5e7eb;
+        border-color: #9ca3af;
+    }
+}
+
+.errorCount {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #22c55e;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.validationContent {
+    position: absolute;
+    right: 100%;
+    top: 0;
+    margin-right: 12px;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 16px;
+    width: 320px;
+    min-height: 100px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-10px);
+    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+
+    .floatingValidationPanel.open & {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(0);
+        pointer-events: auto;
+    }
+
+    .validationTitle {
+        margin: 0 0 12px 0;
+        font-weight: 600;
+        color: #374151;
+        font-size: 14px;
+    }
+
+    ul {
+        margin: 0;
+        padding-left: 20px;
+        list-style: disc;
+        max-height: 400px;
+        overflow-y: auto;
+
+        li {
+            color: #4b5563;
+            font-size: 13px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &:hover {
+                color: #22c55e;
+                text-decoration: underline;
+            }
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+    }
 }
 
 .form {
@@ -102,5 +231,15 @@
     
     .form {
         gap: 24px;
+    }
+
+    .floatingValidationPanel {
+        right: 12px;
+        top: auto;
+        bottom: 24px;
+    }
+
+    .validationContent {
+        max-width: 280px;
     }
 }

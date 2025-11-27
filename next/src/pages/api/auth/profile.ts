@@ -5,7 +5,7 @@ const createApiUrl = (path: string) => `${process.env.NEXT_PUBLIC_API_URL}${path
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     console.log("profile - incoming request");
     console.log("profile - cookies:", req.cookies);
-    
+
     const token = req.cookies.token;
 
     if (!token) {

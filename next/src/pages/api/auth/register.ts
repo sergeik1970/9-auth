@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             const setCookieHeaders = response.headers.getSetCookie?.() || [];
             console.log("Set-Cookie headers from backend:", setCookieHeaders);
-            
+
             if (setCookieHeaders.length > 0) {
                 console.log("✅ Setting cookies on client response");
                 res.setHeader("set-cookie", setCookieHeaders);
