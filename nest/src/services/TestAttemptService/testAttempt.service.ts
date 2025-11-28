@@ -148,6 +148,41 @@ export class TestAttemptService {
         }));
     }
 
+    async getAttemptsByTestId(testId: number, user: JwtPayload): Promise<any[]> {
+        const test = await this.testRepository.findOne({
+            where: { id: testId, creatorId: user.sub },
+        });
+
+        if (!test) {
+            throw new ForbiddenException(
+                "Вы не можете просмотреть результаты для этого теста",
+            );
+        }
+
+        const attempts = await this.attemptRepository.find({
+            where: { testId, status: AttemptStatus.COMPLETED },
+            relations: ["user"],
+            order: { completedAt: "DESC" },
+        });
+
+        return attempts.map((attempt) => ({
+            id: attempt.id,
+            studentName: attempt.user?.email || "Unknown",
+            correctAnswers: Number(attempt.correctAnswers ?? 0),
+            totalQuestions: Number(attempt.totalQuestions ?? 0),
+            percentage: Number(attempt.score ?? 0),
+            timeSpent: attempt.completedAt && attempt.startedAt
+                ? Math.floor(
+                      (new Date(attempt.completedAt).getTime() -
+                          new Date(attempt.startedAt).getTime()) /
+                          1000,
+                  )
+                : 0,
+            status: attempt.status,
+            completedAt: attempt.completedAt,
+        }));
+    }
+
     async saveAnswer(
         testId: number,
         attemptId: number,

@@ -1,4 +1,4 @@
-export const API_BASE_URL = "";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export const API_ENDPOINTS = {
     auth: {
@@ -13,6 +13,7 @@ export const API_ENDPOINTS = {
         create: "/api/tests/create",
         update: (id: number) => `/api/tests/${id}`,
         delete: (id: number) => `/api/tests/${id}`,
+        getAttempts: (id: number) => `/api/tests/${id}/attempts`,
     },
 };
 

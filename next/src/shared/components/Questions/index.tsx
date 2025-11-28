@@ -40,29 +40,31 @@ const Questions: React.FC<QuestionsProps> = ({
     const handleQuestionChange = useCallback(
         (questionIndex: number, field: keyof QuestionFormData, value: any) => {
             const updated = [...questions];
+            const currentQuestion = updated[questionIndex];
 
             if (field === "type") {
                 if (value === "text_input") {
                     updated[questionIndex] = {
-                        ...updated[questionIndex],
+                        ...currentQuestion,
                         type: value,
-                        options: [],
-                        correctTextAnswer: "",
                     };
                 } else {
-                    updated[questionIndex] = {
-                        ...updated[questionIndex],
-                        type: value,
-                        options: [
+                    const existingOptions = currentQuestion.options && currentQuestion.options.length > 0
+                        ? currentQuestion.options
+                        : [
                             { text: "", isCorrect: false, order: 0 },
                             { text: "", isCorrect: false, order: 1 },
-                        ],
-                        correctTextAnswer: undefined,
+                        ];
+                    
+                    updated[questionIndex] = {
+                        ...currentQuestion,
+                        type: value,
+                        options: existingOptions,
                     };
                 }
             } else {
                 updated[questionIndex] = {
-                    ...updated[questionIndex],
+                    ...currentQuestion,
                     [field]: value,
                 };
             }

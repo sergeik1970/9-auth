@@ -91,7 +91,7 @@ const TestList = ({
     return (
         <div className={styles.testContainer}>
             <div className={styles.header}>
-                <h1 className={styles.title}>{isUserTeacher ? "Мои тесты" : "Доступные тесты"}</h1>
+                <h1 className={styles.title}>{isUserTeacher ? (isMainDashboard ? "Активные тесты" : "Мои тесты") : "Доступные тесты"}</h1>
                 <div className={styles.headerActions}>
                     <button
                         onClick={handleRefresh}
@@ -153,8 +153,8 @@ const TestList = ({
             {isUserTeacher ? (
                 // Вид для учителя
                 isMainDashboard ? (
-                    // На главной странице показываем только активные и завершенные
-                    activeTests.length === 0 && completedTests.length === 0 ? (
+                    // На главной странице показываем только активные
+                    activeTests.length === 0 ? (
                         <EmptyState
                             title="У вас пока не тестов"
                             message="Создайте свой первый тест, чтобы начать работу!"
@@ -165,39 +165,20 @@ const TestList = ({
                     ) : (
                         <div>
                             {/* Активные тесты */}
-                            {activeTests.length > 0 && (
-                                <div className={styles.testSection}>
-                                    <h2 className={styles.sectionTitle}>Активные тесты</h2>
-                                    <div className={styles.testList}>
-                                        {activeTests.map((test) => (
-                                            <TestCard
-                                                key={test.id}
-                                                test={test}
-                                                onUpdate={handleRefresh}
-                                            />
-                                        ))}
-                                    </div>
+                            <div className={styles.testSection}>
+                                <div className={styles.testList}>
+                                    {activeTests.map((test) => (
+                                        <TestCard
+                                            key={test.id}
+                                            test={test}
+                                            onUpdate={handleRefresh}
+                                        />
+                                    ))}
                                 </div>
-                            )}
-
-                            {/* Завершенные тесты */}
-                            {completedTests.length > 0 && (
-                                <div className={styles.testSection}>
-                                    <h2 className={styles.sectionTitle}>Завершенные тесты</h2>
-                                    <div className={styles.testList}>
-                                        {completedTests.map((test) => (
-                                            <TestCard
-                                                key={test.id}
-                                                test={test}
-                                                onUpdate={handleRefresh}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                            </div>
 
                             {/* Кнопка Все тесты */}
-                            {(draftTests.length > 0 || archivedTests.length > 0) && (
+                            {(completedTests.length > 0 || draftTests.length > 0 || archivedTests.length > 0) && (
                                 <div className={`${styles.testSection} ${styles.centered}`}>
                                     <Button
                                         variant="primary"
@@ -317,7 +298,7 @@ const TestList = ({
                     </div>
                 )
             ) : // Вид для студента
-            tests.length === 0 && activeAttempts.length === 0 ? (
+            activeTests.length === 0 && activeAttempts.length === 0 ? (
                 <EmptyState
                     title="Нет доступных тестов"
                     message="Пока нет активных тестов для прохождения"
@@ -329,7 +310,7 @@ const TestList = ({
                         <h2 className={styles.sectionTitle}>Все тесты</h2>
                     )}
                     <div className={styles.testList}>
-                        {tests.map((test) => (
+                        {activeTests.map((test) => (
                             <TestCard key={test.id} test={test} onUpdate={handleRefresh} />
                         ))}
                     </div>

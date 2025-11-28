@@ -37,7 +37,6 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
     const [questions, setQuestions] = useState<QuestionFormData[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isValidationOpen, setIsValidationOpen] = useState(false);
-    const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
     const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
     const { user } = useSelector(selectAuth);
 
@@ -53,8 +52,6 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
         try {
             const draftData = { testInfo: info, questions: qs };
             localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
-            setAutoSaveStatus("saved");
-            setTimeout(() => setAutoSaveStatus("idle"), 2000);
         } catch (error) {
             console.error("Error saving draft to localStorage:", error);
         }
@@ -90,8 +87,6 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
         if (autoSaveTimeout) {
             clearTimeout(autoSaveTimeout);
         }
-
-        setAutoSaveStatus("saving");
 
         const timeout = setTimeout(() => {
             saveDraftToStorage(testInfo, questions);
@@ -170,32 +165,11 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
         <div className={styles.createTest}>
             <div className={styles.header}>
                 <div className={styles.headerContent}>
-                    <div
-                        style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "flex-start",
-                        }}
-                    >
-                        <div>
-                            <h1 className={styles.title}>Создание нового теста</h1>
-                            <p className={styles.description}>
-                                Заполните информацию о тесте и добавьте вопросы
-                            </p>
-                        </div>
-                        {autoSaveStatus !== "idle" && (
-                            <div
-                                style={{
-                                    fontSize: "13px",
-                                    color: autoSaveStatus === "saved" ? "#22c55e" : "#6b7280",
-                                    marginTop: "4px",
-                                    fontWeight: 500,
-                                }}
-                            >
-                                {autoSaveStatus === "saving" && "💾 Сохраняется..."}
-                                {autoSaveStatus === "saved" && "✓ Сохранено"}
-                            </div>
-                        )}
+                    <div style={{ textAlign: "center" }}>
+                        <h1 className={styles.title}>Создание нового теста</h1>
+                        <p className={styles.description}>
+                            Заполните информацию о тесте и добавьте вопросы
+                        </p>
                     </div>
                 </div>
             </div>

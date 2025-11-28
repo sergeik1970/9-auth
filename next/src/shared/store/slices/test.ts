@@ -13,6 +13,8 @@ interface TestsState {
     selectedLoading: boolean;
     activeAttempts: Array<{ id: number; testId: number; test: Test; startedAt: Date }>;
     activeAttemptsLoading: boolean;
+    testAttempts: any[];
+    testAttemptsLoading: boolean;
 }
 
 // Начальное состояние
@@ -24,6 +26,8 @@ const initialState: TestsState = {
     selectedLoading: false,
     activeAttempts: [],
     activeAttemptsLoading: false,
+    testAttempts: [],
+    testAttemptsLoading: false,
 };
 
 // Создание асинхронного thunk для получения тестов
@@ -229,6 +233,33 @@ export const saveTestAsDraft = createAsyncThunk(
     },
 );
 
+export const getTestAttempts = createAsyncThunk(
+    "tests/getTestAttempts",
+    async (testId: number, { rejectWithValue }) => {
+        try {
+            const response = await fetch(createApiUrl(API_ENDPOINTS.tests.getAttempts(testId)), {
+                credentials: "include",
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(
+                    `Ошибка при загрузке результатов: ${response.status} - ${
+                        errorData.details || errorData.error || ""
+                    }`,
+                );
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : "Ошибка загрузки результатов теста",
+            );
+        }
+    },
+);
+
 export const getActiveAttempts = createAsyncThunk(
     "tests/getActiveAttempts",
     async (_, { rejectWithValue }) => {
@@ -413,6 +444,18 @@ const testsSlice = createSlice({
             .addCase(getActiveAttempts.rejected, (state) => {
                 state.activeAttemptsLoading = false;
                 state.activeAttempts = [];
+            });
+        builder
+            .addCase(getTestAttempts.pending, (state) => {
+                state.testAttemptsLoading = true;
+            })
+            .addCase(getTestAttempts.fulfilled, (state, action: PayloadAction<any>) => {
+                state.testAttemptsLoading = false;
+                state.testAttempts = action.payload;
+            })
+            .addCase(getTestAttempts.rejected, (state) => {
+                state.testAttemptsLoading = false;
+                state.testAttempts = [];
             });
         builder
             .addCase(publishTest.pending, (state) => {

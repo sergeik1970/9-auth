@@ -38,6 +38,12 @@ export class TestController {
         return this.attemptService.getActiveAttempts(req.user);
     }
 
+    @Get(":id/attempts")
+    @UseGuards(JwtAuthGuard)
+    getTestAttempts(@Param("id", ParseIntPipe) id: number, @Req() req: any) {
+        return this.attemptService.getAttemptsByTestId(id, req.user);
+    }
+
     @Get(":id")
     getTestById(@Param("id", ParseIntPipe) id: number) {
         return this.testService.getTestById(id);
