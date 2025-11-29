@@ -46,7 +46,7 @@ const Header = (): ReactElement => {
                             <div className={styles.userInfo}>
                                 {user?.role === "teacher" ? (
                                     <span className={styles.userName}>
-                                        Здравствуйте, {user?.name}!
+                                        Здравствуйте, {user?.name} {user?.patronymic}!
                                     </span>
                                 ) : (
                                     <span className={styles.userName}>Привет, {user?.name}!</span>

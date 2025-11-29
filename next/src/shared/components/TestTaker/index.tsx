@@ -6,7 +6,7 @@ import { QuestionIndicators } from "@/shared/components/QuestionIndicators";
 import QuestionDisplay from "@/shared/components/QuestionDisplay";
 import Button from "@/shared/components/Button";
 import Modal from "@/shared/components/Modal";
-import SavingStatus, { SavingStatusType } from "@/shared/components/SavingStatus";
+import { SavingStatusType } from "@/shared/components/SavingStatus";
 import useDebounce from "@/shared/hooks/useDebounce";
 import { Test } from "@/shared/types/test";
 import { Question } from "@/shared/types/question";
@@ -313,7 +313,6 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
                     </div>
                     <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
                         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                            <SavingStatus status={autoSaveStatus} />
                             <div style={{ fontSize: "16px", color: "#666", fontWeight: "600" }}>
                                 {answeredSet.size}/{questions.length}
                             </div>

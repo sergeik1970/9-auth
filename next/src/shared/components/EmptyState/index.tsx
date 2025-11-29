@@ -7,7 +7,7 @@ interface EmptyStateProps {
     message: string;
     actionText?: string;
     onAction?: () => void;
-    icon?: string;
+    icon?: string | React.ReactNode;
     className?: string;
 }
 

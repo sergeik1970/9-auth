@@ -60,9 +60,16 @@ export const TestResults: React.FC<TestResultsProps> = ({ results, onRetry, onGo
     };
 
     const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
+        const hours = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
         const secs = seconds % 60;
-        return `${mins}м ${secs}с`;
+        
+        const parts = [];
+        if (hours > 0) parts.push(`${hours}ч`);
+        if (mins > 0) parts.push(`${mins}м`);
+        if (secs > 0 || parts.length === 0) parts.push(`${secs}с`);
+        
+        return parts.join(' ');
     };
 
     const getQuestionStatus = (answer: any) => {

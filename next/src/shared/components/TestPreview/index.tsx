@@ -94,6 +94,19 @@ const formatTime = (minutes: number): string => {
     return parts.join(" ");
 };
 
+const formatTimeSpent = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    const parts = [];
+    if (hours > 0) parts.push(`${hours}ч`);
+    if (mins > 0) parts.push(`${mins}м`);
+    if (secs > 0 || parts.length === 0) parts.push(`${secs}с`);
+
+    return parts.join(" ");
+};
+
 const TestPreview = ({
     isOwner = false,
     isStarting = false,
@@ -527,7 +540,7 @@ const TestPreview = ({
                                             }}
                                         >
                                             {attempt.timeSpent
-                                                ? `${Math.floor(attempt.timeSpent / 60)} мин`
+                                                ? formatTimeSpent(attempt.timeSpent)
                                                 : "—"}
                                         </td>
                                     </tr>

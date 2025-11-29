@@ -5,6 +5,7 @@ import { AuthModule } from "./modules/AuthModule/auth.module";
 import { TestModule } from "./modules/TestModule/test.module";
 import { QuestionModule } from "./modules/QuestionModule/question.module";
 import { UserModule } from "./modules/UserModule/user.module";
+import { RegionModule } from "./modules/RegionModule/region.module";
 
 @Module({
     imports: [
@@ -23,6 +24,7 @@ import { UserModule } from "./modules/UserModule/user.module";
         TestModule,
         QuestionModule,
         UserModule,
+        RegionModule,
     ],
     controllers: [],
     providers: [],

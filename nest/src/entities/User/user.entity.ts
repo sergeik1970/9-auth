@@ -5,9 +5,14 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     OneToMany,
+    ManyToOne,
+    JoinColumn,
 } from "typeorm";
 import { Test } from "../Test/test.entity";
 import { TestAttempt } from "../TestAttempt/testAttempt.entity";
+import { Region } from "../Region/region.entity";
+import { Settlement } from "../Settlement/settlement.entity";
+import { School } from "../School/school.entity";
 
 export enum UserRole {
     // PUPIL = "pupil",
@@ -26,6 +31,12 @@ export class User {
 
     @Column()
     name: string;
+
+    @Column({ nullable: true })
+    lastName: string;
+
+    @Column({ nullable: true })
+    patronymic: string;
 
     @Column()
     password: string;
@@ -67,4 +78,28 @@ export class User {
     @OneToMany(() => TestAttempt, (attempt) => attempt.user)
     // // В testAttempts будут записаны все попытки
     testAttempts: TestAttempt[];
+
+    @Column({ nullable: true })
+    regionId: number;
+
+    @ManyToOne(() => Region, { nullable: true })
+    @JoinColumn({ name: "regionId" })
+    region: Region;
+
+    @Column({ nullable: true })
+    settlementId: number;
+
+    @ManyToOne(() => Settlement, { nullable: true })
+    @JoinColumn({ name: "settlementId" })
+    settlement: Settlement;
+
+    @Column({ nullable: true })
+    schoolId: number;
+
+    @ManyToOne(() => School, { nullable: true })
+    @JoinColumn({ name: "schoolId" })
+    school: School;
+
+    @Column({ type: "text", nullable: true })
+    educationalInstitutionCustom: string;
 }

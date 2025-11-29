@@ -9,6 +9,12 @@ export interface User {
     id: number;
     email: string;
     name: string;
+    lastName?: string;
+    patronymic?: string;
+    regionId?: number;
+    settlementId?: number;
+    schoolId?: number;
+    educationalInstitutionCustom?: string;
     role: "student" | "teacher";
     isAdmin?: boolean;
     avatar?: string;
@@ -29,14 +35,29 @@ export interface AuthFormData {
     email: string;
     password: string;
     name?: string;
+    lastName?: string;
+    patronymic?: string;
+    region?: string;
+    settlement?: string;
+    educationalInstitution?: string;
     role?: "student" | "teacher";
     confirmPassword?: string;
+    regionId?: number;
+    settlementId?: number;
+    schoolId?: number;
+    educationalInstitutionCustom?: string;
 }
 
 export interface RegisterUserData {
     email: string;
     password: string;
     name: string;
+    lastName: string;
+    patronymic?: string;
+    regionId?: number;
+    settlementId?: number;
+    schoolId?: number;
+    educationalInstitutionCustom?: string;
     role: "student" | "teacher";
 }
 

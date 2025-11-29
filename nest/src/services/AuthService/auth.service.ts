@@ -14,6 +14,12 @@ export interface RegisterDto {
     password: string;
     name: string;
     role: string;
+    lastName?: string;
+    patronymic?: string;
+    regionId?: number;
+    settlementId?: number;
+    schoolId?: number;
+    educationalInstitutionCustom?: string;
 }
 
 export interface LoginDto {
@@ -23,6 +29,8 @@ export interface LoginDto {
 
 export interface UpdateProfileDto {
     name?: string;
+    lastName?: string;
+    patronymic?: string;
     avatar?: string;
     password?: string;
     currentPassword?: string;
@@ -49,7 +57,18 @@ export class AuthService {
 
     async register(registerDto: RegisterDto): Promise<User> {
         console.log("AuthService.register called");
-        const { email, password, name, role } = registerDto;
+        const {
+            email,
+            password,
+            name,
+            lastName,
+            patronymic,
+            role,
+            regionId,
+            settlementId,
+            schoolId,
+            educationalInstitutionCustom,
+        } = registerDto;
         console.log("Data:", {
             email,
             name,
@@ -84,8 +103,14 @@ export class AuthService {
             email,
             password: hashedPassword,
             name,
+            lastName,
+            patronymic,
             role: role as UserRole,
             isAdmin: false,
+            regionId,
+            settlementId,
+            schoolId,
+            educationalInstitutionCustom,
         });
         console.log("User entity created:", user);
 
@@ -170,6 +195,14 @@ export class AuthService {
 
         if (updateDto.name) {
             user.name = updateDto.name;
+        }
+
+        if (updateDto.lastName) {
+            user.lastName = updateDto.lastName;
+        }
+
+        if (updateDto.patronymic) {
+            user.patronymic = updateDto.patronymic;
         }
 
         if (updateDto.avatar !== undefined) {

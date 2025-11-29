@@ -5,6 +5,25 @@ import { useDispatch, useSelector } from "../../store/store";
 import { registerUser, loginUser, clearError, selectAuth } from "../../store/slices/auth";
 import { AuthFormData } from "../../types/auth";
 import Button from "@/shared/components/Button";
+import AutocompleteInput from "@/shared/components/AutocompleteInput";
+import { russianRegions, regionSettlements } from "@/shared/data/russianLocations";
+
+interface Region {
+    id: number;
+    name: string;
+}
+
+interface Settlement {
+    id: number;
+    name: string;
+    regionId: number;
+}
+
+interface School {
+    id: number;
+    name: string;
+    settlementId: number;
+}
 
 const Auth = (): ReactElement => {
     const dispatch = useDispatch();
@@ -13,18 +32,27 @@ const Auth = (): ReactElement => {
     const { loading, error, isAuthenticated, user } = useSelector(selectAuth);
 
     const [isLogin, setIsLogin] = useState(true);
+    const [settlementsForRegion, setSettlementsForRegion] = useState<string[]>([]);
+    const [schoolsForSettlement, setSchoolsForSettlement] = useState<string[]>([]);
+    const [regions, setRegions] = useState<Region[]>([]);
+    const [settlements, setSettlements] = useState<Settlement[]>([]);
+    const [schools, setSchools] = useState<School[]>([]);
 
     const [formData, setFormData] = useState<AuthFormData>({
         email: "",
         password: "",
         name: "",
+        lastName: "",
+        patronymic: "",
+        region: "",
+        settlement: "",
+        educationalInstitution: "",
         role: "student",
         confirmPassword: "",
     });
     const [success, setSuccess] = useState("");
     const [validationError, setValidationError] = useState("");
 
-    // Тут будет перенаправление после входа и регистрации
     useEffect(() => {
         if (isAuthenticated && user) {
             setSuccess(`Добро пожаловать, ${user.name}!`);
@@ -33,6 +61,122 @@ const Auth = (): ReactElement => {
             }, 500);
         }
     });
+
+    useEffect(() => {
+        const loadRegions = async () => {
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+                const res = await fetch(`${apiUrl}/api/regions`);
+                
+                if (!res.ok) {
+                    console.error(`API returned status ${res.status}`);
+                    setRegions([]);
+                    return;
+                }
+                
+                const data = await res.json();
+                
+                if (Array.isArray(data)) {
+                    setRegions(data);
+                } else if (data?.data && Array.isArray(data.data)) {
+                    setRegions(data.data);
+                } else {
+                    console.error("Invalid API response format:", data);
+                    setRegions([]);
+                }
+            } catch (err) {
+                console.error("Failed to load regions:", err);
+                setRegions([]);
+            }
+        };
+        loadRegions();
+    }, []);
+
+    useEffect(() => {
+        const loadSettlements = async () => {
+            if (!formData.region || !Array.isArray(regions)) {
+                setSettlementsForRegion([]);
+                setSettlements([]);
+                setFormData((prev) => ({ ...prev, settlement: "", educationalInstitution: "" }));
+                return;
+            }
+
+            const selectedRegion = regions.find((r) => r.name === formData.region);
+            if (!selectedRegion) return;
+
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+                const res = await fetch(`${apiUrl}/api/regions/${selectedRegion.id}/settlements`);
+                
+                if (!res.ok) {
+                    console.error(`Failed to load settlements: ${res.status}`);
+                    setSettlementsForRegion([]);
+                    setSettlements([]);
+                    return;
+                }
+                
+                const data = await res.json();
+                
+                if (Array.isArray(data)) {
+                    setSettlements(data);
+                    setSettlementsForRegion(data.map((s: Settlement) => s.name));
+                } else {
+                    console.error("Invalid settlements response:", data);
+                    setSettlementsForRegion([]);
+                    setSettlements([]);
+                }
+                
+                setFormData((prev) => ({ ...prev, settlement: "", educationalInstitution: "" }));
+            } catch (err) {
+                console.error("Failed to load settlements:", err);
+                setSettlementsForRegion([]);
+                setSettlements([]);
+            }
+        };
+        loadSettlements();
+    }, [formData.region, regions]);
+
+    useEffect(() => {
+        const loadSchools = async () => {
+            if (!formData.settlement || !Array.isArray(settlements)) {
+                setSchoolsForSettlement([]);
+                setSchools([]);
+                setFormData((prev) => ({ ...prev, educationalInstitution: "" }));
+                return;
+            }
+
+            const selectedSettlement = settlements.find((s) => s.name === formData.settlement);
+            if (!selectedSettlement) return;
+
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+                const res = await fetch(`${apiUrl}/api/regions/settlement/${selectedSettlement.id}/schools`);
+                
+                if (!res.ok) {
+                    console.error(`Failed to load schools: ${res.status}`);
+                    setSchoolsForSettlement([]);
+                    setSchools([]);
+                    return;
+                }
+                
+                const data = await res.json();
+                
+                if (Array.isArray(data)) {
+                    setSchools(data);
+                    setSchoolsForSettlement(data.map((s: School) => s.name));
+                } else {
+                    console.error("Invalid schools response:", data);
+                    setSchoolsForSettlement([]);
+                    setSchools([]);
+                }
+            } catch (err) {
+                console.error("Failed to load schools:", err);
+                setSchoolsForSettlement([]);
+                setSchools([]);
+            }
+        };
+        loadSchools();
+    }, [formData.settlement, settlements]);
 
     // Обработка инпутов формы
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -75,7 +219,12 @@ const Auth = (): ReactElement => {
                 !formData.email ||
                 !formData.password ||
                 !formData.name ||
-                !formData.confirmPassword
+                !formData.lastName ||
+                !formData.region ||
+                !formData.settlement ||
+                !formData.educationalInstitution ||
+                !formData.confirmPassword ||
+                (formData.role === "teacher" && !formData.patronymic)
             ) {
                 setValidationError("Заполните все поля");
                 return;
@@ -87,22 +236,35 @@ const Auth = (): ReactElement => {
                 return;
             }
 
+            const selectedRegion = regions.find((r) => r.name === formData.region);
+            const selectedSettlement = settlements.find((s) => s.name === formData.settlement);
+            const selectedSchool = schools.find((s) => s.name === formData.educationalInstitution);
+
             const result = await dispatch(
-                // Диспатч регистрации
                 registerUser({
                     email: formData.email,
                     password: formData.password,
                     name: formData.name,
-                    role: formData.role || "student", // Добавляем значение по умолчанию, если role не определено
+                    lastName: formData.lastName!,
+                    patronymic: formData.role === "teacher" ? formData.patronymic : undefined,
+                    regionId: selectedRegion?.id,
+                    settlementId: selectedSettlement?.id,
+                    schoolId: selectedSchool?.id,
+                    educationalInstitutionCustom: selectedSchool ? undefined : formData.educationalInstitution,
+                    role: formData.role || "student",
                 }),
             );
 
-            // Очистка формы
             if (registerUser.fulfilled.match(result)) {
                 setFormData({
                     email: "",
                     password: "",
                     name: "",
+                    lastName: "",
+                    patronymic: "",
+                    region: "",
+                    settlement: "",
+                    educationalInstitution: "",
                     role: "student",
                     confirmPassword: "",
                 });
@@ -110,13 +272,17 @@ const Auth = (): ReactElement => {
         }
     };
 
-    // Переключение между входом и регистрацией
     const toggleMode = () => {
         setIsLogin(!isLogin);
         setFormData({
             email: "",
             password: "",
             name: "",
+            lastName: "",
+            patronymic: "",
+            region: "",
+            settlement: "",
+            educationalInstitution: "",
             role: "student",
             confirmPassword: "",
         });
@@ -131,22 +297,118 @@ const Auth = (): ReactElement => {
                 <h1 className={styles.title}>{isLogin ? "Вход в систему" : "Регистрация"}</h1>
 
                 <form onSubmit={handleSubmit} className={styles.form}>
-                    {/* Имя для регистрации */}
                     {!isLogin && (
-                        <div className={styles.inputGroup}>
-                            <label htmlFor="name">Имя:</label>
-                            <input
-                                type="text"
-                                id="name"
-                                name="name"
-                                placeholder="Введите ваше имя"
-                                value={formData.name || ""}
-                                onChange={handleInputChange}
-                                required={!isLogin}
-                                disabled={loading}
-                                className={styles.input}
-                            />
-                        </div>
+                        <>
+                            <div className={styles.inputGroup}>
+                                <label htmlFor="role">Роль:</label>
+                                <select
+                                    id="role"
+                                    name="role"
+                                    value={formData.role || "student"}
+                                    onChange={handleInputChange}
+                                    required
+                                    disabled={loading}
+                                    className={styles.input}
+                                >
+                                    <option value="student">Ученик</option>
+                                    <option value="teacher">Учитель</option>
+                                </select>
+                            </div>
+
+                            <div className={styles.inputGroup}>
+                                <label htmlFor="lastName">Фамилия:</label>
+                                <input
+                                    type="text"
+                                    id="lastName"
+                                    name="lastName"
+                                    placeholder="Введите вашу фамилию"
+                                    value={formData.lastName || ""}
+                                    onChange={handleInputChange}
+                                    required
+                                    disabled={loading}
+                                    className={styles.input}
+                                />
+                            </div>
+
+                            <div className={styles.inputGroup}>
+                                <label htmlFor="name">Имя:</label>
+                                <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    placeholder="Введите ваше имя"
+                                    value={formData.name || ""}
+                                    onChange={handleInputChange}
+                                    required
+                                    disabled={loading}
+                                    className={styles.input}
+                                />
+                            </div>
+
+                            {formData.role === "teacher" && (
+                                <div className={styles.inputGroup}>
+                                    <label htmlFor="patronymic">Отчество:</label>
+                                    <input
+                                        type="text"
+                                        id="patronymic"
+                                        name="patronymic"
+                                        placeholder="Введите ваше отчество"
+                                        value={formData.patronymic || ""}
+                                        onChange={handleInputChange}
+                                        required={formData.role === "teacher"}
+                                        disabled={loading}
+                                        className={styles.input}
+                                    />
+                                </div>
+                            )}
+
+                            <div className={styles.inputGroup}>
+                                <label htmlFor="region">Регион:</label>
+                                <AutocompleteInput
+                                    id="region"
+                                    name="region"
+                                    placeholder="Начните вводить регион"
+                                    value={formData.region || ""}
+                                    onChange={handleInputChange}
+                                    suggestions={Array.isArray(regions) ? regions.map((r) => r.name) : []}
+                                    required
+                                    disabled={loading}
+                                    minChars={1}
+                                />
+                            </div>
+
+                            <div className={styles.inputGroup}>
+                                <label htmlFor="settlement">Населённый пункт:</label>
+                                <AutocompleteInput
+                                    id="settlement"
+                                    name="settlement"
+                                    placeholder="Начните вводить населённый пункт"
+                                    value={formData.settlement || ""}
+                                    onChange={handleInputChange}
+                                    suggestions={settlementsForRegion}
+                                    required
+                                    disabled={loading || !formData.region}
+                                    minChars={1}
+                                />
+                            </div>
+
+                            <div className={styles.inputGroup}>
+                                <label htmlFor="educationalInstitution">
+                                    Образовательное учреждение:
+                                </label>
+                                <AutocompleteInput
+                                    id="educationalInstitution"
+                                    name="educationalInstitution"
+                                    placeholder="Начните вводить или выберите школу"
+                                    value={formData.educationalInstitution || ""}
+                                    onChange={handleInputChange}
+                                    suggestions={schoolsForSettlement}
+                                    required
+                                    disabled={loading || !formData.settlement}
+                                    minChars={1}
+                                />
+                            </div>
+                        </>
                     )}
 
                     <div className={styles.inputGroup}>
@@ -179,7 +441,6 @@ const Auth = (): ReactElement => {
                         />
                     </div>
 
-                    {/* Подтверждение пароля для регистрации */}
                     {!isLogin && (
                         <div className={styles.inputGroup}>
                             <label htmlFor="confirmPassword">Подтвердите пароль:</label>
@@ -190,29 +451,10 @@ const Auth = (): ReactElement => {
                                 placeholder="Повторите пароль"
                                 value={formData.confirmPassword || ""}
                                 onChange={handleInputChange}
-                                required={!isLogin}
+                                required
                                 disabled={loading}
                                 className={styles.input}
                             />
-                        </div>
-                    )}
-
-                    {/* Выбор роли для регистрации */}
-                    {!isLogin && (
-                        <div className={styles.inputGroup}>
-                            <label htmlFor="role">Роль:</label>
-                            <select
-                                id="role"
-                                name="role"
-                                value={formData.role || "student"}
-                                onChange={handleInputChange}
-                                required={!isLogin}
-                                disabled={loading}
-                                className={styles.input}
-                            >
-                                <option value="student">Ученик</option>
-                                <option value="teacher">Учитель</option>
-                            </select>
                         </div>
                     )}
 

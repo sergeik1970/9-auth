@@ -158,7 +158,6 @@ export class TestService {
 
         // Обновляем вопросы если они были переданы
         if (questions && questions.length > 0) {
-
             // Получаем все вопросы текущего теста
             const oldQuestions = await this.questionRepository.find({
                 where: { testId: id },

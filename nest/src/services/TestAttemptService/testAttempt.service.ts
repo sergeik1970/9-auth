@@ -148,7 +148,10 @@ export class TestAttemptService {
         }));
     }
 
-    async getAttemptsByTestId(testId: number, user: JwtPayload): Promise<any[]> {
+    async getAttemptsByTestId(
+        testId: number,
+        user: JwtPayload,
+    ): Promise<any[]> {
         const test = await this.testRepository.findOne({
             where: { id: testId, creatorId: user.sub },
         });
@@ -167,17 +170,21 @@ export class TestAttemptService {
 
         return attempts.map((attempt) => ({
             id: attempt.id,
-            studentName: attempt.user?.email || "Unknown",
+            studentName: attempt.user
+                ? `${attempt.user.lastName || ""} ${attempt.user.name || ""}`.trim() ||
+                  "Unknown"
+                : "Unknown",
             correctAnswers: Number(attempt.correctAnswers ?? 0),
             totalQuestions: Number(attempt.totalQuestions ?? 0),
             percentage: Number(attempt.score ?? 0),
-            timeSpent: attempt.completedAt && attempt.startedAt
-                ? Math.floor(
-                      (new Date(attempt.completedAt).getTime() -
-                          new Date(attempt.startedAt).getTime()) /
-                          1000,
-                  )
-                : 0,
+            timeSpent:
+                attempt.completedAt && attempt.startedAt
+                    ? Math.floor(
+                          (new Date(attempt.completedAt).getTime() -
+                              new Date(attempt.startedAt).getTime()) /
+                              1000,
+                      )
+                    : 0,
             status: attempt.status,
             completedAt: attempt.completedAt,
         }));

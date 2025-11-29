@@ -8,7 +8,14 @@ async function bootstrap() {
     app.setGlobalPrefix("api");
 
     if (process.env.NODE_ENV == "dev")
-        app.enableCors({ origin: ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"], credentials: true });
+        app.enableCors({
+            origin: [
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "http://localhost:3002",
+            ],
+            credentials: true,
+        });
     await app.listen(3001);
 }
 bootstrap();

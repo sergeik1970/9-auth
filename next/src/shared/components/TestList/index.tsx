@@ -91,7 +91,13 @@ const TestList = ({
     return (
         <div className={styles.testContainer}>
             <div className={styles.header}>
-                <h1 className={styles.title}>{isUserTeacher ? (isMainDashboard ? "Активные тесты" : "Мои тесты") : "Доступные тесты"}</h1>
+                <h1 className={styles.title}>
+                    {isUserTeacher
+                        ? isMainDashboard
+                            ? "Активные тесты"
+                            : "Мои тесты"
+                        : "Доступные тесты"}
+                </h1>
                 <div className={styles.headerActions}>
                     <button
                         onClick={handleRefresh}
@@ -156,11 +162,29 @@ const TestList = ({
                     // На главной странице показываем только активные
                     activeTests.length === 0 ? (
                         <EmptyState
-                            title="У вас пока не тестов"
+                            title="У вас пока нет тестов"
                             message="Создайте свой первый тест, чтобы начать работу!"
                             actionText="Создать первый тест"
                             onAction={handleCreateTest}
-                            icon="📝"
+                            icon={
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="64"
+                                    height="64"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="#10b981"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="lucide lucide-clipboard-pen-icon lucide-clipboard-pen"
+                                >
+                                    <rect width="8" height="4" x="8" y="2" rx="1" />
+                                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5.5" />
+                                    <path d="M4 13.5V6a2 2 0 0 1 2-2h2" />
+                                    <path d="M13.378 15.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z" />
+                                </svg>
+                            }
                         />
                     ) : (
                         <div>
@@ -178,7 +202,9 @@ const TestList = ({
                             </div>
 
                             {/* Кнопка Все тесты */}
-                            {(completedTests.length > 0 || draftTests.length > 0 || archivedTests.length > 0) && (
+                            {(completedTests.length > 0 ||
+                                draftTests.length > 0 ||
+                                archivedTests.length > 0) && (
                                 <div className={`${styles.testSection} ${styles.centered}`}>
                                     <Button
                                         variant="primary"
@@ -196,11 +222,29 @@ const TestList = ({
                   draftTests.length === 0 &&
                   archivedTests.length === 0 ? (
                     <EmptyState
-                        title="У вас пока не тестов"
+                        title="У вас пока нет тестов"
                         message="Создайте свой первый тест, чтобы начать работу!"
                         actionText="Создать первый тест"
                         onAction={handleCreateTest}
-                        icon="📝"
+                        icon={
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="64"
+                                height="64"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#10b981"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="lucide lucide-clipboard-pen-icon lucide-clipboard-pen"
+                            >
+                                <rect width="8" height="4" x="8" y="2" rx="1" />
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5.5" />
+                                <path d="M4 13.5V6a2 2 0 0 1 2-2h2" />
+                                <path d="M13.378 15.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z" />
+                            </svg>
+                        }
                     />
                 ) : (
                     <div>

@@ -101,7 +101,26 @@ const TestCard = ({
                         </span>
                     )}
                     {test.creator?.name && test.creator.id !== user?.id && (
-                        <span className={styles.metaItem}>👨‍🏫 {test.creator.name}</span>
+                        <span className={styles.metaItem}>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="lucide lucide-circle-user-round-icon lucide-circle-user-round"
+                            >
+                                <path d="M18 20a6 6 0 0 0-12 0" />
+                                <circle cx="12" cy="10" r="4" />
+                                <circle cx="12" cy="12" r="10" />
+                            </svg>
+                            {test.creator.name}
+                            {test.creator.patronymic && ` ${test.creator.patronymic}`}
+                        </span>
                     )}
                 </div>
             </div>

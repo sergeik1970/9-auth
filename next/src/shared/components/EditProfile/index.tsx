@@ -24,8 +24,25 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
 
     const [formData, setFormData] = useState({
         name: user.name || "",
+        lastName: user.lastName || "",
+        patronymic: user.patronymic || "",
         avatar: user.avatar || "",
     });
+
+    const [locationNames, setLocationNames] = useState({
+        region: "",
+        settlement: "",
+        school: "",
+    });
+
+    useEffect(() => {
+        setFormData({
+            name: user.name || "",
+            lastName: user.lastName || "",
+            patronymic: user.patronymic || "",
+            avatar: user.avatar || "",
+        });
+    }, [user]);
 
     const [showPasswordChange, setShowPasswordChange] = useState(false);
     const [passwords, setPasswords] = useState({
@@ -44,9 +61,55 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
         setPasswords((prev) => ({ ...prev, [name]: value }));
     };
 
+    useEffect(() => {
+        const loadLocationNames = async () => {
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+                if (user.regionId) {
+                    const regionsRes = await fetch(`${apiUrl}/api/regions`);
+                    const regions = await regionsRes.json();
+                    const region = Array.isArray(regions)
+                        ? regions.find((r: any) => r.id === user.regionId)
+                        : null;
+                    if (region) setLocationNames((prev) => ({ ...prev, region: region.name }));
+                }
+
+                if (user.settlementId && user.regionId) {
+                    const settlementsRes = await fetch(
+                        `${apiUrl}/api/regions/${user.regionId}/settlements`,
+                    );
+                    const settlements = await settlementsRes.json();
+                    const settlement = Array.isArray(settlements)
+                        ? settlements.find((s: any) => s.id === user.settlementId)
+                        : null;
+                    if (settlement)
+                        setLocationNames((prev) => ({ ...prev, settlement: settlement.name }));
+                }
+
+                if (user.schoolId && user.settlementId) {
+                    const schoolsRes = await fetch(
+                        `${apiUrl}/api/regions/settlement/${user.settlementId}/schools`,
+                    );
+                    const schools = await schoolsRes.json();
+                    const school = Array.isArray(schools)
+                        ? schools.find((s: any) => s.id === user.schoolId)
+                        : null;
+                    if (school) setLocationNames((prev) => ({ ...prev, school: school.name }));
+                }
+            } catch (err) {
+                console.error("Failed to load location names:", err);
+            }
+        };
+
+        loadLocationNames();
+    }, [user.regionId, user.settlementId, user.schoolId]);
+
     const handleSaveProfile = async () => {
         const updateData: any = {};
         if (formData.name !== user.name) updateData.name = formData.name;
+        if (formData.lastName !== user.lastName) updateData.lastName = formData.lastName;
+        if (formData.patronymic !== user.patronymic) updateData.patronymic = formData.patronymic;
         if (formData.avatar !== user.avatar) updateData.avatar = formData.avatar;
 
         if (showPasswordChange) {
@@ -116,12 +179,36 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
                 }}
             >
                 <div className={styles.formGroup}>
+                    <label htmlFor="lastName">Фамилия</label>
+                    <input
+                        id="lastName"
+                        type="text"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleProfileChange}
+                        disabled={loading}
+                    />
+                </div>
+
+                <div className={styles.formGroup}>
                     <label htmlFor="name">Имя</label>
                     <input
                         id="name"
                         type="text"
                         name="name"
                         value={formData.name}
+                        onChange={handleProfileChange}
+                        disabled={loading}
+                    />
+                </div>
+
+                <div className={styles.formGroup}>
+                    <label htmlFor="patronymic">Отчество</label>
+                    <input
+                        id="patronymic"
+                        type="text"
+                        name="patronymic"
+                        value={formData.patronymic}
                         onChange={handleProfileChange}
                         disabled={loading}
                     />
@@ -146,6 +233,57 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
                     {formData.avatar && (
                         <div className={styles.avatarPreview}>
                             <img src={formData.avatar} alt="Avatar preview" />
+                        </div>
+                    )}
+                </div>
+
+                <div
+                    style={{
+                        marginTop: "24px",
+                        paddingTop: "24px",
+                        borderTop: "1px solid #e0e0e0",
+                    }}
+                >
+                    <h3 style={{ marginBottom: "16px" }}>
+                        Данные об образовательном учреждении (не редактируются)
+                    </h3>
+
+                    {(locationNames.region || user.regionId) && (
+                        <div className={styles.formGroup}>
+                            <label>Регион</label>
+                            <input
+                                type="text"
+                                value={locationNames.region || "Загрузка..."}
+                                disabled
+                            />
+                        </div>
+                    )}
+
+                    {(locationNames.settlement || user.settlementId) && (
+                        <div className={styles.formGroup}>
+                            <label>Населённый пункт</label>
+                            <input
+                                type="text"
+                                value={locationNames.settlement || "Загрузка..."}
+                                disabled
+                            />
+                        </div>
+                    )}
+
+                    {(locationNames.school ||
+                        user.schoolId ||
+                        user.educationalInstitutionCustom) && (
+                        <div className={styles.formGroup}>
+                            <label>Образовательное учреждение</label>
+                            <input
+                                type="text"
+                                value={
+                                    locationNames.school ||
+                                    user.educationalInstitutionCustom ||
+                                    "Загрузка..."
+                                }
+                                disabled
+                            />
                         </div>
                     )}
                 </div>
