@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Head from "next/head";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import DashboardLayout from "@/shared/components/DashboardLayout";
@@ -80,9 +81,14 @@ const TakeTestWithAttemptPage = () => {
     }
 
     return (
-        <div>
-            <TestTaker test={test} attemptId={attemptId || undefined} />
-        </div>
+        <>
+            <Head>
+                <title>Продолжение теста</title>
+            </Head>
+            <div>
+                <TestTaker test={test} attemptId={attemptId || undefined} />
+            </div>
+        </>
     );
 };
 

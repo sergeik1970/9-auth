@@ -44,7 +44,7 @@ export default function SettingsPage() {
     return (
         <>
             <Head>
-                <title>Настройки - Тестовая платформа</title>
+                <title>Настройки</title>
             </Head>
             <DashboardLayout>
                 <div className={styles.container}>

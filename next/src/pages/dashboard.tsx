@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { useSelector } from "@/shared/store/store";
 import { selectAuth } from "@/shared/store/slices/auth";
@@ -24,10 +25,15 @@ const Main = () => {
     console.log("Dashboard - typeof user?.role:", typeof user?.role);
 
     return (
-        <DashboardLayout>
-            <DashboardHeader />
-            <TestList userRole={user?.role} isMainDashboard={true} />
-        </DashboardLayout>
+        <>
+            <Head>
+                <title>Панель управления</title>
+            </Head>
+            <DashboardLayout>
+                <DashboardHeader />
+                <TestList userRole={user?.role} isMainDashboard={true} />
+            </DashboardLayout>
+        </>
     );
 };
 

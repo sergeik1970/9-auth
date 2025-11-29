@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { useSelector } from "@/shared/store/store";
 import { selectAuth } from "@/shared/store/slices/auth";
@@ -20,10 +21,15 @@ const MyTests = () => {
     }
 
     return (
-        <DashboardLayout>
-            <DashboardHeader />
-            <TestList userRole={user?.role} />
-        </DashboardLayout>
+        <>
+            <Head>
+                <title>Тесты</title>
+            </Head>
+            <DashboardLayout>
+                <DashboardHeader />
+                <TestList userRole={user?.role} />
+            </DashboardLayout>
+        </>
     );
 };
 

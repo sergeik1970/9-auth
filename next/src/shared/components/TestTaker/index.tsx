@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
 import { useTimer, useTestAttempt } from "@/shared/hooks/test";
 import { Timer } from "@/shared/components/Timer";
@@ -6,6 +6,8 @@ import { QuestionIndicators } from "@/shared/components/QuestionIndicators";
 import QuestionDisplay from "@/shared/components/QuestionDisplay";
 import Button from "@/shared/components/Button";
 import Modal from "@/shared/components/Modal";
+import SavingStatus, { SavingStatusType } from "@/shared/components/SavingStatus";
+import useDebounce from "@/shared/hooks/useDebounce";
 import { Test } from "@/shared/types/test";
 import { Question } from "@/shared/types/question";
 import styles from "./index.module.scss";
@@ -26,6 +28,8 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
     const [currentTextAnswer, setCurrentTextAnswer] = useState<string>("");
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [autoSaveStatus, setAutoSaveStatus] = useState<SavingStatusType>("saved");
+    const autoSaveTimeoutRef = useRef<NodeJS.Timeout>();
 
     const {
         attempt,
@@ -61,6 +65,14 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
 
     const saveCurrentAnswer = useCallback(async () => {
         if (!currentQuestion) return;
+
+        const hasAnswer =
+            currentSelectedOptionId !== undefined ||
+            (Array.isArray(currentSelectedOptionIds) && currentSelectedOptionIds.length > 0) ||
+            (typeof currentTextAnswer === "string" && currentTextAnswer.trim().length > 0);
+
+        if (!hasAnswer) return;
+
         await saveAnswer(
             currentQuestion.id!,
             currentSelectedOptionId,
@@ -74,6 +86,61 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
         currentSelectedOptionIds,
         currentTextAnswer,
     ]);
+
+    const performAutoSave = useCallback(
+        async (selectedOptionId?: number, selectedOptionIds?: number[], textAnswer?: string) => {
+            if (!currentQuestion) return;
+
+            setAutoSaveStatus("saving");
+            try {
+                await saveAnswer(
+                    currentQuestion.id!,
+                    selectedOptionId,
+                    selectedOptionIds,
+                    textAnswer,
+                );
+                setAutoSaveStatus("saved");
+
+                if (autoSaveTimeoutRef.current) {
+                    clearTimeout(autoSaveTimeoutRef.current);
+                }
+                autoSaveTimeoutRef.current = setTimeout(() => {
+                    setAutoSaveStatus("saved");
+                }, 2000);
+            } catch (error) {
+                setAutoSaveStatus("error");
+                console.error("Auto-save error:", error);
+            }
+        },
+        [currentQuestion, saveAnswer],
+    );
+
+    const saveOptionAnswer = useCallback(
+        (selectedOptionId?: number, selectedOptionIds?: number[]) => {
+            performAutoSave(selectedOptionId, selectedOptionIds, currentTextAnswer);
+        },
+        [performAutoSave, currentTextAnswer],
+    );
+
+    const debouncedSaveTextAnswer = useDebounce(async (textAnswer: string) => {
+        if (!currentQuestion) return;
+
+        setAutoSaveStatus("saving");
+        try {
+            await saveAnswer(currentQuestion.id!, undefined, undefined, textAnswer);
+            setAutoSaveStatus("saved");
+
+            if (autoSaveTimeoutRef.current) {
+                clearTimeout(autoSaveTimeoutRef.current);
+            }
+            autoSaveTimeoutRef.current = setTimeout(() => {
+                setAutoSaveStatus("saved");
+            }, 2000);
+        } catch (error) {
+            setAutoSaveStatus("error");
+            console.error("Auto-save error:", error);
+        }
+    }, 500);
 
     const handleConfirmSubmit = useCallback(async () => {
         if (isSubmitted) return;
@@ -120,8 +187,22 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
                 Array.isArray(savedAnswer?.selectedOptionIds) ? savedAnswer.selectedOptionIds : [],
             );
             setCurrentTextAnswer(savedAnswer?.textAnswer || "");
+            setAutoSaveStatus("saved");
         }
     }, [currentQuestionIndex, questions, answers]);
+
+    useEffect(() => {
+        if (!currentQuestion || currentQuestion.type !== "text_input") return;
+
+        debouncedSaveTextAnswer(currentTextAnswer);
+
+        return () => {
+            if (autoSaveTimeoutRef.current) {
+                clearTimeout(autoSaveTimeoutRef.current);
+            }
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentTextAnswer, currentQuestion]);
 
     const loadQuestions = async () => {
         try {
@@ -148,9 +229,16 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
         selectedOptionIds?: number[],
         textAnswer?: string,
     ) => {
-        setCurrentSelectedOptionId(selectedOptionId);
-        setCurrentSelectedOptionIds(selectedOptionIds || []);
-        setCurrentTextAnswer(textAnswer || "");
+        if (
+            selectedOptionId !== undefined ||
+            (selectedOptionIds && selectedOptionIds.length >= 0)
+        ) {
+            setCurrentSelectedOptionId(selectedOptionId);
+            setCurrentSelectedOptionIds(selectedOptionIds || []);
+            saveOptionAnswer(selectedOptionId, selectedOptionIds);
+        } else if (textAnswer !== undefined) {
+            setCurrentTextAnswer(textAnswer);
+        }
     };
 
     const handlePrevious = async () => {
@@ -167,7 +255,8 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
         }
     };
 
-    const handleQuestionJump = (questionIndex: number) => {
+    const handleQuestionJump = async (questionIndex: number) => {
+        await saveCurrentAnswer();
         setCurrentQuestionIndex(questionIndex);
     };
 
@@ -224,6 +313,7 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
                     </div>
                     <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
                         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                            <SavingStatus status={autoSaveStatus} />
                             <div style={{ fontSize: "16px", color: "#666", fontWeight: "600" }}>
                                 {answeredSet.size}/{questions.length}
                             </div>

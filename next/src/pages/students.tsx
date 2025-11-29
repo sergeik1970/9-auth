@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { useSelector } from "@/shared/store/store";
 import { selectAuth } from "@/shared/store/slices/auth";
@@ -21,9 +22,14 @@ const StudentsPage = () => {
     }
 
     return (
-        <DashboardLayout>
-            <StudentsList />
-        </DashboardLayout>
+        <>
+            <Head>
+                <title>Студенты</title>
+            </Head>
+            <DashboardLayout>
+                <StudentsList />
+            </DashboardLayout>
+        </>
     );
 };
 

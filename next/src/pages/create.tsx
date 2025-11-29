@@ -1,4 +1,5 @@
 import React from "react";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import CreateTest from "@/shared/components/CreateTest";
 import DashboardLayout from "@/shared/components/DashboardLayout";
@@ -12,10 +13,15 @@ const Main = () => {
     }
 
     return (
-        <DashboardLayout>
-            {/* <DashboardHeader /> */}
-            <CreateTest />
-        </DashboardLayout>
+        <>
+            <Head>
+                <title>Создание теста</title>
+            </Head>
+            <DashboardLayout>
+                {/* <DashboardHeader /> */}
+                <CreateTest />
+            </DashboardLayout>
+        </>
     );
 };
 

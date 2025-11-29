@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import DashboardLayout from "@/shared/components/DashboardLayout";
 import { TestResults as TestResultsComponent } from "@/shared/components/TestResults";
@@ -72,9 +73,14 @@ const ResultsPage = () => {
     }
 
     return (
-        <DashboardLayout>
-            <TestResultsComponent results={results} onRetry={handleRetry} onGoBack={handleGoBack} />
-        </DashboardLayout>
+        <>
+            <Head>
+                <title>Результаты</title>
+            </Head>
+            <DashboardLayout>
+                <TestResultsComponent results={results} onRetry={handleRetry} onGoBack={handleGoBack} />
+            </DashboardLayout>
+        </>
     );
 };
 

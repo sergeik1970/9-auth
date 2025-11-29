@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Head from "next/head";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import DashboardLayout from "@/shared/components/DashboardLayout";
@@ -90,9 +91,14 @@ const TakeTestPage = () => {
     }
 
     return (
-        <div>
-            <TestTaker test={test} />
-        </div>
+        <>
+            <Head>
+                <title>Прохождение теста</title>
+            </Head>
+            <div>
+                <TestTaker test={test} />
+            </div>
+        </>
     );
 };
 

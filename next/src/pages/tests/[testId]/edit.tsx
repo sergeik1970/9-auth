@@ -1,4 +1,5 @@
 import React from "react";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "@/shared/store/store";
 import { selectAuth } from "@/shared/store/slices/auth";
@@ -24,9 +25,14 @@ const EditTestPage = () => {
     }
 
     return (
-        <DashboardLayout>
-            <EditTest testId={Number(testId)} />
-        </DashboardLayout>
+        <>
+            <Head>
+                <title>Редактирование теста</title>
+            </Head>
+            <DashboardLayout>
+                <EditTest testId={Number(testId)} />
+            </DashboardLayout>
+        </>
     );
 };
 
