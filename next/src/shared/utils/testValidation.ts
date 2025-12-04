@@ -4,6 +4,7 @@ export interface TestFormData {
     title: string;
     description?: string;
     timeLimit?: number;
+    dueDate?: string;
     questions: QuestionFormData[] | Question[];
 }
 

@@ -44,26 +44,11 @@ export class TestController {
         return this.attemptService.getAttemptsByTestId(id, req.user);
     }
 
-    @Get(":id")
-    getTestById(@Param("id", ParseIntPipe) id: number) {
-        return this.testService.getTestById(id);
-    }
-
     @Post("create")
     @UseGuards(JwtAuthGuard)
     @HttpCode(HttpStatus.CREATED)
     createTest(@Body() createTestDto: CreateTestDto, @Req() req: any) {
         return this.testService.createTest(createTestDto, req.user);
-    }
-
-    @Patch(":id")
-    @UseGuards(JwtAuthGuard)
-    updateTest(
-        @Param("id", ParseIntPipe) id: number,
-        @Body() updateData: Partial<CreateTestDto>,
-        @Req() req: any,
-    ) {
-        return this.testService.updateTest(id, updateData, req.user);
     }
 
     @Post(":id/publish")
@@ -82,6 +67,35 @@ export class TestController {
     @UseGuards(JwtAuthGuard)
     archiveTest(@Param("id", ParseIntPipe) id: number, @Req() req: any) {
         return this.testService.archiveTest(id, req.user);
+    }
+
+    @Post(":id/recalculate")
+    @UseGuards(JwtAuthGuard)
+    recalculateAttempts(
+        @Param("id", ParseIntPipe) id: number,
+        @Body("timeRangeHours") timeRangeHours: number,
+        @Req() req: any,
+    ) {
+        return this.testService.recalculateAttempts(
+            id,
+            timeRangeHours,
+            req.user,
+        );
+    }
+
+    @Get(":id")
+    getTestById(@Param("id", ParseIntPipe) id: number) {
+        return this.testService.getTestById(id);
+    }
+
+    @Patch(":id")
+    @UseGuards(JwtAuthGuard)
+    updateTest(
+        @Param("id", ParseIntPipe) id: number,
+        @Body() updateData: Partial<CreateTestDto>,
+        @Req() req: any,
+    ) {
+        return this.testService.updateTest(id, updateData, req.user);
     }
 
     @Delete(":id")

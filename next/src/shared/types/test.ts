@@ -6,6 +6,7 @@ export interface Test {
     title: string;
     description?: string;
     timeLimit?: number;
+    dueDate?: string;
     status: "draft" | "active" | "completed" | "archived";
     questions?: Question[];
     creator?: User;
@@ -18,6 +19,7 @@ export interface CreateTestData {
     title: string;
     description?: string;
     timeLimit?: number;
+    dueDate?: string;
     questions: QuestionFormData[];
 }
 

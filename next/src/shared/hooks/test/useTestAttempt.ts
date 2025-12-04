@@ -145,6 +145,7 @@ export const useTestAttempt = ({
                         headers: {
                             "Content-Type": "application/json",
                         },
+                        credentials: "include",
                         body: JSON.stringify({
                             questionId,
                             selectedOptionId,
@@ -190,6 +191,7 @@ export const useTestAttempt = ({
                 headers: {
                     "Content-Type": "application/json",
                 },
+                credentials: "include",
                 body: JSON.stringify({}),
             });
 

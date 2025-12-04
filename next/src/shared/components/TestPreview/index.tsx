@@ -8,6 +8,7 @@ import {
     completeTest,
     archiveTest,
     getTestAttempts,
+    updateTest,
 } from "@/shared/store/slices/test";
 import styles from "./index.module.scss";
 import { useDispatch, useSelector } from "@/shared/store/store";
@@ -16,6 +17,8 @@ import LoadingState from "@/shared/components/LoadingState";
 import TestStatus from "@/shared/components/TestStatus";
 import { selectAuth } from "@/shared/store/slices/auth";
 import { getTestValidationErrors } from "@/shared/utils/testValidation";
+import DueDatePicker from "@/shared/components/DueDatePicker";
+import Modal from "@/shared/components/Modal";
 
 interface TestPreviewProps {
     isOwner?: boolean;
@@ -107,6 +110,19 @@ const formatTimeSpent = (seconds: number): string => {
     return parts.join(" ");
 };
 
+const formatDeadline = (dueDateString: string): string => {
+    if (!dueDateString) return "";
+
+    const date = new Date(dueDateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
+};
+
 const TestPreview = ({
     isOwner = false,
     isStarting = false,
@@ -129,6 +145,8 @@ const TestPreview = ({
     const [isCompleting, setIsCompleting] = useState(false);
     const [isArchiving, setIsArchiving] = useState(false);
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
+    const [editingDueDate, setEditingDueDate] = useState<string | undefined>(undefined);
+    const [showEarlyCompleteModal, setShowEarlyCompleteModal] = useState(false);
 
     // Получаем ID теста из URL, если не передан через props
     const id = testId || (router.query.id ? Number(router.query.id) : undefined);
@@ -148,6 +166,7 @@ const TestPreview = ({
 
     useEffect(() => {
         if (test) {
+            console.log("Test loaded:", { dueDate: test.dueDate, status: test.status });
             const errors = getTestValidationErrors({
                 title: test.title,
                 description: test.description,
@@ -155,6 +174,7 @@ const TestPreview = ({
                 questions: test.questions || [],
             });
             setValidationErrors(errors);
+            setEditingDueDate(test.dueDate);
         }
     }, [test]);
 
@@ -170,8 +190,37 @@ const TestPreview = ({
             alert("Тест не может быть опубликован. Пожалуйста, исправьте все ошибки валидации.");
             return;
         }
+
+        if (!editingDueDate) {
+            alert("Пожалуйста, установите срок выполнения перед публикацией теста.");
+            return;
+        }
+
+        const now = new Date();
+        const minDate = new Date(now.getTime() + 10 * 60 * 1000);
+        const selectedDate = new Date(editingDueDate);
+
+        if (selectedDate < minDate) {
+            alert("Срок выполнения должен быть не менее чем на 10 минут позже текущего времени.");
+            return;
+        }
+
         try {
             setIsPublishing(true);
+
+            await dispatch(
+                updateTest({
+                    testId: test.id,
+                    testData: {
+                        title: test.title,
+                        description: test.description,
+                        timeLimit: test.timeLimit,
+                        dueDate: editingDueDate,
+                        questions: test.questions || [],
+                    },
+                }),
+            ).unwrap();
+
             await dispatch(publishTest(test.id)).unwrap();
             await dispatch(getTestById(test.id));
         } catch (err) {
@@ -188,6 +237,21 @@ const TestPreview = ({
             alert("Тест не может быть завершен. Пожалуйста, исправьте все ошибки валидации.");
             return;
         }
+
+        if (test.dueDate) {
+            const now = new Date();
+            const dueDate = new Date(test.dueDate);
+            if (now < dueDate) {
+                setShowEarlyCompleteModal(true);
+                return;
+            }
+        }
+
+        await proceedWithCompletion();
+    };
+
+    const proceedWithCompletion = async () => {
+        if (!test?.id) return;
         try {
             setIsCompleting(true);
             await dispatch(completeTest(test.id)).unwrap();
@@ -250,6 +314,62 @@ const TestPreview = ({
                     <strong>Время на прохождение:</strong>
                     <p>{test.timeLimit ? formatTime(test.timeLimit) : "Не ограничено"}</p>
                 </div>
+                {isOwner && (test.status === "draft" || test.status === "completed") && (
+                    <div className={styles.infoItem}>
+                        <strong style={{ marginBottom: "12px", display: "block" }}>
+                            Срок выполнения:
+                        </strong>
+                        <div style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}>
+                            <div style={{ width: "280px" }}>
+                                <DueDatePicker
+                                    value={editingDueDate}
+                                    onChange={setEditingDueDate}
+                                    disabled={isPublishing || validationErrors.length > 0}
+                                />
+                            </div>
+                            <Button
+                                size="small"
+                                onClick={handlePublish}
+                                disabled={
+                                    isPublishing || validationErrors.length > 0 || !editingDueDate
+                                }
+                                variant="primary"
+                                style={{ whiteSpace: "nowrap" }}
+                                title={
+                                    !editingDueDate
+                                        ? "Установите срок выполнения перед публикацией теста."
+                                        : validationErrors.length > 0
+                                          ? "Тест содержит ошибки валидации. Отредактируйте тест перед публикацией."
+                                          : ""
+                                }
+                            >
+                                {isPublishing ? "Публикация..." : "Опубликовать"}
+                            </Button>
+                        </div>
+                    </div>
+                )}
+                {(() => {
+                    const shouldShowForNonOwner = !isOwner && test.dueDate;
+                    const shouldShowForOwner = isOwner && test.status !== "draft" && test.dueDate;
+
+                    console.log("Due date display conditions:", {
+                        isOwner,
+                        status: test.status,
+                        dueDate: test.dueDate,
+                        shouldShowForNonOwner,
+                        shouldShowForOwner,
+                    });
+
+                    if (shouldShowForNonOwner || shouldShowForOwner) {
+                        return (
+                            <div className={styles.infoItem}>
+                                <strong>Срок выполнения:</strong>
+                                <p>{formatDeadline(test.dueDate)}</p>
+                            </div>
+                        );
+                    }
+                    return null;
+                })()}
 
                 {/* <div className={styles.infoItem}>
                     <strong>Количество вопросов:</strong>
@@ -310,24 +430,6 @@ const TestPreview = ({
                               : "Начать тест"}
                     </Button>
                 )}
-                {isOwner &&
-                    test.id &&
-                    (test.status === "draft" ||
-                        test.status === "completed" ||
-                        test.status === "archived") && (
-                        <Button
-                            onClick={handlePublish}
-                            disabled={isPublishing || validationErrors.length > 0}
-                            variant="primary"
-                            title={
-                                validationErrors.length > 0
-                                    ? "Тест содержит ошибки валидации. Отредактируйте тест перед публикацией."
-                                    : ""
-                            }
-                        >
-                            {isPublishing ? "Публикация..." : "Опубликовать"}
-                        </Button>
-                    )}
                 {isOwner && test.id && test.status === "active" && (
                     <Button
                         onClick={handleComplete}
@@ -471,11 +573,17 @@ const TestPreview = ({
                                                 textAlign: "center",
                                                 fontWeight: 600,
                                                 fontSize: "14px",
-                                                color: getGradeColor(attempt.percentage || 0, user?.gradingCriteria),
+                                                color: getGradeColor(
+                                                    attempt.percentage || 0,
+                                                    user?.gradingCriteria,
+                                                ),
                                                 minWidth: "50px",
                                             }}
                                         >
-                                            {getGrade(attempt.percentage || 0, user?.gradingCriteria)}
+                                            {getGrade(
+                                                attempt.percentage || 0,
+                                                user?.gradingCriteria,
+                                            )}
                                         </td>
                                         <td
                                             style={{
@@ -514,7 +622,10 @@ const TestPreview = ({
                                                     <div
                                                         style={{
                                                             height: "100%",
-                                                            backgroundColor: getGradeColor(attempt.percentage || 0, user?.gradingCriteria),
+                                                            backgroundColor: getGradeColor(
+                                                                attempt.percentage || 0,
+                                                                user?.gradingCriteria,
+                                                            ),
                                                             width: (attempt.percentage || 0) + "%",
                                                             transition: "width 0.3s ease",
                                                         }}
@@ -550,6 +661,21 @@ const TestPreview = ({
                     </div>
                 </div>
             )}
+
+            <Modal
+                isOpen={showEarlyCompleteModal}
+                title="Завершить тест раньше срока?"
+                message="Вы пытаетесь завершить тест раньше установленного срока. Некоторые ученики могут не успеть закончить свои попытки прохождения теста. Вы уверены, что хотите завершить тест сейчас?"
+                onConfirm={() => {
+                    setShowEarlyCompleteModal(false);
+                    proceedWithCompletion();
+                }}
+                onCancel={() => {
+                    setShowEarlyCompleteModal(false);
+                }}
+                confirmText="Да, завершить"
+                cancelText="Отмена"
+            />
         </div>
     );
 };

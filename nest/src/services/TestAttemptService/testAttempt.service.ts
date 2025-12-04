@@ -14,6 +14,7 @@ import {
 import { TestAnswer } from "src/entities/TestAnswer/testAnswer.entity";
 import { Test } from "src/entities/Test/test.entity";
 import { Question } from "src/entities/Question/question.entity";
+import { QuestionOption } from "src/entities/QuestionOption/questionOption.entity";
 
 export interface JwtPayload {
     sub: number;
@@ -32,6 +33,8 @@ export class TestAttemptService {
         private readonly testRepository: Repository<Test>,
         @InjectRepository(Question)
         private readonly questionRepository: Repository<Question>,
+        @InjectRepository(QuestionOption)
+        private readonly questionOptionRepository: Repository<QuestionOption>,
     ) {}
 
     async createAttempt(testId: number, user: JwtPayload): Promise<any> {
@@ -204,11 +207,21 @@ export class TestAttemptService {
             where: { attemptId, questionId },
         });
 
+        // Если установлен selectedOptionId, получаем текст варианта
+        let selectedOptionText: string | null = null;
+        if (selectedOptionId) {
+            const option = await this.questionOptionRepository.findOne({
+                where: { id: selectedOptionId },
+            });
+            selectedOptionText = option?.text || null;
+        }
+
         if (!answer) {
             answer = this.answerRepository.create({
                 attemptId,
                 questionId,
                 selectedOptionId,
+                selectedOptionText,
                 selectedOptionIds: selectedOptionIds
                     ? JSON.stringify(selectedOptionIds)
                     : null,
@@ -216,13 +229,18 @@ export class TestAttemptService {
             });
         } else {
             answer.selectedOptionId = selectedOptionId;
+            answer.selectedOptionText = selectedOptionText;
             answer.selectedOptionIds = selectedOptionIds
                 ? JSON.stringify(selectedOptionIds)
                 : null;
             answer.textAnswer = textAnswer;
         }
 
-        return this.answerRepository.save(answer);
+        const saved = await this.answerRepository.save(answer);
+        console.log(
+            `[SaveAnswer] Attempt ${attemptId}, Question ${questionId}: saved, ID=${saved.id}`,
+        );
+        return saved;
     }
 
     async submitTest(testId: number, attemptId: number, user: JwtPayload) {
@@ -246,6 +264,10 @@ export class TestAttemptService {
         const answers = await this.answerRepository.find({
             where: { attemptId },
         });
+
+        console.log(
+            `[SubmitTest] Attempt ${attemptId}: found ${answers.length} answers`,
+        );
 
         let correctAnswers = 0;
         const totalQuestions = test.questions.length;

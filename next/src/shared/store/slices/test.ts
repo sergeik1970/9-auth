@@ -361,6 +361,39 @@ export const archiveTest = createAsyncThunk(
     },
 );
 
+export const recalculateAttempts = createAsyncThunk(
+    "tests/recalculate",
+    async (
+        { testId, timeRangeHours }: { testId: number; timeRangeHours: number },
+        { rejectWithValue },
+    ) => {
+        try {
+            const response = await fetch(`/api/tests/${testId}/recalculate`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ timeRangeHours }),
+                credentials: "include",
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                return rejectWithValue(
+                    data.message || data.error || "Ошибка при перепроверке попыток",
+                );
+            }
+
+            return data;
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : "Ошибка при перепроверке попыток",
+            );
+        }
+    },
+);
+
 // Создание слайса
 const testsSlice = createSlice({
     name: "test",
@@ -514,6 +547,18 @@ const testsSlice = createSlice({
                 state.error = null;
             })
             .addCase(archiveTest.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+            .addCase(recalculateAttempts.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(recalculateAttempts.fulfilled, (state, action) => {
+                state.loading = false;
+                state.error = null;
+            })
+            .addCase(recalculateAttempts.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             });

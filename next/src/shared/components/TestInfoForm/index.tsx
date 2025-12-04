@@ -35,6 +35,7 @@ const TestInfoForm = ({ data, onChange, disabled = false }: TestInfoFormProps): 
             timeLimit: minutes,
         });
     };
+
     return (
         <div>
             <div className={styles.testInfoForm} id="field-title">
@@ -68,6 +69,8 @@ const TestInfoForm = ({ data, onChange, disabled = false }: TestInfoFormProps): 
                         disabled={disabled}
                     />
                 </div>
+
+
             </div>
         </div>
     );

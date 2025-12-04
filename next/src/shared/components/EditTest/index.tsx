@@ -8,7 +8,13 @@ import TestInfoForm, { TestInfoData } from "@/shared/components/TestInfoForm";
 import Questions from "@/shared/components/Questions";
 import { QuestionFormData } from "@/shared/types/question";
 import styles from "./index.module.scss";
-import { getTestById, updateTest, autoSaveTest, saveTestAsDraft } from "@/shared/store/slices/test";
+import {
+    getTestById,
+    updateTest,
+    autoSaveTest,
+    saveTestAsDraft,
+    recalculateAttempts,
+} from "@/shared/store/slices/test";
 import { getTestValidationErrors } from "@/shared/utils/testValidation";
 
 interface EditTestProps {
@@ -39,6 +45,11 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
     const [isValidationOpen, setIsValidationOpen] = useState(false);
     const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
     const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+    const [saveDraftModalOpen, setSaveDraftModalOpen] = useState(false);
+    const [saveDraftModalType, setSaveDraftModalType] = useState<"success" | "error" | null>(null);
+    const [saveDraftErrorMessage, setSaveDraftErrorMessage] = useState("");
+    const [recalculateModalOpen, setRecalculateModalOpen] = useState(false);
+    const [isRecalculating, setIsRecalculating] = useState(false);
     const { selectedTest } = useSelector((state) => state.test);
 
     useEffect(() => {
@@ -133,13 +144,47 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
                 }),
             ).unwrap();
 
-            router.push("/dashboard");
+            setIsConfirmModalOpen(false);
+
+            if (selectedTest?.status === "active" || selectedTest?.status === "completed") {
+                setRecalculateModalOpen(true);
+            } else {
+                router.push("/dashboard");
+            }
         } catch (error) {
             console.error("Error saving test:", error);
-            alert(error instanceof Error ? error.message : "Ошибка при сохранении теста");
+            setSaveDraftErrorMessage(
+                error instanceof Error ? error.message : "Ошибка при сохранении теста",
+            );
+            setSaveDraftModalType("error");
+            setSaveDraftModalOpen(true);
         } finally {
             setIsSaving(false);
-            setIsConfirmModalOpen(false);
+        }
+    };
+
+    const handleRecalculate = async (timeRangeHours: number) => {
+        setIsRecalculating(true);
+        try {
+            await dispatch(
+                recalculateAttempts({
+                    testId,
+                    timeRangeHours,
+                }),
+            ).unwrap();
+
+            setRecalculateModalOpen(false);
+            router.push("/dashboard");
+        } catch (error) {
+            console.error("Error recalculating attempts:", error);
+            setSaveDraftErrorMessage(
+                error instanceof Error ? error.message : "Ошибка при перепроверке попыток",
+            );
+            setSaveDraftModalType("error");
+            setSaveDraftModalOpen(true);
+            setRecalculateModalOpen(false);
+        } finally {
+            setIsRecalculating(false);
         }
     };
 
@@ -160,11 +205,15 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
                 }),
             ).unwrap();
 
-            alert("Тест сохранен как черновик");
-            router.push("/dashboard");
+            setSaveDraftModalType("success");
+            setSaveDraftModalOpen(true);
         } catch (error) {
             console.error("Error saving draft:", error);
-            alert(error instanceof Error ? error.message : "Ошибка при сохранении черновика");
+            setSaveDraftErrorMessage(
+                error instanceof Error ? error.message : "Ошибка при сохранении черновика",
+            );
+            setSaveDraftModalType("error");
+            setSaveDraftModalOpen(true);
         } finally {
             setIsSaving(false);
         }
@@ -213,33 +262,8 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
         <div className={styles.editTest}>
             <div className={styles.header}>
                 <div className={styles.headerContent}>
-                    <div
-                        style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "flex-start",
-                        }}
-                    >
-                        <div>
-                            <h1 className={styles.title}>Редактирование теста</h1>
-                            <p className={styles.description}>
-                                Измените информацию о тесте и вопросы
-                            </p>
-                        </div>
-                        {autoSaveStatus !== "idle" && (
-                            <div
-                                style={{
-                                    fontSize: "13px",
-                                    color: autoSaveStatus === "saved" ? "#22c55e" : "#6b7280",
-                                    marginTop: "4px",
-                                    fontWeight: 500,
-                                }}
-                            >
-                                {autoSaveStatus === "saving" && "💾 Сохраняется..."}
-                                {autoSaveStatus === "saved" && "✓ Сохранено"}
-                            </div>
-                        )}
-                    </div>
+                    <h1 className={styles.title}>Редактирование теста</h1>
+                    <p className={styles.description}>Измените информацию о тесте и вопросы</p>
                 </div>
             </div>
 
@@ -341,6 +365,81 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
                 confirmText="Сохранить"
                 cancelText="Отмена"
             />
+
+            <Modal
+                isOpen={saveDraftModalOpen && saveDraftModalType === "success"}
+                title="Тест сохранен как черновик"
+                message="Тест успешно сохранен как черновик в разделе «Мои тесты». Вы будете перенаправлены на главную страницу."
+                onConfirm={() => {
+                    setSaveDraftModalOpen(false);
+                    router.push("/dashboard");
+                }}
+                onCancel={() => {
+                    setSaveDraftModalOpen(false);
+                    router.push("/dashboard");
+                }}
+                confirmText="ОК"
+                cancelText="ОК"
+            />
+
+            <Modal
+                isOpen={saveDraftModalOpen && saveDraftModalType === "error"}
+                title="Ошибка при сохранении"
+                message={saveDraftErrorMessage}
+                onConfirm={() => setSaveDraftModalOpen(false)}
+                onCancel={() => setSaveDraftModalOpen(false)}
+                confirmText="ОК"
+                cancelText="ОК"
+            />
+
+            {recalculateModalOpen && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.recalculateModal}>
+                        <h2>Перепроверить попытки</h2>
+                        <p>Выберите, за какой период перепроверить результаты попыток:</p>
+                        <div className={styles.recalculateButtonGroup}>
+                            <Button
+                                onClick={() => handleRecalculate(1)}
+                                disabled={isRecalculating}
+                                variant="secondary"
+                            >
+                                За последний час
+                            </Button>
+                            <Button
+                                onClick={() => handleRecalculate(24)}
+                                disabled={isRecalculating}
+                                variant="secondary"
+                            >
+                                За последние 24 часа
+                            </Button>
+                            <Button
+                                onClick={() => handleRecalculate(168)}
+                                disabled={isRecalculating}
+                                variant="secondary"
+                            >
+                                За последние 7 дней
+                            </Button>
+                            <Button
+                                onClick={() => handleRecalculate(999999)}
+                                disabled={isRecalculating}
+                                variant="secondary"
+                            >
+                                За все время
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setRecalculateModalOpen(false);
+                                    router.push("/dashboard");
+                                }}
+                                disabled={isRecalculating}
+                                variant="outline"
+                            >
+                                Не перепроверять
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

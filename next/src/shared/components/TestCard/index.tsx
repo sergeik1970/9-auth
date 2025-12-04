@@ -51,6 +51,19 @@ const formatTime = (minutes: number): string => {
     return parts.join(" ");
 };
 
+const formatDeadline = (dueDateString: string): string => {
+    if (!dueDateString) return "";
+
+    const date = new Date(dueDateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
+};
+
 const TestCard = ({
     test,
     className,
@@ -120,6 +133,25 @@ const TestCard = ({
                             </svg>
                             {test.creator.name}
                             {test.creator.patronymic && ` ${test.creator.patronymic}`}
+                        </span>
+                    )}
+                    {test.dueDate && (
+                        <span className={styles.metaItem}>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M8 2v4m8-4v4M3 4.5A2.5 2.5 0 0 1 5.5 2h13A2.5 2.5 0 0 1 21 4.5v15a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 19.5Z" />
+                                <line x1="3" x2="21" y1="7" y2="7" />
+                            </svg>
+                            До: {formatDeadline(test.dueDate)}
                         </span>
                     )}
                 </div>

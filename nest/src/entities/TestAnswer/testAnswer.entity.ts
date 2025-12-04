@@ -37,6 +37,10 @@ export class TestAnswer {
     @Column({ type: "text", nullable: true })
     textAnswer: string;
 
+    // Текст выбранного варианта ответа (для восстановления связи при изменении вариантов)
+    @Column({ type: "text", nullable: true })
+    selectedOptionText: string;
+
     // Верный ли ответ
     @Column({ type: "boolean", nullable: true })
     isCorrect: boolean;

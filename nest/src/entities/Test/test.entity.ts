@@ -33,6 +33,9 @@ export class Test {
     @Column({ type: "int", nullable: true })
     timeLimit: number;
 
+    @Column({ type: "timestamp", nullable: true })
+    dueDate: Date;
+
     // Статус теста
     @Column({
         type: "enum",
