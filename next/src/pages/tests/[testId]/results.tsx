@@ -78,7 +78,11 @@ const ResultsPage = () => {
                 <title>Результаты</title>
             </Head>
             <DashboardLayout>
-                <TestResultsComponent results={results} onRetry={handleRetry} onGoBack={handleGoBack} />
+                <TestResultsComponent
+                    results={results}
+                    onRetry={handleRetry}
+                    onGoBack={handleGoBack}
+                />
             </DashboardLayout>
         </>
     );

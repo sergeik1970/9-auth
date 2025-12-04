@@ -1,7 +1,7 @@
 import React, { ReactElement } from "react";
 import { useSelector } from "@/shared/store/store";
 import { useRouter } from "next/router";
-import { isTeacher, getRoleDisplayName } from "@/shared/utils/roles";
+import { isTeacher } from "@/shared/utils/roles";
 import styles from "./index.module.scss";
 import Link from "next/link";
 import { selectAuth } from "@/shared/store/slices/auth";
@@ -184,15 +184,6 @@ const Sidebar = ({ isOpen = false, onClose, isDesktop = false }: SideBarProps): 
                     ))}
                 </ul>
             </nav>
-            <div className={styles.user}>
-                <div className={styles.userAvatar}>👤</div>
-                <div className={styles.userInfo}>
-                    <div className={styles.userName}>{user?.name || "Пользователь"}</div>
-                    <div className={styles.userRole}>
-                        {user?.role ? getRoleDisplayName(user.role) : "Пользователь"}
-                    </div>
-                </div>
-            </div>
         </aside>
     );
 };

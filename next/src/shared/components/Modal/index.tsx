@@ -9,6 +9,8 @@ interface ModalProps {
     onCancel: () => void;
     confirmText?: string;
     cancelText?: string;
+    hideConfirm?: boolean;
+    hideCancel?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -19,6 +21,8 @@ export const Modal: React.FC<ModalProps> = ({
     onCancel,
     confirmText = "Завершить",
     cancelText = "Вернуться",
+    hideConfirm = false,
+    hideCancel = false,
 }): ReactElement | null => {
     if (!isOpen) return null;
 
@@ -28,12 +32,16 @@ export const Modal: React.FC<ModalProps> = ({
                 <h2 className={styles.title}>{title}</h2>
                 <p className={styles.message}>{message}</p>
                 <div className={styles.buttons}>
-                    <button className={styles.cancelBtn} onClick={onCancel}>
-                        {cancelText}
-                    </button>
-                    <button className={styles.confirmBtn} onClick={onConfirm}>
-                        {confirmText}
-                    </button>
+                    {!hideCancel && (
+                        <button className={styles.cancelBtn} onClick={onCancel}>
+                            {cancelText}
+                        </button>
+                    )}
+                    {!hideConfirm && (
+                        <button className={styles.confirmBtn} onClick={onConfirm}>
+                            {confirmText}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

@@ -69,8 +69,6 @@ const TestInfoForm = ({ data, onChange, disabled = false }: TestInfoFormProps): 
                         disabled={disabled}
                     />
                 </div>
-
-
             </div>
         </div>
     );

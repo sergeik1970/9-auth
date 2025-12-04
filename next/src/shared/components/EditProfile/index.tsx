@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Lock, RotateCcw } from "lucide-react";
 import styles from "./index.module.scss";
 import { updateProfile, clearError, clearSuccess } from "../../store/slices/settings";
 import {
@@ -9,6 +10,7 @@ import {
 } from "../../store/slices/settings";
 import { RootState } from "../../store/store";
 import { User } from "../../types/auth";
+import Modal from "../Modal";
 
 interface EditProfileProps {
     user: User;
@@ -26,7 +28,6 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
         name: user.name || "",
         lastName: user.lastName || "",
         patronymic: user.patronymic || "",
-        avatar: user.avatar || "",
     });
 
     const [locationNames, setLocationNames] = useState({
@@ -40,7 +41,6 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
             name: user.name || "",
             lastName: user.lastName || "",
             patronymic: user.patronymic || "",
-            avatar: user.avatar || "",
         });
     }, [user]);
 
@@ -50,6 +50,7 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
         password: "",
         confirmPassword: "",
     });
+    const [showNoChangesModal, setShowNoChangesModal] = useState(false);
 
     const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -110,7 +111,6 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
         if (formData.name !== user.name) updateData.name = formData.name;
         if (formData.lastName !== user.lastName) updateData.lastName = formData.lastName;
         if (formData.patronymic !== user.patronymic) updateData.patronymic = formData.patronymic;
-        if (formData.avatar !== user.avatar) updateData.avatar = formData.avatar;
 
         if (showPasswordChange) {
             if (passwords.password !== passwords.confirmPassword) {
@@ -126,7 +126,7 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
         }
 
         if (Object.keys(updateData).length === 0) {
-            alert("Нет изменений для сохранения");
+            setShowNoChangesModal(true);
             return;
         }
 
@@ -170,6 +170,16 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
 
             {error && <div className={styles.errorMessage}>{error}</div>}
             {success && <div className={styles.successMessage}>Профиль успешно обновлён</div>}
+
+            <Modal
+                isOpen={showNoChangesModal}
+                title="Нет изменений"
+                message="Вы не внесли никаких изменений в профиль"
+                onConfirm={() => setShowNoChangesModal(false)}
+                onCancel={() => setShowNoChangesModal(false)}
+                confirmText="Ок"
+                hideCancel={true}
+            />
 
             <form
                 className={styles.form}
@@ -219,23 +229,7 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
                     <input id="email" type="email" value={user.email} disabled />
                 </div>
 
-                <div className={styles.formGroup}>
-                    <label htmlFor="avatar">Аватар (URL)</label>
-                    <input
-                        id="avatar"
-                        type="text"
-                        name="avatar"
-                        value={formData.avatar}
-                        onChange={handleProfileChange}
-                        placeholder="https://..."
-                        disabled={loading}
-                    />
-                    {formData.avatar && (
-                        <div className={styles.avatarPreview}>
-                            <img src={formData.avatar} alt="Avatar preview" />
-                        </div>
-                    )}
-                </div>
+
 
                 <div
                     style={{
@@ -245,7 +239,7 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
                     }}
                 >
                     <h3 style={{ marginBottom: "16px" }}>
-                        Данные об образовательном учреждении (не редактируются)
+                        Данные об образовательном учреждении
                     </h3>
 
                     {(locationNames.region || user.regionId) && (
@@ -299,9 +293,22 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
                         textAlign: "left",
                         padding: 0,
                         fontSize: "14px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
                     }}
                 >
-                    {showPasswordChange ? "❌ Отменить" : "🔐 Изменить пароль"}
+                    {showPasswordChange ? (
+                        <>
+                            <RotateCcw size={20} />
+                            Отменить
+                        </>
+                    ) : (
+                        <>
+                            <Lock size={20} />
+                            Изменить пароль
+                        </>
+                    )}
                 </button>
 
                 {showPasswordChange && (

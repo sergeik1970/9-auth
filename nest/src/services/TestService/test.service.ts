@@ -65,7 +65,11 @@ export class TestService {
         const now = new Date();
         const dueDate = new Date(test.dueDate);
 
-        if (now > dueDate && test.status !== TestStatus.COMPLETED) {
+        if (
+            now > dueDate &&
+            test.status !== TestStatus.COMPLETED &&
+            test.status !== TestStatus.ARCHIVED
+        ) {
             test.status = TestStatus.COMPLETED;
             await this.testRepository.update(test.id, {
                 status: TestStatus.COMPLETED,

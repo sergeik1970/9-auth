@@ -49,13 +49,14 @@ const Questions: React.FC<QuestionsProps> = ({
                         type: value,
                     };
                 } else {
-                    const existingOptions = currentQuestion.options && currentQuestion.options.length > 0
-                        ? currentQuestion.options
-                        : [
-                            { text: "", isCorrect: false, order: 0 },
-                            { text: "", isCorrect: false, order: 1 },
-                        ];
-                    
+                    const existingOptions =
+                        currentQuestion.options && currentQuestion.options.length > 0
+                            ? currentQuestion.options
+                            : [
+                                  { text: "", isCorrect: false, order: 0 },
+                                  { text: "", isCorrect: false, order: 1 },
+                              ];
+
                     updated[questionIndex] = {
                         ...currentQuestion,
                         type: value,

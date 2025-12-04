@@ -80,6 +80,57 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
         }
     }, [selectedTest]);
 
+    const hasChanges = (): boolean => {
+        if (!selectedTest) return false;
+
+        if (
+            testInfo.title !== selectedTest.title ||
+            testInfo.description !== selectedTest.description ||
+            testInfo.timeLimit !== selectedTest.timeLimit
+        ) {
+            return true;
+        }
+
+        const selectedQuestions = selectedTest.questions || [];
+        if (questions.length !== selectedQuestions.length) {
+            return true;
+        }
+
+        for (let i = 0; i < questions.length; i++) {
+            const currentQ = questions[i];
+            const originalQ = selectedQuestions[i];
+
+            if (
+                currentQ.text !== originalQ.text ||
+                currentQ.type !== originalQ.type ||
+                currentQ.correctTextAnswer !== originalQ.correctTextAnswer
+            ) {
+                return true;
+            }
+
+            const currentOptions = currentQ.options || [];
+            const originalOptions = originalQ.options || [];
+
+            if (currentOptions.length !== originalOptions.length) {
+                return true;
+            }
+
+            for (let j = 0; j < currentOptions.length; j++) {
+                const currentOpt = currentOptions[j];
+                const originalOpt = originalOptions[j];
+
+                if (
+                    currentOpt.text !== originalOpt.text ||
+                    currentOpt.isCorrect !== originalOpt.isCorrect
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    };
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (autoSaveTimeout) {
@@ -124,6 +175,10 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
         if (errors.length > 0) {
             return;
         }
+        if (!hasChanges()) {
+            router.push("/dashboard");
+            return;
+        }
         setIsConfirmModalOpen(true);
     };
 
@@ -146,7 +201,10 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
 
             setIsConfirmModalOpen(false);
 
-            if (selectedTest?.status === "active" || selectedTest?.status === "completed") {
+            if (
+                hasChanges() &&
+                (selectedTest?.status === "active" || selectedTest?.status === "completed")
+            ) {
                 setRecalculateModalOpen(true);
             } else {
                 router.push("/dashboard");

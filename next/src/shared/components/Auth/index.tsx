@@ -67,15 +67,15 @@ const Auth = (): ReactElement => {
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
                 const res = await fetch(`${apiUrl}/api/regions`);
-                
+
                 if (!res.ok) {
                     console.error(`API returned status ${res.status}`);
                     setRegions([]);
                     return;
                 }
-                
+
                 const data = await res.json();
-                
+
                 if (Array.isArray(data)) {
                     setRegions(data);
                 } else if (data?.data && Array.isArray(data.data)) {
@@ -107,16 +107,16 @@ const Auth = (): ReactElement => {
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
                 const res = await fetch(`${apiUrl}/api/regions/${selectedRegion.id}/settlements`);
-                
+
                 if (!res.ok) {
                     console.error(`Failed to load settlements: ${res.status}`);
                     setSettlementsForRegion([]);
                     setSettlements([]);
                     return;
                 }
-                
+
                 const data = await res.json();
-                
+
                 if (Array.isArray(data)) {
                     setSettlements(data);
                     setSettlementsForRegion(data.map((s: Settlement) => s.name));
@@ -125,7 +125,7 @@ const Auth = (): ReactElement => {
                     setSettlementsForRegion([]);
                     setSettlements([]);
                 }
-                
+
                 setFormData((prev) => ({ ...prev, settlement: "", educationalInstitution: "" }));
             } catch (err) {
                 console.error("Failed to load settlements:", err);
@@ -150,17 +150,19 @@ const Auth = (): ReactElement => {
 
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-                const res = await fetch(`${apiUrl}/api/regions/settlement/${selectedSettlement.id}/schools`);
-                
+                const res = await fetch(
+                    `${apiUrl}/api/regions/settlement/${selectedSettlement.id}/schools`,
+                );
+
                 if (!res.ok) {
                     console.error(`Failed to load schools: ${res.status}`);
                     setSchoolsForSettlement([]);
                     setSchools([]);
                     return;
                 }
-                
+
                 const data = await res.json();
-                
+
                 if (Array.isArray(data)) {
                     setSchools(data);
                     setSchoolsForSettlement(data.map((s: School) => s.name));
@@ -250,7 +252,9 @@ const Auth = (): ReactElement => {
                     regionId: selectedRegion?.id,
                     settlementId: selectedSettlement?.id,
                     schoolId: selectedSchool?.id,
-                    educationalInstitutionCustom: selectedSchool ? undefined : formData.educationalInstitution,
+                    educationalInstitutionCustom: selectedSchool
+                        ? undefined
+                        : formData.educationalInstitution,
                     role: formData.role || "student",
                 }),
             );
@@ -370,7 +374,9 @@ const Auth = (): ReactElement => {
                                     placeholder="Начните вводить регион"
                                     value={formData.region || ""}
                                     onChange={handleInputChange}
-                                    suggestions={Array.isArray(regions) ? regions.map((r) => r.name) : []}
+                                    suggestions={
+                                        Array.isArray(regions) ? regions.map((r) => r.name) : []
+                                    }
                                     required
                                     disabled={loading}
                                     minChars={1}

@@ -115,6 +115,7 @@ interface IQuestionOption {
     onTextChange: (text: string) => void;
     onToggleCorrect: () => void;
     onBlur?: () => void;
+    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
     onDelete?: () => void;
     questionIndex: number;
     optionIndex: number;
@@ -129,6 +130,7 @@ const QuestionOption = (props: IQuestionOption): ReactElement => {
         onTextChange,
         onToggleCorrect,
         onBlur,
+        onKeyDown,
         onDelete,
         questionIndex,
         optionIndex,
@@ -180,6 +182,7 @@ const QuestionOption = (props: IQuestionOption): ReactElement => {
                         value={option.text}
                         onChange={handleTextChange}
                         onBlur={handleBlur}
+                        onKeyDown={onKeyDown}
                         placeholder={`Вариант ответа ${optionIndex + 1}`}
                         disabled={disabled}
                         data-question={questionIndex}

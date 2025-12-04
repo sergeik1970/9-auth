@@ -41,6 +41,14 @@ const QuestionOptionsSection = ({
         return options.some((opt) => opt.isCorrect);
     };
 
+    const hasMinimumCorrectAnswers = (): boolean => {
+        const correctCount = getCorrectAnswersCount();
+        if (type === "multiple_choice") {
+            return correctCount >= 2;
+        }
+        return correctCount >= 1;
+    };
+
     const handleKeyDown = (optionIndex: number, e: React.KeyboardEvent<HTMLInputElement>) => {
         const lastOptionEmpty =
             options[options.length - 1]?.text.trim() === "" &&
@@ -169,6 +177,7 @@ const QuestionOptionsSection = ({
                         totalOptions={options.length}
                         onTextChange={(text) => handleOptionTextChange(optionIndex, text)}
                         onBlur={() => handleOptionBlur(optionIndex)}
+                        onKeyDown={(e) => handleKeyDown(optionIndex, e)}
                         onToggleCorrect={() => onToggleCorrect(optionIndex)}
                         onDelete={() => onRemoveOption(optionIndex)}
                         disabled={disabled}
@@ -179,19 +188,46 @@ const QuestionOptionsSection = ({
             <small className={styles.hint}>
                 {type === "single_choice"
                     ? "Нажмите на кружок рядом с единственным правильным ответом."
-                    : "Нажмите на квадратики рядом с правильными ответами. Можно выбрать несколько."}{" "}
+                    : "Нажмите на квадратики рядом с правильными ответами. Минимум 2 правильных ответа."}{" "}
                 Новые варианты добавляются автоматически при заполнении (до 10 вариантов).
                 Используйте стрелки ↑↓ для навигации между вариантами.
-                {getCorrectAnswersCount() > 0 && (
+                {hasMinimumCorrectAnswers() && getCorrectAnswersCount() > 0 && (
                     <span className={styles.multipleAnswers}>
                         <br />✓ Выбрано правильных ответов: {getCorrectAnswersCount()} из{" "}
                         {getNonEmptyOptionsCount()}
                     </span>
                 )}
-                {!hasCorrectAnswer() && (
+                {!hasMinimumCorrectAnswers() && (
                     <span className={styles.noAnswers}>
                         <br />
-                        ⚠️ Не выбран ни один правильный ответ
+                        {type === "multiple_choice" && getCorrectAnswersCount() > 0 ? (
+                            <>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    style={{
+                                        display: "inline",
+                                        marginRight: "6px",
+                                        verticalAlign: "middle",
+                                    }}
+                                >
+                                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+                                    <path d="M12 9v4" />
+                                    <path d="M12 17h.01" />
+                                </svg>
+                                Для множественного выбора необходимо минимум 2 правильных ответа
+                                (выбрано {getCorrectAnswersCount()})
+                            </>
+                        ) : (
+                            "⚠️ Не выбран ни один правильный ответ"
+                        )}
                     </span>
                 )}
             </small>

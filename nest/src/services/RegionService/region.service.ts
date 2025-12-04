@@ -23,7 +23,28 @@ export class RegionService {
     }
 
     async getSchoolsBySettlement(settlementId: number): Promise<School[]> {
-        return this.schoolRepository.find({ where: { settlementId } });
+        const schools = await this.schoolRepository.find({ where: { settlementId } });
+        return schools.map(school => ({
+            ...school,
+            name: this.stripCityPrefix(school.name),
+        }));
+    }
+
+    private stripCityPrefix(name: string): string {
+        const cityPrefixPatterns = [
+            /^г\.\s+[^,]*,\s*/i,
+            /^г\s+[^,]*,\s*/i,
+            /^город\s+[^,]*,\s*/i,
+            /^[^,]*,\s*/,
+        ];
+
+        for (const pattern of cityPrefixPatterns) {
+            if (pattern.test(name)) {
+                return name.replace(pattern, '').trim();
+            }
+        }
+
+        return name;
     }
 
     async createRegion(name: string): Promise<Region> {

@@ -449,7 +449,7 @@ export class TestAttemptService {
 
         const test = await this.testRepository.findOne({
             where: { id: testId },
-            relations: ["questions", "questions.options"],
+            relations: ["questions", "questions.options", "creator"],
         });
 
         if (!test) {
@@ -474,6 +474,7 @@ export class TestAttemptService {
                     new Date(attempt.startedAt).getTime()) /
                     1000,
             ),
+            gradingCriteria: test.creator?.gradingCriteria || null,
             answers: [...test.questions]
                 .sort((a, b) => a.order - b.order)
                 .map((question) => {

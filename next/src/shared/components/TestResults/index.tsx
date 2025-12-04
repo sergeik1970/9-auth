@@ -14,7 +14,8 @@ interface TestResultsProps {
 
 export const TestResults: React.FC<TestResultsProps> = ({ results, onRetry, onGoBack }) => {
     const [selectedQuestionIndex, setSelectedQuestionIndex] = useState<number | null>(null);
-    const gradingCriteria = useSelector((state: RootState) => state.auth.user?.gradingCriteria);
+    const userGradingCriteria = useSelector((state: RootState) => state.auth.user?.gradingCriteria);
+    const gradingCriteria = (results as any).gradingCriteria || userGradingCriteria;
 
     const getGrade = (percentage: number): { grade: number; label: string } => {
         if (!gradingCriteria) {
@@ -63,13 +64,13 @@ export const TestResults: React.FC<TestResultsProps> = ({ results, onRetry, onGo
         const hours = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
         const secs = seconds % 60;
-        
+
         const parts = [];
         if (hours > 0) parts.push(`${hours}ч`);
         if (mins > 0) parts.push(`${mins}м`);
         if (secs > 0 || parts.length === 0) parts.push(`${secs}с`);
-        
-        return parts.join(' ');
+
+        return parts.join(" ");
     };
 
     const getQuestionStatus = (answer: any) => {

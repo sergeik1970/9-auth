@@ -147,6 +147,9 @@ const TestPreview = ({
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
     const [editingDueDate, setEditingDueDate] = useState<string | undefined>(undefined);
     const [showEarlyCompleteModal, setShowEarlyCompleteModal] = useState(false);
+    const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
+    const [collapsingStudents, setCollapsingStudents] = useState<Set<string>>(new Set());
+    const [errorModal, setErrorModal] = useState<string | null>(null);
 
     // Получаем ID теста из URL, если не передан через props
     const id = testId || (router.query.id ? Number(router.query.id) : undefined);
@@ -187,12 +190,14 @@ const TestPreview = ({
     const handlePublish = async () => {
         if (!test?.id) return;
         if (validationErrors.length > 0) {
-            alert("Тест не может быть опубликован. Пожалуйста, исправьте все ошибки валидации.");
+            setErrorModal(
+                "Тест не может быть опубликован. Пожалуйста, исправьте все ошибки валидации.",
+            );
             return;
         }
 
         if (!editingDueDate) {
-            alert("Пожалуйста, установите срок выполнения перед публикацией теста.");
+            setErrorModal("Пожалуйста, установите срок выполнения перед публикацией теста.");
             return;
         }
 
@@ -201,7 +206,9 @@ const TestPreview = ({
         const selectedDate = new Date(editingDueDate);
 
         if (selectedDate < minDate) {
-            alert("Срок выполнения должен быть не менее чем на 10 минут позже текущего времени.");
+            setErrorModal(
+                "Срок выполнения должен быть не менее чем на 10 минут позже текущего времени.",
+            );
             return;
         }
 
@@ -225,7 +232,7 @@ const TestPreview = ({
             await dispatch(getTestById(test.id));
         } catch (err) {
             console.error("Error publishing test:", err);
-            alert(err instanceof Error ? err.message : "Ошибка при публикации теста");
+            setErrorModal(err instanceof Error ? err.message : "Ошибка при публикации теста");
         } finally {
             setIsPublishing(false);
         }
@@ -234,7 +241,9 @@ const TestPreview = ({
     const handleComplete = async () => {
         if (!test?.id) return;
         if (validationErrors.length > 0) {
-            alert("Тест не может быть завершен. Пожалуйста, исправьте все ошибки валидации.");
+            setErrorModal(
+                "Тест не может быть завершен. Пожалуйста, исправьте все ошибки валидации.",
+            );
             return;
         }
 
@@ -258,16 +267,67 @@ const TestPreview = ({
             await dispatch(getTestById(test.id));
         } catch (err) {
             console.error("Error completing test:", err);
-            alert(err instanceof Error ? err.message : "Ошибка при завершении теста");
+            setErrorModal(err instanceof Error ? err.message : "Ошибка при завершении теста");
         } finally {
             setIsCompleting(false);
+        }
+    };
+
+    const getBestAttempt = (attempts: any[]): any => {
+        if (attempts.length === 0) return null;
+        if (attempts.length === 1) return attempts[0];
+
+        return attempts.reduce((best, current) => {
+            const bestPercentage = best.percentage || 0;
+            const currentPercentage = current.percentage || 0;
+
+            if (currentPercentage > bestPercentage) return current;
+            if (currentPercentage < bestPercentage) return best;
+
+            const bestTime = best.timeSpent || 0;
+            const currentTime = current.timeSpent || 0;
+            return currentTime < bestTime ? current : best;
+        });
+    };
+
+    const groupAttemptsByStudent = (attempts: any[]) => {
+        const grouped: { [key: string]: any[] } = {};
+
+        attempts.forEach((attempt) => {
+            const studentName = attempt.studentName || "Неизвестный";
+            if (!grouped[studentName]) {
+                grouped[studentName] = [];
+            }
+            grouped[studentName].push(attempt);
+        });
+
+        return grouped;
+    };
+
+    const toggleStudentExpanded = (studentName: string) => {
+        const newExpanded = new Set(expandedStudents);
+        if (newExpanded.has(studentName)) {
+            const newCollapsing = new Set(collapsingStudents);
+            newCollapsing.add(studentName);
+            setCollapsingStudents(newCollapsing);
+
+            setTimeout(() => {
+                newExpanded.delete(studentName);
+                setExpandedStudents(newExpanded);
+                setCollapsingStudents(new Set());
+            }, 250);
+        } else {
+            newExpanded.add(studentName);
+            setExpandedStudents(newExpanded);
         }
     };
 
     const handleArchive = async () => {
         if (!test?.id) return;
         if (validationErrors.length > 0) {
-            alert("Тест не может быть архивирован. Пожалуйста, исправьте все ошибки валидации.");
+            setErrorModal(
+                "Тест не может быть архивирован. Пожалуйста, исправьте все ошибки валидации.",
+            );
             return;
         }
         try {
@@ -276,7 +336,7 @@ const TestPreview = ({
             await dispatch(getTestById(test.id));
         } catch (err) {
             console.error("Error archiving test:", err);
-            alert(err instanceof Error ? err.message : "Ошибка при архивировании теста");
+            setErrorModal(err instanceof Error ? err.message : "Ошибка при архивировании теста");
         } finally {
             setIsArchiving(false);
         }
@@ -314,40 +374,45 @@ const TestPreview = ({
                     <strong>Время на прохождение:</strong>
                     <p>{test.timeLimit ? formatTime(test.timeLimit) : "Не ограничено"}</p>
                 </div>
-                {isOwner && (test.status === "draft" || test.status === "completed") && (
-                    <div className={styles.infoItem}>
-                        <strong style={{ marginBottom: "12px", display: "block" }}>
-                            Срок выполнения:
-                        </strong>
-                        <div style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}>
-                            <div style={{ width: "280px" }}>
-                                <DueDatePicker
-                                    value={editingDueDate}
-                                    onChange={setEditingDueDate}
-                                    disabled={isPublishing || validationErrors.length > 0}
-                                />
+                {isOwner &&
+                    (test.status === "draft" ||
+                        test.status === "completed" ||
+                        test.status === "archived") && (
+                        <div className={styles.infoItem}>
+                            <strong style={{ marginBottom: "12px", display: "block" }}>
+                                Срок выполнения:
+                            </strong>
+                            <div style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}>
+                                <div style={{ width: "280px" }}>
+                                    <DueDatePicker
+                                        value={editingDueDate}
+                                        onChange={setEditingDueDate}
+                                        disabled={isPublishing || validationErrors.length > 0}
+                                    />
+                                </div>
+                                <Button
+                                    size="small"
+                                    onClick={handlePublish}
+                                    disabled={
+                                        isPublishing ||
+                                        validationErrors.length > 0 ||
+                                        !editingDueDate
+                                    }
+                                    variant="primary"
+                                    style={{ whiteSpace: "nowrap" }}
+                                    title={
+                                        !editingDueDate
+                                            ? "Установите срок выполнения перед публикацией теста."
+                                            : validationErrors.length > 0
+                                              ? "Тест содержит ошибки валидации. Отредактируйте тест перед публикацией."
+                                              : ""
+                                    }
+                                >
+                                    {isPublishing ? "Публикация..." : "Опубликовать"}
+                                </Button>
                             </div>
-                            <Button
-                                size="small"
-                                onClick={handlePublish}
-                                disabled={
-                                    isPublishing || validationErrors.length > 0 || !editingDueDate
-                                }
-                                variant="primary"
-                                style={{ whiteSpace: "nowrap" }}
-                                title={
-                                    !editingDueDate
-                                        ? "Установите срок выполнения перед публикацией теста."
-                                        : validationErrors.length > 0
-                                          ? "Тест содержит ошибки валидации. Отредактируйте тест перед публикацией."
-                                          : ""
-                                }
-                            >
-                                {isPublishing ? "Публикация..." : "Опубликовать"}
-                            </Button>
                         </div>
-                    </div>
-                )}
+                    )}
                 {(() => {
                     const shouldShowForNonOwner = !isOwner && test.dueDate;
                     const shouldShowForOwner = isOwner && test.status !== "draft" && test.dueDate;
@@ -364,7 +429,7 @@ const TestPreview = ({
                         return (
                             <div className={styles.infoItem}>
                                 <strong>Срок выполнения:</strong>
-                                <p>{formatDeadline(test.dueDate)}</p>
+                                <p>{test.dueDate ? formatDeadline(test.dueDate) : ""}</p>
                             </div>
                         );
                     }
@@ -541,121 +606,387 @@ const TestPreview = ({
                                     >
                                         Время
                                     </th>
+                                    <th
+                                        style={{
+                                            padding: "12px 8px",
+                                            textAlign: "center",
+                                            fontWeight: 600,
+                                            color: "#374151",
+                                            width: "40px",
+                                        }}
+                                    ></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {testAttempts.map((attempt: any, idx: number) => (
-                                    <tr
-                                        key={attempt.id || idx}
-                                        style={{
-                                            borderBottom: "1px solid #e5e7eb",
-                                            transition: "background-color 0.2s ease",
-                                            cursor: "pointer",
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.backgroundColor = "#f3f4f6";
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.backgroundColor = "transparent";
-                                        }}
-                                    >
-                                        <td
-                                            style={{
-                                                padding: "12px",
-                                                color: "#1f2937",
-                                            }}
-                                        >
-                                            {attempt.studentName || "Неизвестный"}
-                                        </td>
-                                        <td
-                                            style={{
-                                                padding: "12px 6px",
-                                                textAlign: "center",
-                                                fontWeight: 600,
-                                                fontSize: "14px",
-                                                color: getGradeColor(
-                                                    attempt.percentage || 0,
-                                                    user?.gradingCriteria,
-                                                ),
-                                                minWidth: "50px",
-                                            }}
-                                        >
-                                            {getGrade(
-                                                attempt.percentage || 0,
-                                                user?.gradingCriteria,
-                                            )}
-                                        </td>
-                                        <td
-                                            style={{
-                                                padding: "12px 8px",
-                                                textAlign: "center",
-                                                color: "#1f2937",
-                                                fontWeight: 500,
-                                            }}
-                                        >
-                                            {attempt.correctAnswers || 0}/
-                                            {attempt.totalQuestions || 0}
-                                        </td>
-                                        <td
-                                            style={{
-                                                padding: "12px 8px",
-                                                textAlign: "center",
-                                            }}
-                                        >
-                                            <div
-                                                style={{
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    gap: "8px",
-                                                }}
-                                            >
-                                                <div
+                                {Object.entries(groupAttemptsByStudent(testAttempts))
+                                    .sort(([nameA], [nameB]) => {
+                                        const firstNameA = (nameA || "").split(" ")[0] || "";
+                                        const firstNameB = (nameB || "").split(" ")[0] || "";
+                                        return firstNameA.localeCompare(firstNameB, "ru");
+                                    })
+                                    .map(([studentName, attempts]) => {
+                                        const bestAttempt = getBestAttempt(attempts);
+                                        const isExpanded = expandedStudents.has(studentName);
+                                        const hasMultipleAttempts = attempts.length > 1;
+
+                                        const allAttemptsSorted = attempts.sort(
+                                            (a: any, b: any) => {
+                                                const dateA = new Date(a.createdAt || 0).getTime();
+                                                const dateB = new Date(b.createdAt || 0).getTime();
+                                                return dateA - dateB;
+                                            },
+                                        );
+
+                                        const attemptNumberMap = new Map(
+                                            allAttemptsSorted.map((attempt, index) => [
+                                                attempt.id,
+                                                index + 1,
+                                            ]),
+                                        );
+
+                                        const otherAttempts = allAttemptsSorted
+                                            .filter((a) => a.id !== bestAttempt.id)
+                                            .sort(
+                                                (a: any, b: any) =>
+                                                    (b.percentage || 0) - (a.percentage || 0),
+                                            );
+
+                                        return (
+                                            <React.Fragment key={studentName}>
+                                                <tr
                                                     style={{
-                                                        height: "8px",
-                                                        backgroundColor: "#e5e7eb",
-                                                        width: "100px",
-                                                        borderRadius: "4px",
-                                                        overflow: "hidden",
+                                                        borderBottom: "1px solid #e5e7eb",
+                                                        transition: "background-color 0.2s ease",
+                                                        cursor: "pointer",
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.backgroundColor =
+                                                            "#f3f4f6";
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.backgroundColor =
+                                                            "transparent";
                                                     }}
                                                 >
-                                                    <div
+                                                    <td
                                                         style={{
-                                                            height: "100%",
-                                                            backgroundColor: getGradeColor(
-                                                                attempt.percentage || 0,
+                                                            padding: "12px",
+                                                            color: "#1f2937",
+                                                        }}
+                                                    >
+                                                        {isExpanded && hasMultipleAttempts ? (
+                                                            <>
+                                                                <div>{studentName}</div>
+                                                                <div
+                                                                    style={{
+                                                                        fontSize: "12px",
+                                                                        color: "#6b7280",
+                                                                        marginTop: "4px",
+                                                                    }}
+                                                                >
+                                                                    Попытка{" "}
+                                                                    {attemptNumberMap.get(
+                                                                        bestAttempt.id,
+                                                                    )}
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            studentName
+                                                        )}
+                                                    </td>
+                                                    <td
+                                                        style={{
+                                                            padding: "12px 6px",
+                                                            textAlign: "center",
+                                                            fontWeight: 600,
+                                                            fontSize: "14px",
+                                                            color: getGradeColor(
+                                                                bestAttempt.percentage || 0,
                                                                 user?.gradingCriteria,
                                                             ),
-                                                            width: (attempt.percentage || 0) + "%",
-                                                            transition: "width 0.3s ease",
+                                                            minWidth: "50px",
                                                         }}
-                                                    />
-                                                </div>
-                                                <span
-                                                    style={{
-                                                        color: "#6b7280",
-                                                        fontSize: "12px",
-                                                        minWidth: "35px",
-                                                    }}
-                                                >
-                                                    {attempt.percentage || 0}%
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td
-                                            style={{
-                                                padding: "12px 8px",
-                                                textAlign: "center",
-                                                color: "#6b7280",
-                                                fontSize: "13px",
-                                            }}
-                                        >
-                                            {attempt.timeSpent
-                                                ? formatTimeSpent(attempt.timeSpent)
-                                                : "—"}
-                                        </td>
-                                    </tr>
-                                ))}
+                                                    >
+                                                        {getGrade(
+                                                            bestAttempt.percentage || 0,
+                                                            user?.gradingCriteria,
+                                                        )}
+                                                    </td>
+                                                    <td
+                                                        style={{
+                                                            padding: "12px 8px",
+                                                            textAlign: "center",
+                                                            color: "#1f2937",
+                                                            fontWeight: 500,
+                                                        }}
+                                                    >
+                                                        {bestAttempt.correctAnswers || 0}/
+                                                        {bestAttempt.totalQuestions || 0}
+                                                    </td>
+                                                    <td
+                                                        style={{
+                                                            padding: "12px 8px",
+                                                            textAlign: "center",
+                                                        }}
+                                                    >
+                                                        <div
+                                                            style={{
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                gap: "8px",
+                                                            }}
+                                                        >
+                                                            <div
+                                                                style={{
+                                                                    height: "8px",
+                                                                    backgroundColor: "#e5e7eb",
+                                                                    width: "100px",
+                                                                    borderRadius: "4px",
+                                                                    overflow: "hidden",
+                                                                }}
+                                                            >
+                                                                <div
+                                                                    style={{
+                                                                        height: "100%",
+                                                                        backgroundColor:
+                                                                            getGradeColor(
+                                                                                bestAttempt.percentage ||
+                                                                                    0,
+                                                                                user?.gradingCriteria,
+                                                                            ),
+                                                                        width:
+                                                                            Math.round(
+                                                                                bestAttempt.percentage ||
+                                                                                    0,
+                                                                            ) + "%",
+                                                                        transition:
+                                                                            "width 0.3s ease",
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <span
+                                                                style={{
+                                                                    color: "#6b7280",
+                                                                    fontSize: "12px",
+                                                                    minWidth: "35px",
+                                                                }}
+                                                            >
+                                                                {Math.round(
+                                                                    bestAttempt.percentage || 0,
+                                                                )}
+                                                                %
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td
+                                                        style={{
+                                                            padding: "12px 8px",
+                                                            textAlign: "center",
+                                                            color: "#6b7280",
+                                                            fontSize: "13px",
+                                                        }}
+                                                    >
+                                                        {bestAttempt.timeSpent
+                                                            ? formatTimeSpent(bestAttempt.timeSpent)
+                                                            : "—"}
+                                                    </td>
+                                                    <td
+                                                        style={{
+                                                            padding: "12px 8px",
+                                                            textAlign: "center",
+                                                            width: "40px",
+                                                        }}
+                                                    >
+                                                        {hasMultipleAttempts && (
+                                                            <button
+                                                                onClick={() =>
+                                                                    toggleStudentExpanded(
+                                                                        studentName,
+                                                                    )
+                                                                }
+                                                                style={{
+                                                                    background: "none",
+                                                                    border: "none",
+                                                                    cursor: "pointer",
+                                                                    padding: "4px",
+                                                                    fontSize: "16px",
+                                                                    display: "flex",
+                                                                    alignItems: "center",
+                                                                    justifyContent: "center",
+                                                                    transition:
+                                                                        "transform 0.2s ease",
+                                                                    transform: isExpanded
+                                                                        ? "rotate(180deg)"
+                                                                        : "rotate(0deg)",
+                                                                }}
+                                                            >
+                                                                ▼
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                                {(isExpanded ||
+                                                    collapsingStudents.has(studentName)) &&
+                                                    otherAttempts.map(
+                                                        (attempt: any, idx: number) => {
+                                                            const attemptNumber =
+                                                                attemptNumberMap.get(attempt.id) ||
+                                                                idx + 1;
+                                                            const isCollapsing =
+                                                                collapsingStudents.has(studentName);
+                                                            return (
+                                                                <tr
+                                                                    key={`${studentName}-other-${attempt.id}`}
+                                                                    style={{
+                                                                        borderBottom:
+                                                                            "1px solid #e5e7eb",
+                                                                        backgroundColor: "#f9fafb",
+                                                                        transition:
+                                                                            "max-height 0.25s ease-out, opacity 0.25s ease-out",
+                                                                        animation: isCollapsing
+                                                                            ? "collapseRow 0.25s ease-out forwards"
+                                                                            : "slideIn 0.25s ease-out",
+                                                                        overflow: "hidden",
+                                                                    }}
+                                                                    onMouseEnter={(e) => {
+                                                                        e.currentTarget.style.backgroundColor =
+                                                                            "#f3f4f6";
+                                                                    }}
+                                                                    onMouseLeave={(e) => {
+                                                                        e.currentTarget.style.backgroundColor =
+                                                                            "#f9fafb";
+                                                                    }}
+                                                                >
+                                                                    <td
+                                                                        style={{
+                                                                            padding:
+                                                                                "12px 12px 12px 48px",
+                                                                            color: "#6b7280",
+                                                                            fontSize: "13px",
+                                                                        }}
+                                                                    >
+                                                                        Попытка {attemptNumber}
+                                                                    </td>
+                                                                    <td
+                                                                        style={{
+                                                                            padding: "12px 6px",
+                                                                            textAlign: "center",
+                                                                            fontWeight: 600,
+                                                                            fontSize: "14px",
+                                                                            color: getGradeColor(
+                                                                                attempt.percentage ||
+                                                                                    0,
+                                                                                user?.gradingCriteria,
+                                                                            ),
+                                                                            minWidth: "50px",
+                                                                        }}
+                                                                    >
+                                                                        {getGrade(
+                                                                            attempt.percentage || 0,
+                                                                            user?.gradingCriteria,
+                                                                        )}
+                                                                    </td>
+                                                                    <td
+                                                                        style={{
+                                                                            padding: "12px 8px",
+                                                                            textAlign: "center",
+                                                                            color: "#1f2937",
+                                                                            fontWeight: 500,
+                                                                        }}
+                                                                    >
+                                                                        {attempt.correctAnswers ||
+                                                                            0}
+                                                                        /
+                                                                        {attempt.totalQuestions ||
+                                                                            0}
+                                                                    </td>
+                                                                    <td
+                                                                        style={{
+                                                                            padding: "12px 8px",
+                                                                            textAlign: "center",
+                                                                        }}
+                                                                    >
+                                                                        <div
+                                                                            style={{
+                                                                                display: "flex",
+                                                                                alignItems:
+                                                                                    "center",
+                                                                                justifyContent:
+                                                                                    "center",
+                                                                                gap: "8px",
+                                                                            }}
+                                                                        >
+                                                                            <div
+                                                                                style={{
+                                                                                    height: "8px",
+                                                                                    backgroundColor:
+                                                                                        "#e5e7eb",
+                                                                                    width: "100px",
+                                                                                    borderRadius:
+                                                                                        "4px",
+                                                                                    overflow:
+                                                                                        "hidden",
+                                                                                }}
+                                                                            >
+                                                                                <div
+                                                                                    style={{
+                                                                                        height: "100%",
+                                                                                        backgroundColor:
+                                                                                            getGradeColor(
+                                                                                                attempt.percentage ||
+                                                                                                    0,
+                                                                                                user?.gradingCriteria,
+                                                                                            ),
+                                                                                        width:
+                                                                                            Math.round(
+                                                                                                attempt.percentage ||
+                                                                                                    0,
+                                                                                            ) + "%",
+                                                                                        transition:
+                                                                                            "width 0.3s ease",
+                                                                                    }}
+                                                                                />
+                                                                            </div>
+                                                                            <span
+                                                                                style={{
+                                                                                    color: "#6b7280",
+                                                                                    fontSize:
+                                                                                        "12px",
+                                                                                    minWidth:
+                                                                                        "35px",
+                                                                                }}
+                                                                            >
+                                                                                {Math.round(
+                                                                                    attempt.percentage ||
+                                                                                        0,
+                                                                                )}
+                                                                                %
+                                                                            </span>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td
+                                                                        style={{
+                                                                            padding: "12px 8px",
+                                                                            textAlign: "center",
+                                                                            color: "#6b7280",
+                                                                            fontSize: "13px",
+                                                                        }}
+                                                                    >
+                                                                        {attempt.timeSpent
+                                                                            ? formatTimeSpent(
+                                                                                  attempt.timeSpent,
+                                                                              )
+                                                                            : "—"}
+                                                                    </td>
+                                                                    <td />
+                                                                </tr>
+                                                            );
+                                                        },
+                                                    )}
+                                            </React.Fragment>
+                                        );
+                                    })}
                             </tbody>
                         </table>
                     </div>
@@ -675,6 +1006,18 @@ const TestPreview = ({
                 }}
                 confirmText="Да, завершить"
                 cancelText="Отмена"
+            />
+
+            <Modal
+                isOpen={!!errorModal}
+                title="Ошибка"
+                message={errorModal || ""}
+                onCancel={() => {
+                    setErrorModal(null);
+                }}
+                onConfirm={() => {}}
+                cancelText="Вернуться"
+                hideConfirm
             />
         </div>
     );

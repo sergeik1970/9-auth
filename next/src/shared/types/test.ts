@@ -1,5 +1,6 @@
 import { User } from "./auth";
 import { QuestionFormData, Question } from "./question";
+import { GradingCriteria } from "./auth";
 
 export interface Test {
     id?: number;
@@ -57,6 +58,7 @@ export interface TestResults {
     correctAnswers: number;
     timeSpent: number;
     answers: AnswerResult[];
+    gradingCriteria?: GradingCriteria | null;
 }
 
 export interface AnswerResult {
