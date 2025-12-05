@@ -28,6 +28,8 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
         name: user.name || "",
         lastName: user.lastName || "",
         patronymic: user.patronymic || "",
+        classNumber: user.classNumber?.toString() || "",
+        classLetter: user.classLetter || "",
     });
 
     const [locationNames, setLocationNames] = useState({
@@ -41,6 +43,8 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
             name: user.name || "",
             lastName: user.lastName || "",
             patronymic: user.patronymic || "",
+            classNumber: user.classNumber?.toString() || "",
+            classLetter: user.classLetter || "",
         });
     }, [user]);
 
@@ -51,8 +55,12 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
         confirmPassword: "",
     });
     const [showNoChangesModal, setShowNoChangesModal] = useState(false);
+    const [showClassErrorModal, setShowClassErrorModal] = useState(false);
+    const [showPasswordErrorModal, setShowPasswordErrorModal] = useState(false);
 
-    const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleProfileChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    ) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
@@ -111,14 +119,28 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
         if (formData.name !== user.name) updateData.name = formData.name;
         if (formData.lastName !== user.lastName) updateData.lastName = formData.lastName;
         if (formData.patronymic !== user.patronymic) updateData.patronymic = formData.patronymic;
+        if (formData.classNumber !== user.classNumber?.toString())
+            updateData.classNumber = formData.classNumber ? parseInt(formData.classNumber) : null;
+        if (formData.classLetter !== user.classLetter)
+            updateData.classLetter = formData.classLetter || null;
+
+        if (
+            user.role === "student" &&
+            (updateData.classNumber !== undefined || updateData.classLetter !== undefined)
+        ) {
+            if (!formData.classNumber || !formData.classLetter) {
+                setShowClassErrorModal(true);
+                return;
+            }
+        }
 
         if (showPasswordChange) {
             if (passwords.password !== passwords.confirmPassword) {
-                alert("Пароли не совпадают");
+                setShowPasswordErrorModal(true);
                 return;
             }
             if (!passwords.currentPassword || !passwords.password) {
-                alert("Заполните все поля пароля");
+                alert("Пожалуйста, заполните все поля пароля");
                 return;
             }
             updateData.currentPassword = passwords.currentPassword;
@@ -181,6 +203,26 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
                 hideCancel={true}
             />
 
+            <Modal
+                isOpen={showClassErrorModal}
+                title="Ошибка"
+                message="Пожалуйста, заполните оба поля класса"
+                onConfirm={() => setShowClassErrorModal(false)}
+                onCancel={() => setShowClassErrorModal(false)}
+                confirmText="Ок"
+                hideCancel={true}
+            />
+
+            <Modal
+                isOpen={showPasswordErrorModal}
+                title="Ошибка"
+                message="Пароли не совпадают"
+                onConfirm={() => setShowPasswordErrorModal(false)}
+                onCancel={() => setShowPasswordErrorModal(false)}
+                confirmText="Ок"
+                hideCancel={true}
+            />
+
             <form
                 className={styles.form}
                 onSubmit={(e) => {
@@ -228,9 +270,6 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
                     <label htmlFor="email">Email</label>
                     <input id="email" type="email" value={user.email} disabled />
                 </div>
-
-
-
                 <div
                     style={{
                         marginTop: "24px",
@@ -238,9 +277,7 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
                         borderTop: "1px solid #e0e0e0",
                     }}
                 >
-                    <h3 style={{ marginBottom: "16px" }}>
-                        Данные об образовательном учреждении
-                    </h3>
+                    <h3 style={{ marginBottom: "16px" }}>Данные об образовательном учреждении</h3>
 
                     {(locationNames.region || user.regionId) && (
                         <div className={styles.formGroup}>
@@ -278,6 +315,51 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
                                 }
                                 disabled
                             />
+                        </div>
+                    )}
+
+                    {user.role === "student" && (
+                        <div className={styles.classSection}>
+                            <h3>Класс</h3>
+                            <div style={{ display: "flex", gap: "16px" }}>
+                                <div className={styles.formGroup} style={{ flex: 1 }}>
+                                    <label htmlFor="classNumber">Номер класса</label>
+                                    <select
+                                        id="classNumber"
+                                        name="classNumber"
+                                        value={formData.classNumber || ""}
+                                        onChange={handleProfileChange}
+                                        disabled={loading}
+                                    >
+                                        <option value="">Выберите номер</option>
+                                        {Array.from({ length: 11 }, (_, i) => i + 1).map((num) => (
+                                            <option key={num} value={num}>
+                                                {num}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className={styles.formGroup} style={{ flex: 1 }}>
+                                    <label htmlFor="classLetter">Буква класса</label>
+                                    <select
+                                        id="classLetter"
+                                        name="classLetter"
+                                        value={formData.classLetter || ""}
+                                        onChange={handleProfileChange}
+                                        disabled={loading}
+                                    >
+                                        <option value="">Выберите букву</option>
+                                        {Array.from({ length: 32 }, (_, i) =>
+                                            String.fromCharCode(1072 + i),
+                                        ).map((letter) => (
+                                            <option key={letter} value={letter}>
+                                                {letter.toUpperCase()}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>

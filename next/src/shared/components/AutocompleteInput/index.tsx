@@ -12,6 +12,7 @@ interface AutocompleteInputProps {
     required?: boolean;
     disabled?: boolean;
     minChars?: number;
+    strictMode?: boolean;
 }
 
 const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
@@ -25,6 +26,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
     required = false,
     disabled = false,
     minChars = 2,
+    strictMode = false,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [filtered, setFiltered] = useState<string[]>([]);
@@ -32,9 +34,22 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
     const [isFocused, setIsFocused] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isSelectingRef = useRef(false);
+    const isJustSelectedRef = useRef(false);
 
     useEffect(() => {
-        if (value.length >= minChars) {
+        if (isJustSelectedRef.current) {
+            isJustSelectedRef.current = false;
+            return;
+        }
+        if (strictMode && isFocused) {
+            const filtered = suggestions.filter(
+                (item) => value === "" || item.toLowerCase().includes(value.toLowerCase()),
+            );
+            setFiltered(filtered);
+            setIsOpen(filtered.length > 0);
+            setSelectedIndex(-1);
+        } else if (value.length >= minChars) {
             const filtered = suggestions.filter((item) =>
                 item.toLowerCase().includes(value.toLowerCase()),
             );
@@ -51,7 +66,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
             setFiltered([]);
             setIsOpen(false);
         }
-    }, [value, suggestions, minChars, isFocused]);
+    }, [value, suggestions, minChars, isFocused, strictMode]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -71,6 +86,8 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
     }, []);
 
     const handleSelect = (item: string) => {
+        isSelectingRef.current = true;
+        isJustSelectedRef.current = true;
         const event = {
             target: { value: item, name },
         } as React.ChangeEvent<HTMLInputElement>;
@@ -118,7 +135,11 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
                 name={name}
                 placeholder={placeholder}
                 value={value}
-                onChange={onChange}
+                onChange={(e) => {
+                    isSelectingRef.current = false;
+                    isJustSelectedRef.current = false;
+                    onChange(e);
+                }}
                 onKeyDown={handleKeyDown}
                 onFocus={() => {
                     setIsFocused(true);
@@ -126,7 +147,14 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
                         clearTimeout(closeTimeoutRef.current);
                         closeTimeoutRef.current = null;
                     }
-                    if (value.length >= minChars && filtered.length > 0) {
+                    if (strictMode) {
+                        const filtered = suggestions.filter(
+                            (item) =>
+                                value === "" || item.toLowerCase().includes(value.toLowerCase()),
+                        );
+                        setFiltered(filtered);
+                        setIsOpen(filtered.length > 0);
+                    } else if (value.length >= minChars && filtered.length > 0) {
                         setIsOpen(true);
                     }
                 }}
@@ -139,6 +167,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
                         setIsOpen(false);
                         closeTimeoutRef.current = null;
                     }, 100);
+                    isSelectingRef.current = false;
                 }}
                 required={required}
                 disabled={disabled}
@@ -152,7 +181,11 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
                             className={`${styles.item} ${
                                 index === selectedIndex ? styles.selected : ""
                             }`}
-                            onClick={() => handleSelect(item)}
+                            onMouseDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleSelect(item);
+                            }}
                             onMouseEnter={() => setSelectedIndex(index)}
                         >
                             {item}

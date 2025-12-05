@@ -51,6 +51,93 @@
     }
 }
 
+.classesContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.classRow {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+
+    @media (max-width: 768px) {
+        flex-wrap: wrap;
+    }
+}
+
+.classSelect {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+
+    &:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    &:disabled {
+        background: #f9fafb;
+        color: #6b7280;
+        cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
+        min-width: 100px;
+    }
+}
+
+.removeButton {
+    padding: 8px 12px;
+    background: #fee;
+    border: 1px solid #fcc;
+    border-radius: 6px;
+    color: #c33;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+        background: #fdd;
+        border-color: #faa;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.addButton {
+    padding: 10px 16px;
+    background: #f0f9ff;
+    border: 1px dashed #10b981;
+    border-radius: 6px;
+    color: #10b981;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    align-self: flex-start;
+
+    &:hover:not(:disabled) {
+        background: #ecfdf5;
+        border-color: #059669;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
 @media (max-width: 768px) {
     .testInfoForm {
         padding: 16px;

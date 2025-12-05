@@ -7,6 +7,7 @@ import LoadingState from "@/shared/components/LoadingState";
 import TestInfoForm, { TestInfoData } from "@/shared/components/TestInfoForm";
 import Questions from "@/shared/components/Questions";
 import { QuestionFormData } from "@/shared/types/question";
+import { ClassSchedule } from "@/shared/types/test";
 import styles from "./index.module.scss";
 import {
     getTestById,
@@ -25,6 +26,7 @@ interface SavePayload {
     title: string;
     description: string;
     timeLimit?: number;
+    classSchedules: ClassSchedule[];
     questions: QuestionFormData[];
 }
 
@@ -37,6 +39,7 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
         title: "",
         description: "",
         timeLimit: undefined,
+        allowedClasses: [{ classNumber: 1, classLetter: "А" }],
     });
     const [questions, setQuestions] = useState<QuestionFormData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -152,6 +155,7 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
                             title: testInfo.title,
                             description: testInfo.description,
                             timeLimit: testInfo.timeLimit,
+                            classSchedules: selectedTest.classSchedules || [],
                             questions,
                         },
                     }),
@@ -189,6 +193,7 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
                 title: testInfo.title,
                 description: testInfo.description,
                 timeLimit: testInfo.timeLimit,
+                classSchedules: selectedTest?.classSchedules || [],
                 questions: questions,
             };
 
@@ -253,6 +258,7 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
                 title: testInfo.title,
                 description: testInfo.description,
                 timeLimit: testInfo.timeLimit,
+                classSchedules: selectedTest?.classSchedules || [],
                 questions: questions,
             };
 

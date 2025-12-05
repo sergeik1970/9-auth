@@ -76,56 +76,53 @@ export default function SettingsPage() {
                             </svg>
                             Профиль
                         </button>
-                        <button
-                            className={`${styles.tab} ${
-                                activeTab === "grading" ? styles.active : ""
-                            }`}
-                            onClick={() => setActiveTab("grading")}
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                style={{
-                                    display: "inline",
-                                    marginRight: "8px",
-                                    verticalAlign: "middle",
-                                }}
+                        {user.role === "teacher" && (
+                            <button
+                                className={`${styles.tab} ${
+                                    activeTab === "grading" ? styles.active : ""
+                                }`}
+                                onClick={() => setActiveTab("grading")}
                             >
-                                <path d="M10 5H3" />
-                                <path d="M12 19H3" />
-                                <path d="M14 3v4" />
-                                <path d="M16 17v4" />
-                                <path d="M21 12h-9" />
-                                <path d="M21 19h-5" />
-                                <path d="M21 5h-7" />
-                                <path d="M8 10v4" />
-                                <path d="M8 12H3" />
-                            </svg>
-                            Критерии оценок
-                        </button>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    style={{
+                                        display: "inline",
+                                        marginRight: "8px",
+                                        verticalAlign: "middle",
+                                    }}
+                                >
+                                    <path d="M10 5H3" />
+                                    <path d="M12 19H3" />
+                                    <path d="M14 3v4" />
+                                    <path d="M16 17v4" />
+                                    <path d="M21 12h-9" />
+                                    <path d="M21 19h-5" />
+                                    <path d="M21 5h-7" />
+                                    <path d="M8 10v4" />
+                                    <path d="M8 12H3" />
+                                </svg>
+                                Критерии оценок
+                            </button>
+                        )}
                     </div>
 
                     <div className={styles.content}>
                         {activeTab === "profile" && (
                             <EditProfile user={user} onSuccess={onSuccess} />
                         )}
-                        {activeTab === "grading" && user.role === "teacher" && (
+                        {activeTab === "grading" && (
                             <GradingCriteria
                                 initialCriteria={user.gradingCriteria}
                                 onSuccess={onSuccess}
                             />
-                        )}
-                        {activeTab === "grading" && user.role !== "teacher" && (
-                            <div className={styles.message}>
-                                Только учителя могут настраивать критерии оценок
-                            </div>
                         )}
                     </div>
                 </div>

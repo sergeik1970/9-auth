@@ -2,11 +2,13 @@ import {
     Injectable,
     UnauthorizedException,
     ConflictException,
+    BadRequestException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { JwtService } from "@nestjs/jwt";
 import { User, UserRole } from "src/entities/User/user.entity";
+import { School } from "src/entities/School/school.entity";
 import * as bcrypt from "bcrypt";
 
 export interface RegisterDto {
@@ -20,6 +22,8 @@ export interface RegisterDto {
     settlementId?: number;
     schoolId?: number;
     educationalInstitutionCustom?: string;
+    classNumber?: number;
+    classLetter?: string;
 }
 
 export interface LoginDto {
@@ -34,6 +38,8 @@ export interface UpdateProfileDto {
     avatar?: string;
     password?: string;
     currentPassword?: string;
+    classNumber?: number;
+    classLetter?: string;
 }
 
 export interface GradingCriteria {
@@ -52,6 +58,8 @@ export class AuthService {
     constructor(
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
+        @InjectRepository(School)
+        private readonly schoolRepository: Repository<School>,
         private readonly jwtService: JwtService,
     ) {}
 
@@ -68,6 +76,8 @@ export class AuthService {
             settlementId,
             schoolId,
             educationalInstitutionCustom,
+            classNumber,
+            classLetter,
         } = registerDto;
         console.log("Data:", {
             email,
@@ -79,6 +89,27 @@ export class AuthService {
         // Валидация роли
         if (!["student", "teacher"].includes(role)) {
             throw new ConflictException("Роль должна быть student или teacher");
+        }
+
+        // Валидация школы - должна быть выбрана из списка, не пользовательская
+        if (educationalInstitutionCustom) {
+            throw new BadRequestException(
+                "Пользовательские школы не допускаются. Пожалуйста, выберите школу из списка.",
+            );
+        }
+
+        if (!schoolId) {
+            throw new BadRequestException(
+                "Школа должна быть выбрана из списка",
+            );
+        }
+
+        // Проверить, что школа существует в базе данных
+        const school = await this.schoolRepository.findOne({
+            where: { id: schoolId },
+        });
+        if (!school) {
+            throw new BadRequestException("Выбранная школа не найдена");
         }
 
         console.log("Checking for existing user...");
@@ -110,7 +141,9 @@ export class AuthService {
             regionId,
             settlementId,
             schoolId,
-            educationalInstitutionCustom,
+            educationalInstitutionCustom: null,
+            classNumber,
+            classLetter,
         });
         console.log("User entity created:", user);
 
@@ -154,11 +187,17 @@ export class AuthService {
     }
 
     generateToken(user: User): string {
-        const payload = {
+        const payload: any = {
             sub: user.id,
             email: user.email,
             role: user.role,
         };
+        if (user.classNumber) {
+            payload.classNumber = user.classNumber;
+        }
+        if (user.classLetter) {
+            payload.classLetter = user.classLetter;
+        }
         return this.jwtService.sign(payload);
     }
 
@@ -207,6 +246,14 @@ export class AuthService {
 
         if (updateDto.avatar !== undefined) {
             user.avatar = updateDto.avatar;
+        }
+
+        if (updateDto.classNumber !== undefined) {
+            user.classNumber = updateDto.classNumber;
+        }
+
+        if (updateDto.classLetter !== undefined) {
+            user.classLetter = updateDto.classLetter;
         }
 
         return this.userRepository.save(user);

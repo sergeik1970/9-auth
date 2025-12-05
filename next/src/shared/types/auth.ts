@@ -15,6 +15,8 @@ export interface User {
     settlementId?: number;
     schoolId?: number;
     educationalInstitutionCustom?: string;
+    classNumber?: number;
+    classLetter?: string;
     role: "student" | "teacher";
     isAdmin?: boolean;
     avatar?: string;
@@ -40,6 +42,8 @@ export interface AuthFormData {
     region?: string;
     settlement?: string;
     educationalInstitution?: string;
+    classNumber?: string;
+    classLetter?: string;
     role?: "student" | "teacher";
     confirmPassword?: string;
     regionId?: number;
@@ -58,6 +62,8 @@ export interface RegisterUserData {
     settlementId?: number;
     schoolId?: number;
     educationalInstitutionCustom?: string;
+    classNumber?: number;
+    classLetter?: string;
     role: "student" | "teacher";
 }
 

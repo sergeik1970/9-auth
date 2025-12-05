@@ -111,6 +111,7 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
                     title: testInfo.title,
                     description: testInfo.description,
                     timeLimit: testInfo.timeLimit,
+                    classSchedules: [],
                     questions: questions,
                 }),
             ).unwrap();

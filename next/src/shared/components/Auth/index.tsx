@@ -47,6 +47,8 @@ const Auth = (): ReactElement => {
         region: "",
         settlement: "",
         educationalInstitution: "",
+        classNumber: "",
+        classLetter: "",
         role: "student",
         confirmPassword: "",
     });
@@ -226,7 +228,8 @@ const Auth = (): ReactElement => {
                 !formData.settlement ||
                 !formData.educationalInstitution ||
                 !formData.confirmPassword ||
-                (formData.role === "teacher" && !formData.patronymic)
+                (formData.role === "teacher" && !formData.patronymic) ||
+                (formData.role === "student" && (!formData.classNumber || !formData.classLetter))
             ) {
                 setValidationError("Заполните все поля");
                 return;
@@ -255,6 +258,9 @@ const Auth = (): ReactElement => {
                     educationalInstitutionCustom: selectedSchool
                         ? undefined
                         : formData.educationalInstitution,
+                    classNumber:
+                        formData.role === "student" ? parseInt(formData.classNumber!) : undefined,
+                    classLetter: formData.role === "student" ? formData.classLetter : undefined,
                     role: formData.role || "student",
                 }),
             );
@@ -269,6 +275,8 @@ const Auth = (): ReactElement => {
                     region: "",
                     settlement: "",
                     educationalInstitution: "",
+                    classNumber: "",
+                    classLetter: "",
                     role: "student",
                     confirmPassword: "",
                 });
@@ -287,6 +295,8 @@ const Auth = (): ReactElement => {
             region: "",
             settlement: "",
             educationalInstitution: "",
+            classNumber: "",
+            classLetter: "",
             role: "student",
             confirmPassword: "",
         });
@@ -405,15 +415,64 @@ const Auth = (): ReactElement => {
                                 <AutocompleteInput
                                     id="educationalInstitution"
                                     name="educationalInstitution"
-                                    placeholder="Начните вводить или выберите школу"
+                                    placeholder="Выберите школу из списка"
                                     value={formData.educationalInstitution || ""}
                                     onChange={handleInputChange}
                                     suggestions={schoolsForSettlement}
                                     required
                                     disabled={loading || !formData.settlement}
                                     minChars={1}
+                                    strictMode={true}
                                 />
                             </div>
+
+                            {formData.role === "student" && (
+                                <div style={{ display: "flex", gap: "16px" }}>
+                                    <div className={styles.inputGroup} style={{ flex: 1 }}>
+                                        <label htmlFor="classNumber">Класс (цифра):</label>
+                                        <select
+                                            id="classNumber"
+                                            name="classNumber"
+                                            value={formData.classNumber || ""}
+                                            onChange={handleInputChange}
+                                            required={formData.role === "student"}
+                                            disabled={loading}
+                                            className={styles.input}
+                                        >
+                                            <option value="">Выберите класс</option>
+                                            {Array.from({ length: 11 }, (_, i) => i + 1).map(
+                                                (num) => (
+                                                    <option key={num} value={num}>
+                                                        {num}
+                                                    </option>
+                                                ),
+                                            )}
+                                        </select>
+                                    </div>
+
+                                    <div className={styles.inputGroup} style={{ flex: 1 }}>
+                                        <label htmlFor="classLetter">Класс (буква):</label>
+                                        <select
+                                            id="classLetter"
+                                            name="classLetter"
+                                            value={formData.classLetter || ""}
+                                            onChange={handleInputChange}
+                                            required={formData.role === "student"}
+                                            disabled={loading}
+                                            className={styles.input}
+                                        >
+                                            <option value="">Выберите букву</option>
+                                            {Array.from({ length: 32 }, (_, i) =>
+                                                String.fromCharCode(1072 + i),
+                                            ).map((letter) => (
+                                                <option key={letter} value={letter}>
+                                                    {letter.toUpperCase()}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
                         </>
                     )}
 

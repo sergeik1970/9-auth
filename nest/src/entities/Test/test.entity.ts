@@ -19,6 +19,12 @@ export enum TestStatus {
     ARCHIVED = "archived",
 }
 
+export interface ClassSchedule {
+    classNumber: number;
+    classLetter: string;
+    dueDate: string;
+}
+
 @Entity("tests")
 export class Test {
     @PrimaryGeneratedColumn("increment")
@@ -59,6 +65,9 @@ export class Test {
     // Связь с попытками
     @OneToMany(() => TestAttempt, (attempt) => attempt.test)
     attempts: TestAttempt[];
+
+    @Column({ type: "json", nullable: false, default: [] })
+    classSchedules: ClassSchedule[];
 
     @CreateDateColumn()
     createdAt: Date;

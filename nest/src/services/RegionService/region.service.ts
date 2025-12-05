@@ -23,8 +23,10 @@ export class RegionService {
     }
 
     async getSchoolsBySettlement(settlementId: number): Promise<School[]> {
-        const schools = await this.schoolRepository.find({ where: { settlementId } });
-        return schools.map(school => ({
+        const schools = await this.schoolRepository.find({
+            where: { settlementId },
+        });
+        return schools.map((school) => ({
             ...school,
             name: this.stripCityPrefix(school.name),
         }));
@@ -40,7 +42,7 @@ export class RegionService {
 
         for (const pattern of cityPrefixPatterns) {
             if (pattern.test(name)) {
-                return name.replace(pattern, '').trim();
+                return name.replace(pattern, "").trim();
             }
         }
 

@@ -4,7 +4,7 @@ import {
     ForbiddenException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Test, TestStatus } from "src/entities/Test/test.entity";
+import { Test, TestStatus, ClassSchedule } from "src/entities/Test/test.entity";
 import { Question, QuestionType } from "src/entities/Question/question.entity";
 import { QuestionOption } from "src/entities/QuestionOption/questionOption.entity";
 import {
@@ -32,7 +32,7 @@ export interface CreateTestDto {
     title: string;
     description?: string;
     timeLimit?: number;
-    dueDate?: string;
+    classSchedules: ClassSchedule[];
     questions?: CreateQuestionForTestDto[];
 }
 
@@ -40,6 +40,8 @@ export interface JwtPayload {
     sub: number;
     email: string;
     role: string;
+    classNumber?: number;
+    classLetter?: string;
 }
 
 @Injectable()
@@ -58,15 +60,21 @@ export class TestService {
     ) {}
 
     private async checkAndUpdateTestStatus(test: Test): Promise<Test> {
-        if (!test.dueDate) {
+        if (!test.classSchedules || test.classSchedules.length === 0) {
             return test;
         }
 
         const now = new Date();
-        const dueDate = new Date(test.dueDate);
+        const maxDueDate = new Date(
+            Math.max(
+                ...test.classSchedules.map((s) =>
+                    new Date(s.dueDate).getTime(),
+                ),
+            ),
+        );
 
         if (
-            now > dueDate &&
+            now > maxDueDate &&
             test.status !== TestStatus.COMPLETED &&
             test.status !== TestStatus.ARCHIVED
         ) {
@@ -147,8 +155,30 @@ export class TestService {
                     createdAt: "DESC",
                 },
             });
+        } else if (user && user.role === "student") {
+            // Студентам показываем только активные тесты, доступные для их класса
+            const allActiveTests = await this.testRepository.find({
+                where: { status: TestStatus.ACTIVE },
+                relations: ["creator", "questions", "questions.options"],
+                order: {
+                    createdAt: "DESC",
+                },
+            });
+
+            // Фильтруем по классам ученика
+            tests = allActiveTests.filter((test) => {
+                if (!test.classSchedules || test.classSchedules.length === 0) {
+                    return false;
+                }
+                // Проверяем, есть ли класс ученика в classSchedules
+                return test.classSchedules.some(
+                    (schedule) =>
+                        schedule.classNumber === user.classNumber &&
+                        schedule.classLetter === user.classLetter,
+                );
+            });
         } else {
-            // Студентам и неавторизованным пользователям показываем только активные тесты
+            // Неавторизованным пользователям показываем только активные тесты
             tests = await this.testRepository.find({
                 where: { status: TestStatus.ACTIVE },
                 relations: ["creator", "questions", "questions.options"],
@@ -188,216 +218,225 @@ export class TestService {
         updateData: Partial<CreateTestDto>,
         user: JwtPayload,
     ): Promise<Test> {
-        const test = await this.getTestById(id);
+        try {
+            const test = await this.getTestById(id);
 
-        // Проверка, что пользователь - создатель теста
-        if (test.creatorId !== user.sub) {
-            throw new ForbiddenException(
-                "Вы можете редактировать только свои тесты",
-            );
-        }
-
-        const { questions, ...testUpdateData } = updateData;
-
-        // Обновляем вопросы если они были переданы
-        if (questions && questions.length > 0) {
-            // Получаем все вопросы текущего теста
-            const oldQuestions = await this.questionRepository.find({
-                where: { testId: id },
-            });
-
-            console.log(
-                `[UpdateTest] Old questions: ${oldQuestions.length}, New questions: ${questions.length}`,
-            );
-
-            // УДАЛЯЕМ ТОЛЬКО вопросы которых больше нет в новом списке
-            // и которые НЕ имеют ответов от completed попыток
-            for (const oldQuestion of oldQuestions) {
-                // Проверяем есть ли этот вопрос в новом списке (by order)
-                const isInNewList = questions.some(
-                    (q) => q.order === oldQuestion.order,
+            // Проверка, что пользователь - создатель теста
+            if (test.creatorId !== user.sub) {
+                throw new ForbiddenException(
+                    "Вы можете редактировать только свои тесты",
                 );
-
-                if (!isInNewList) {
-                    // Вопроса больше нет - проверяем есть ли на него ответы
-                    const answersCount = await this.answerRepository.count({
-                        where: { questionId: oldQuestion.id },
-                    });
-
-                    if (answersCount === 0) {
-                        // Нет ответов - удаляем вопрос и его варианты
-                        await this.questionOptionRepository.delete({
-                            questionId: oldQuestion.id,
-                        });
-                        await this.questionRepository.delete({
-                            id: oldQuestion.id,
-                        });
-                        console.log(
-                            `[UpdateTest] Deleted old question ${oldQuestion.id} (order ${oldQuestion.order}, no answers)`,
-                        );
-                    } else {
-                        // Есть ответы - НЕ удаляем для сохранения истории
-                        console.log(
-                            `[UpdateTest] Keeping old question ${oldQuestion.id} (order ${oldQuestion.order}, ${answersCount} answers)`,
-                        );
-                    }
-                }
             }
 
-            // ОБНОВЛЯЕМ или ДОБАВЛЯЕМ вопросы из нового списка
-            for (const questionDto of questions) {
-                // Ищем существующий вопрос по order
-                const existingQuestion = oldQuestions.find(
-                    (q) => q.order === questionDto.order,
+            const { questions, ...testUpdateData } = updateData;
+
+            // Обновляем вопросы если они были переданы
+            if (questions && questions.length > 0) {
+                // Получаем все вопросы текущего теста
+                const oldQuestions = await this.questionRepository.find({
+                    where: { testId: id },
+                });
+
+                console.log(
+                    `[UpdateTest] Old questions: ${oldQuestions.length}, New questions: ${questions.length}`,
                 );
 
-                if (existingQuestion) {
-                    // Обновляем текст вопроса
-                    await this.questionRepository.update(existingQuestion.id, {
-                        text: questionDto.text,
-                        type: questionDto.type as QuestionType,
-                        correctTextAnswer: questionDto.correctTextAnswer,
-                    });
-
-                    // Проверяем изменились ли варианты ответа (текст или флаг isCorrect)
-                    const oldOptions = await this.questionOptionRepository.find(
-                        {
-                            where: { questionId: existingQuestion.id },
-                            order: { order: "ASC" },
-                        },
+                // УДАЛЯЕМ ТОЛЬКО вопросы которых больше нет в новом списке
+                // и которые НЕ имеют ответов от completed попыток
+                for (const oldQuestion of oldQuestions) {
+                    // Проверяем есть ли этот вопрос в новом списке (by order)
+                    const isInNewList = questions.some(
+                        (q) => q.order === oldQuestion.order,
                     );
 
-                    // Сравниваем текст И флаг isCorrect
-                    const newOptionsSignature = (questionDto.options || [])
-                        .sort((a, b) => a.text.localeCompare(b.text))
-                        .map((o) => `${o.text}:${o.isCorrect}`)
-                        .join("|");
-                    const oldOptionsSignature = oldOptions
-                        .sort((a, b) => a.text.localeCompare(b.text))
-                        .map((o) => `${o.text}:${o.isCorrect}`)
-                        .join("|");
-
-                    // Если варианты изменились (текст или правильность) - обновляем их
-                    if (newOptionsSignature !== oldOptionsSignature) {
-                        console.log(
-                            `[UpdateTest] Question ${existingQuestion.id}: options changed, updating...`,
-                        );
-
-                        // Перед удалением вариантов - сохраняем текст в selectedOptionText
-                        for (const option of oldOptions) {
-                            const answersWithThisOption =
-                                await this.answerRepository.find({
-                                    where: { selectedOptionId: option.id },
-                                });
-
-                            // Сохраняем текст варианта в selectedOptionText перед обнулением
-                            for (const answer of answersWithThisOption) {
-                                await this.answerRepository.update(
-                                    { id: answer.id },
-                                    {
-                                        selectedOptionText: option.text,
-                                        selectedOptionId: null,
-                                    },
-                                );
-                            }
-                        }
-
-                        // Удаляем старые варианты и добавляем новые
-                        await this.questionOptionRepository.delete({
-                            questionId: existingQuestion.id,
+                    if (!isInNewList) {
+                        // Вопроса больше нет - проверяем есть ли на него ответы
+                        const answersCount = await this.answerRepository.count({
+                            where: { questionId: oldQuestion.id },
                         });
 
-                        const newOptions = [];
-                        if (
-                            questionDto.options &&
-                            questionDto.options.length > 0
-                        ) {
+                        if (answersCount === 0) {
+                            // Нет ответов - удаляем вопрос и его варианты
+                            await this.questionOptionRepository.delete({
+                                questionId: oldQuestion.id,
+                            });
+                            await this.questionRepository.delete({
+                                id: oldQuestion.id,
+                            });
+                            console.log(
+                                `[UpdateTest] Deleted old question ${oldQuestion.id} (order ${oldQuestion.order}, no answers)`,
+                            );
+                        } else {
+                            // Есть ответы - НЕ удаляем для сохранения истории
+                            console.log(
+                                `[UpdateTest] Keeping old question ${oldQuestion.id} (order ${oldQuestion.order}, ${answersCount} answers)`,
+                            );
+                        }
+                    }
+                }
+
+                // ОБНОВЛЯЕМ или ДОБАВЛЯЕМ вопросы из нового списка
+                for (const questionDto of questions) {
+                    // Ищем существующий вопрос по order
+                    const existingQuestion = oldQuestions.find(
+                        (q) => q.order === questionDto.order,
+                    );
+
+                    if (existingQuestion) {
+                        // Обновляем текст вопроса
+                        await this.questionRepository.update(existingQuestion.id, {
+                            text: questionDto.text,
+                            type: questionDto.type as QuestionType,
+                            correctTextAnswer: questionDto.correctTextAnswer,
+                        });
+
+                        // Проверяем изменились ли варианты ответа (текст или флаг isCorrect)
+                        const oldOptions = await this.questionOptionRepository.find(
+                            {
+                                where: { questionId: existingQuestion.id },
+                                order: { order: "ASC" },
+                            },
+                        );
+
+                        // Сравниваем текст И флаг isCorrect
+                        const newOptionsSignature = (questionDto.options || [])
+                            .sort((a, b) => a.text.localeCompare(b.text))
+                            .map((o) => `${o.text}:${o.isCorrect}`)
+                            .join("|");
+                        const oldOptionsSignature = oldOptions
+                            .sort((a, b) => a.text.localeCompare(b.text))
+                            .map((o) => `${o.text}:${o.isCorrect}`)
+                            .join("|");
+
+                        // Если варианты изменились (текст или правильность) - обновляем их
+                        if (newOptionsSignature !== oldOptionsSignature) {
+                            console.log(
+                                `[UpdateTest] Question ${existingQuestion.id}: options changed, updating...`,
+                            );
+
+                            // Перед удалением вариантов - сохраняем текст в selectedOptionText
+                            for (const option of oldOptions) {
+                                const answersWithThisOption =
+                                    await this.answerRepository.find({
+                                        where: { selectedOptionId: option.id },
+                                    });
+
+                                // Сохраняем текст варианта в selectedOptionText перед обнулением
+                                for (const answer of answersWithThisOption) {
+                                    await this.answerRepository.update(
+                                        { id: answer.id },
+                                        {
+                                            selectedOptionText: option.text,
+                                            selectedOptionId: null,
+                                        },
+                                    );
+                                }
+                            }
+
+                            // Удаляем старые варианты и добавляем новые
+                            await this.questionOptionRepository.delete({
+                                questionId: existingQuestion.id,
+                            });
+
+                            const newOptions = [];
+                            if (
+                                questionDto.options &&
+                                questionDto.options.length > 0
+                            ) {
+                                const options = questionDto.options.map((opt) =>
+                                    this.questionOptionRepository.create({
+                                        text: opt.text,
+                                        isCorrect: opt.isCorrect,
+                                        order: opt.order,
+                                        questionId: existingQuestion.id,
+                                    }),
+                                );
+                                newOptions.push(
+                                    ...(await this.questionOptionRepository.save(
+                                        options,
+                                    )),
+                                );
+                            }
+
+                            // Переподключаем selectedOptionId по совпадению текста
+                            const answersNeedingReconnection =
+                                await this.answerRepository.find({
+                                    where: {
+                                        questionId: existingQuestion.id,
+                                        selectedOptionId: null,
+                                    },
+                                });
+
+                            for (const answer of answersNeedingReconnection) {
+                                if (answer.selectedOptionText) {
+                                    const matchingOption = newOptions.find(
+                                        (opt) =>
+                                            opt.text === answer.selectedOptionText,
+                                    );
+                                    if (matchingOption) {
+                                        await this.answerRepository.update(
+                                            { id: answer.id },
+                                            { selectedOptionId: matchingOption.id },
+                                        );
+                                        console.log(
+                                            `[UpdateTest] Reconnected answer ${answer.id} to option ${matchingOption.id}`,
+                                        );
+                                    }
+                                }
+                            }
+                        } else {
+                            console.log(
+                                `[UpdateTest] Question ${existingQuestion.id}: options unchanged, keeping them`,
+                            );
+                        }
+
+                        console.log(
+                            `[UpdateTest] Updated question ${existingQuestion.id} (order ${questionDto.order})`,
+                        );
+                    } else {
+                        // Добавляем новый вопрос
+                        const question = this.questionRepository.create({
+                            text: questionDto.text,
+                            type: questionDto.type as QuestionType,
+                            order: questionDto.order,
+                            correctTextAnswer: questionDto.correctTextAnswer,
+                            testId: id,
+                        });
+
+                        const savedQuestion =
+                            await this.questionRepository.save(question);
+
+                        if (questionDto.options && questionDto.options.length > 0) {
                             const options = questionDto.options.map((opt) =>
                                 this.questionOptionRepository.create({
                                     text: opt.text,
                                     isCorrect: opt.isCorrect,
                                     order: opt.order,
-                                    questionId: existingQuestion.id,
+                                    questionId: savedQuestion.id,
                                 }),
                             );
-                            newOptions.push(
-                                ...(await this.questionOptionRepository.save(
-                                    options,
-                                )),
-                            );
+                            await this.questionOptionRepository.save(options);
                         }
 
-                        // Переподключаем selectedOptionId по совпадению текста
-                        const answersNeedingReconnection =
-                            await this.answerRepository.find({
-                                where: {
-                                    questionId: existingQuestion.id,
-                                    selectedOptionId: null,
-                                },
-                            });
-
-                        for (const answer of answersNeedingReconnection) {
-                            if (answer.selectedOptionText) {
-                                const matchingOption = newOptions.find(
-                                    (opt) =>
-                                        opt.text === answer.selectedOptionText,
-                                );
-                                if (matchingOption) {
-                                    await this.answerRepository.update(
-                                        { id: answer.id },
-                                        { selectedOptionId: matchingOption.id },
-                                    );
-                                    console.log(
-                                        `[UpdateTest] Reconnected answer ${answer.id} to option ${matchingOption.id}`,
-                                    );
-                                }
-                            }
-                        }
-                    } else {
                         console.log(
-                            `[UpdateTest] Question ${existingQuestion.id}: options unchanged, keeping them`,
+                            `[UpdateTest] Added new question ${savedQuestion.id} (order ${questionDto.order})`,
                         );
                     }
-
-                    console.log(
-                        `[UpdateTest] Updated question ${existingQuestion.id} (order ${questionDto.order})`,
-                    );
-                } else {
-                    // Добавляем новый вопрос
-                    const question = this.questionRepository.create({
-                        text: questionDto.text,
-                        type: questionDto.type as QuestionType,
-                        order: questionDto.order,
-                        correctTextAnswer: questionDto.correctTextAnswer,
-                        testId: id,
-                    });
-
-                    const savedQuestion =
-                        await this.questionRepository.save(question);
-
-                    if (questionDto.options && questionDto.options.length > 0) {
-                        const options = questionDto.options.map((opt) =>
-                            this.questionOptionRepository.create({
-                                text: opt.text,
-                                isCorrect: opt.isCorrect,
-                                order: opt.order,
-                                questionId: savedQuestion.id,
-                            }),
-                        );
-                        await this.questionOptionRepository.save(options);
-                    }
-
-                    console.log(
-                        `[UpdateTest] Added new question ${savedQuestion.id} (order ${questionDto.order})`,
-                    );
                 }
             }
+
+            console.log(`Updating test ${id} with:`, {
+                ...testUpdateData,
+                classSchedulesType: Array.isArray(testUpdateData.classSchedules) ? "array" : typeof testUpdateData.classSchedules,
+                classSchedulesValue: JSON.stringify(testUpdateData.classSchedules),
+            });
+            await this.testRepository.update(id, testUpdateData);
+
+            return this.getTestById(id);
+        } catch (error) {
+            console.error(`[UpdateTest Error] Test ID: ${id}`, error);
+            throw error;
         }
-
-        console.log(`Updating test ${id} with:`, testUpdateData);
-        await this.testRepository.update(id, testUpdateData);
-
-        return this.getTestById(id);
     }
 
     // Публикация теста (DRAFT -> ACTIVE)

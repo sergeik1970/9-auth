@@ -19,6 +19,7 @@ import { selectAuth } from "@/shared/store/slices/auth";
 import { getTestValidationErrors } from "@/shared/utils/testValidation";
 import DueDatePicker from "@/shared/components/DueDatePicker";
 import Modal from "@/shared/components/Modal";
+import { ClassSchedule } from "@/shared/types/test";
 
 interface TestPreviewProps {
     isOwner?: boolean;
@@ -145,7 +146,7 @@ const TestPreview = ({
     const [isCompleting, setIsCompleting] = useState(false);
     const [isArchiving, setIsArchiving] = useState(false);
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
-    const [editingDueDate, setEditingDueDate] = useState<string | undefined>(undefined);
+    const [editingClassSchedules, setEditingClassSchedules] = useState<ClassSchedule[]>([]);
     const [showEarlyCompleteModal, setShowEarlyCompleteModal] = useState(false);
     const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
     const [collapsingStudents, setCollapsingStudents] = useState<Set<string>>(new Set());
@@ -169,7 +170,10 @@ const TestPreview = ({
 
     useEffect(() => {
         if (test) {
-            console.log("Test loaded:", { dueDate: test.dueDate, status: test.status });
+            console.log("Test loaded:", {
+                classSchedules: test.classSchedules,
+                status: test.status,
+            });
             const errors = getTestValidationErrors({
                 title: test.title,
                 description: test.description,
@@ -177,7 +181,7 @@ const TestPreview = ({
                 questions: test.questions || [],
             });
             setValidationErrors(errors);
-            setEditingDueDate(test.dueDate);
+            setEditingClassSchedules(test.classSchedules || []);
         }
     }, [test]);
 
@@ -196,20 +200,24 @@ const TestPreview = ({
             return;
         }
 
-        if (!editingDueDate) {
-            setErrorModal("Пожалуйста, установите срок выполнения перед публикацией теста.");
+        if (!editingClassSchedules || editingClassSchedules.length === 0) {
+            setErrorModal(
+                "Пожалуйста, выберите хотя бы один класс и установите срок для публикации теста.",
+            );
             return;
         }
 
         const now = new Date();
         const minDate = new Date(now.getTime() + 10 * 60 * 1000);
-        const selectedDate = new Date(editingDueDate);
 
-        if (selectedDate < minDate) {
-            setErrorModal(
-                "Срок выполнения должен быть не менее чем на 10 минут позже текущего времени.",
-            );
-            return;
+        for (const schedule of editingClassSchedules) {
+            const selectedDate = new Date(schedule.dueDate);
+            if (selectedDate < minDate) {
+                setErrorModal(
+                    `Срок выполнения для класса ${schedule.classNumber}${schedule.classLetter} должен быть не менее чем на 10 минут позже текущего времени.`,
+                );
+                return;
+            }
         }
 
         try {
@@ -222,7 +230,7 @@ const TestPreview = ({
                         title: test.title,
                         description: test.description,
                         timeLimit: test.timeLimit,
-                        dueDate: editingDueDate,
+                        classSchedules: editingClassSchedules,
                         questions: test.questions || [],
                     },
                 }),
@@ -380,32 +388,175 @@ const TestPreview = ({
                         test.status === "archived") && (
                         <div className={styles.infoItem}>
                             <strong style={{ marginBottom: "12px", display: "block" }}>
-                                Срок выполнения:
+                                Классы и сроки выполнения:
                             </strong>
-                            <div style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}>
-                                <div style={{ width: "280px" }}>
-                                    <DueDatePicker
-                                        value={editingDueDate}
-                                        onChange={setEditingDueDate}
-                                        disabled={isPublishing || validationErrors.length > 0}
-                                    />
-                                </div>
+                            <div style={{ marginBottom: "16px" }}>
+                                {editingClassSchedules.map((schedule, index) => (
+                                    <div
+                                        key={index}
+                                        style={{
+                                            display: "flex",
+                                            gap: "12px",
+                                            alignItems: "flex-end",
+                                            marginBottom: "12px",
+                                            padding: "12px",
+                                            border: "1px solid #ddd",
+                                            borderRadius: "4px",
+                                            backgroundColor: "#f9f9f9",
+                                        }}
+                                    >
+                                        <div>
+                                            <label
+                                                style={{
+                                                    display: "block",
+                                                    marginBottom: "4px",
+                                                    fontSize: "12px",
+                                                    fontWeight: "600",
+                                                }}
+                                            >
+                                                Класс
+                                            </label>
+                                            <div style={{ display: "flex", gap: "4px" }}>
+                                                <select
+                                                    value={schedule.classNumber}
+                                                    onChange={(e) => {
+                                                        const updated = [...editingClassSchedules];
+                                                        updated[index].classNumber = parseInt(
+                                                            e.target.value,
+                                                        );
+                                                        setEditingClassSchedules(updated);
+                                                    }}
+                                                    disabled={isPublishing}
+                                                    style={{
+                                                        padding: "6px",
+                                                        borderRadius: "4px",
+                                                        border: "1px solid #ccc",
+                                                    }}
+                                                >
+                                                    {Array.from(
+                                                        { length: 11 },
+                                                        (_, i) => i + 1,
+                                                    ).map((num) => (
+                                                        <option key={num} value={num}>
+                                                            {num}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <select
+                                                    value={schedule.classLetter}
+                                                    onChange={(e) => {
+                                                        const updated = [...editingClassSchedules];
+                                                        updated[index].classLetter = e.target.value;
+                                                        setEditingClassSchedules(updated);
+                                                    }}
+                                                    disabled={isPublishing}
+                                                    style={{
+                                                        padding: "6px",
+                                                        borderRadius: "4px",
+                                                        border: "1px solid #ccc",
+                                                    }}
+                                                >
+                                                    {Array.from({ length: 32 }, (_, i) =>
+                                                        String.fromCharCode(1072 + i),
+                                                    ).map((letter) => (
+                                                        <option key={letter} value={letter}>
+                                                            {letter.toUpperCase()}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ flex: 1 }}>
+                                            <label
+                                                style={{
+                                                    display: "block",
+                                                    marginBottom: "4px",
+                                                    fontSize: "12px",
+                                                    fontWeight: "600",
+                                                }}
+                                            >
+                                                Срок выполнения
+                                            </label>
+                                            <DueDatePicker
+                                                value={schedule.dueDate}
+                                                onChange={(newDate) => {
+                                                    const updated = [...editingClassSchedules];
+                                                    updated[index].dueDate = newDate;
+                                                    setEditingClassSchedules(updated);
+                                                }}
+                                                disabled={isPublishing}
+                                            />
+                                        </div>
+
+                                        {editingClassSchedules.length > 1 && (
+                                            <button
+                                                onClick={() => {
+                                                    setEditingClassSchedules(
+                                                        editingClassSchedules.filter(
+                                                            (_, i) => i !== index,
+                                                        ),
+                                                    );
+                                                }}
+                                                disabled={isPublishing}
+                                                style={{
+                                                    padding: "6px 12px",
+                                                    background: "none",
+                                                    border: "none",
+                                                    cursor: "pointer",
+                                                    color: "#d32f2f",
+                                                    fontSize: "16px",
+                                                }}
+                                                title="Удалить"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                                <button
+                                    onClick={() => {
+                                        setEditingClassSchedules([
+                                            ...editingClassSchedules,
+                                            { classNumber: 1, classLetter: "А", dueDate: "" },
+                                        ]);
+                                    }}
+                                    disabled={isPublishing}
+                                    style={{
+                                        padding: "8px 12px",
+                                        border: "1px dashed #999",
+                                        borderRadius: "4px",
+                                        backgroundColor: "#fff",
+                                        cursor: "pointer",
+                                        fontSize: "14px",
+                                    }}
+                                    title="Добавить класс"
+                                >
+                                    + Добавить класс
+                                </button>
+                            </div>
+
+                            <div style={{ display: "flex", gap: "12px" }}>
                                 <Button
                                     size="small"
                                     onClick={handlePublish}
                                     disabled={
                                         isPublishing ||
                                         validationErrors.length > 0 ||
-                                        !editingDueDate
+                                        !editingClassSchedules ||
+                                        editingClassSchedules.length === 0 ||
+                                        editingClassSchedules.some((s) => !s.dueDate)
                                     }
                                     variant="primary"
                                     style={{ whiteSpace: "nowrap" }}
                                     title={
-                                        !editingDueDate
-                                            ? "Установите срок выполнения перед публикацией теста."
-                                            : validationErrors.length > 0
-                                              ? "Тест содержит ошибки валидации. Отредактируйте тест перед публикацией."
-                                              : ""
+                                        !editingClassSchedules || editingClassSchedules.length === 0
+                                            ? "Добавьте хотя бы один класс со сроком выполнения."
+                                            : editingClassSchedules.some((s) => !s.dueDate)
+                                              ? "Установите срок выполнения для всех классов."
+                                              : validationErrors.length > 0
+                                                ? "Тест содержит ошибки валидации. Отредактируйте тест перед публикацией."
+                                                : ""
                                     }
                                 >
                                     {isPublishing ? "Публикация..." : "Опубликовать"}
@@ -414,22 +565,38 @@ const TestPreview = ({
                         </div>
                     )}
                 {(() => {
-                    const shouldShowForNonOwner = !isOwner && test.dueDate;
-                    const shouldShowForOwner = isOwner && test.status !== "draft" && test.dueDate;
+                    const shouldShow = test.classSchedules && test.classSchedules.length > 0;
 
-                    console.log("Due date display conditions:", {
-                        isOwner,
-                        status: test.status,
-                        dueDate: test.dueDate,
-                        shouldShowForNonOwner,
-                        shouldShowForOwner,
-                    });
+                    if (shouldShow) {
+                        const userSchedule = test.classSchedules.find(
+                            (schedule) =>
+                                schedule.classNumber === user?.classNumber &&
+                                schedule.classLetter === user?.classLetter,
+                        );
 
-                    if (shouldShowForNonOwner || shouldShowForOwner) {
                         return (
                             <div className={styles.infoItem}>
-                                <strong>Срок выполнения:</strong>
-                                <p>{test.dueDate ? formatDeadline(test.dueDate) : ""}</p>
+                                <strong>Сроки выполнения по классам:</strong>
+                                <ul style={{ margin: "8px 0", paddingLeft: "20px" }}>
+                                    {test.classSchedules.map((schedule, idx) => (
+                                        <li key={idx}>
+                                            Класс {schedule.classNumber}
+                                            {schedule.classLetter}:{" "}
+                                            {formatDeadline(schedule.dueDate)}
+                                        </li>
+                                    ))}
+                                </ul>
+                                {userSchedule && user && (
+                                    <p
+                                        style={{
+                                            fontSize: "13px",
+                                            color: "#666",
+                                            margin: "4px 0 0 0",
+                                        }}
+                                    >
+                                        ℹ️ Ваш класс: {formatDeadline(userSchedule.dueDate)}
+                                    </p>
+                                )}
                             </div>
                         );
                     }

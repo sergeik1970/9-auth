@@ -9,9 +9,9 @@ interface IInputText extends React.InputHTMLAttributes<HTMLInputElement> {
 export type Ref = HTMLInputElement;
 
 const InputText = React.forwardRef<Ref, IInputText>((props: IInputText, realRef): ReactElement => {
-    const { className = "", ...rest } = props;
+    const { className = "", type = "text", ...rest } = props;
     return (
-        <input {...rest} ref={realRef} className={clsx(styles["input"], className)} type="text" />
+        <input {...rest} ref={realRef} className={clsx(styles["input"], className)} type={type} />
     );
 });
 

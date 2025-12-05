@@ -102,4 +102,10 @@ export class User {
 
     @Column({ type: "text", nullable: true })
     educationalInstitutionCustom: string;
+
+    @Column({ type: "int", nullable: true })
+    classNumber: number;
+
+    @Column({ type: "varchar", length: 1, nullable: true })
+    classLetter: string;
 }

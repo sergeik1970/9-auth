@@ -2,16 +2,27 @@ import { User } from "./auth";
 import { QuestionFormData, Question } from "./question";
 import { GradingCriteria } from "./auth";
 
+export interface AllowedClass {
+    classNumber: number;
+    classLetter: string;
+}
+
+export interface ClassSchedule {
+    classNumber: number;
+    classLetter: string;
+    dueDate: string;
+}
+
 export interface Test {
     id?: number;
     title: string;
     description?: string;
     timeLimit?: number;
-    dueDate?: string;
     status: "draft" | "active" | "completed" | "archived";
     questions?: Question[];
     creator?: User;
     creatorId?: number;
+    classSchedules?: ClassSchedule[];
     createdAt?: string;
     updatedAt?: string;
 }
@@ -20,7 +31,7 @@ export interface CreateTestData {
     title: string;
     description?: string;
     timeLimit?: number;
-    dueDate?: string;
+    classSchedules: ClassSchedule[];
     questions: QuestionFormData[];
 }
 
