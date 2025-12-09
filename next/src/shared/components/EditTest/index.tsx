@@ -65,6 +65,10 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
                 title: selectedTest.title,
                 description: selectedTest.description || "",
                 timeLimit: selectedTest.timeLimit,
+                allowedClasses: (selectedTest.classSchedules || []).map((cs) => ({
+                    classNumber: cs.classNumber,
+                    classLetter: cs.classLetter,
+                })),
             });
 
             const formattedQuestions = (selectedTest.questions || []).map((q) => ({

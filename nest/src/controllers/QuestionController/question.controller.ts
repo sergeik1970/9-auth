@@ -40,14 +40,19 @@ export class QuestionController {
 
     // Получение всех вопросов для теста
     @Get("test/:testId")
-    getQuestionsByTestId(@Param("testId") testId: string) {
-        return this.questionService.getQuestionsByTestId(Number(testId));
+    @UseGuards(JwtAuthGuard)
+    getQuestionsByTestId(@Param("testId") testId: string, @Req() req: any) {
+        return this.questionService.getQuestionsByTestId(
+            Number(testId),
+            req.user,
+        );
     }
 
     // Получение конкретного вопроса
     @Get(":id")
-    getQuestionById(@Param("id") id: string) {
-        return this.questionService.getQuestionById(Number(id));
+    @UseGuards(JwtAuthGuard)
+    getQuestionById(@Param("id") id: string, @Req() req: any) {
+        return this.questionService.getQuestionById(Number(id), req.user);
     }
 
     // Обновление вопроса

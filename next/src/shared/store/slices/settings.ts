@@ -7,6 +7,10 @@ export interface UpdateProfileData {
     avatar?: string;
     password?: string;
     currentPassword?: string;
+    classNumber?: number | null;
+    classLetter?: string | null;
+    lastName?: string;
+    patronymic?: string;
 }
 
 export interface UpdateGradingCriteriaData {
@@ -99,7 +103,7 @@ const settingsSlice = createSlice({
                 state.error = null;
                 state.success = false;
             })
-            .addCase(updateProfile.fulfilled, (state) => {
+            .addCase(updateProfile.fulfilled, (state, action) => {
                 state.loading = false;
                 state.success = true;
             })

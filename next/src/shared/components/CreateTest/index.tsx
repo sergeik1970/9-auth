@@ -33,6 +33,7 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
         title: "",
         description: "",
         timeLimit: undefined,
+        allowedClasses: [],
     });
     const [questions, setQuestions] = useState<QuestionFormData[]>([]);
     const [isLoading, setIsLoading] = useState(false);

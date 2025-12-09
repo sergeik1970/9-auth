@@ -84,6 +84,8 @@ export class AuthService {
             name,
             role,
             passwordLength: password?.length,
+            classNumber,
+            classLetter,
         });
 
         // Валидация роли
@@ -130,6 +132,9 @@ export class AuthService {
         console.log("Password hashed successfully");
 
         console.log("Creating user entity...");
+        const normalizedClassLetter = classLetter
+            ? classLetter.toUpperCase()
+            : classLetter;
         const user = this.userRepository.create({
             email,
             password: hashedPassword,
@@ -143,13 +148,21 @@ export class AuthService {
             schoolId,
             educationalInstitutionCustom: null,
             classNumber,
-            classLetter,
+            classLetter: normalizedClassLetter,
         });
-        console.log("User entity created:", user);
+        console.log("User entity created with class:", {
+            classNumber: user.classNumber,
+            classLetter: user.classLetter,
+        });
 
         console.log("Saving user to database...");
         const savedUser = await this.userRepository.save(user);
-        console.log("User saved successfully:", savedUser.id);
+        console.log("User saved successfully:", {
+            id: savedUser.id,
+            email: savedUser.email,
+            classNumber: savedUser.classNumber,
+            classLetter: savedUser.classLetter,
+        });
 
         return savedUser;
     }
@@ -157,10 +170,37 @@ export class AuthService {
     async login(loginDto: LoginDto): Promise<User> {
         const { email, password } = loginDto;
 
-        const user = await this.userRepository.findOne({ where: { email } });
+        const user = await this.userRepository.findOne({
+            where: { email },
+            select: [
+                "id",
+                "email",
+                "password",
+                "name",
+                "lastName",
+                "patronymic",
+                "role",
+                "isAdmin",
+                "regionId",
+                "settlementId",
+                "schoolId",
+                "educationalInstitutionCustom",
+                "classNumber",
+                "classLetter",
+                "createdAt",
+                "updatedAt",
+            ],
+        });
         if (!user) {
             throw new UnauthorizedException("Неверный логин или пароль");
         }
+
+        console.log(`[Login] User ${user.id}:`, {
+            email: user.email,
+            role: user.role,
+            classNumber: user.classNumber,
+            classLetter: user.classLetter,
+        });
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
@@ -171,12 +211,50 @@ export class AuthService {
     }
 
     async findUserById(id: number): Promise<User | null> {
-        return this.userRepository.findOne({ where: { id } });
+        return this.userRepository.findOne({
+            where: { id },
+            select: [
+                "id",
+                "email",
+                "password",
+                "name",
+                "lastName",
+                "patronymic",
+                "role",
+                "isAdmin",
+                "regionId",
+                "settlementId",
+                "schoolId",
+                "educationalInstitutionCustom",
+                "classNumber",
+                "classLetter",
+                "createdAt",
+                "updatedAt",
+            ],
+        });
     }
 
     async getUserByToken(userId: number): Promise<User> {
         const user = await this.userRepository.findOne({
             where: { id: userId },
+            select: [
+                "id",
+                "email",
+                "password",
+                "name",
+                "lastName",
+                "patronymic",
+                "role",
+                "isAdmin",
+                "regionId",
+                "settlementId",
+                "schoolId",
+                "educationalInstitutionCustom",
+                "classNumber",
+                "classLetter",
+                "createdAt",
+                "updatedAt",
+            ],
         });
 
         if (!user) {
@@ -198,6 +276,12 @@ export class AuthService {
         if (user.classLetter) {
             payload.classLetter = user.classLetter;
         }
+        console.log(`[generateToken] User ${user.id}:`, {
+            role: user.role,
+            classNumber: user.classNumber,
+            classLetter: user.classLetter,
+            payload,
+        });
         return this.jwtService.sign(payload);
     }
 
@@ -253,7 +337,7 @@ export class AuthService {
         }
 
         if (updateDto.classLetter !== undefined) {
-            user.classLetter = updateDto.classLetter;
+            user.classLetter = updateDto.classLetter?.toUpperCase();
         }
 
         return this.userRepository.save(user);

@@ -32,8 +32,9 @@ export class TestAttemptController {
     getAttempt(
         @Param("testId", ParseIntPipe) testId: number,
         @Param("attemptId", ParseIntPipe) attemptId: number,
+        @Req() req: any,
     ) {
-        return this.attemptService.getAttempt(testId, attemptId);
+        return this.attemptService.getAttempt(testId, attemptId, req.user);
     }
 
     @Post(":testId/attempts/:attemptId/answers")
@@ -49,6 +50,7 @@ export class TestAttemptController {
             selectedOptionIds?: number[];
             textAnswer?: string;
         },
+        @Req() req: any,
     ) {
         return this.attemptService.saveAnswer(
             testId,
@@ -57,6 +59,7 @@ export class TestAttemptController {
             body.selectedOptionId,
             body.selectedOptionIds,
             body.textAnswer,
+            req.user,
         );
     }
 

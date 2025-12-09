@@ -52,8 +52,11 @@ export const getTestById = createAsyncThunk(
     "tests/getTestById",
     async (id: number, { rejectWithValue }) => {
         try {
-            const response = await fetch(`${createApiUrl(API_ENDPOINTS.tests.getById(id))}`, {
+            // Добавляем timestamp для обхода кэша
+            const url = `${createApiUrl(API_ENDPOINTS.tests.getById(id))}?t=${Date.now()}`;
+            const response = await fetch(url, {
                 credentials: "include",
+                cache: "no-store",
             });
 
             if (!response.ok) {
@@ -464,6 +467,7 @@ const testsSlice = createSlice({
             })
             .addCase(getTestById.rejected, (state, action) => {
                 state.selectedLoading = false;
+                state.selectedTest = null;
                 state.error = action.payload as string;
             });
         builder

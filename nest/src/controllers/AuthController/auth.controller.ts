@@ -180,6 +180,30 @@ export class AuthController {
                 userId,
                 updateDto,
             );
+
+            // Перегенерируем токен если изменили класс
+            const classChanged =
+                updateDto.classNumber !== undefined ||
+                updateDto.classLetter !== undefined;
+
+            if (classChanged) {
+                const newToken = this.authService.generateToken(user);
+                res.cookie("token", newToken, {
+                    httpOnly: true,
+                    secure: false,
+                    sameSite: "lax",
+                    path: "/",
+                    maxAge: 30 * 24 * 60 * 60 * 1000,
+                });
+
+                const { password, ...userWithoutPassword } = user;
+                return res.status(HttpStatus.OK).json({
+                    message: "Профиль успешно обновлён",
+                    user: userWithoutPassword,
+                    token: newToken,
+                });
+            }
+
             const { password, ...userWithoutPassword } = user;
             return res.status(HttpStatus.OK).json({
                 message: "Профиль успешно обновлён",

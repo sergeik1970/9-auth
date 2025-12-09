@@ -20,6 +20,8 @@ export interface JwtPayload {
     sub: number;
     email: string;
     role: string;
+    classNumber?: number;
+    classLetter?: string;
 }
 
 @Injectable()
@@ -37,8 +39,73 @@ export class TestAttemptService {
         private readonly questionOptionRepository: Repository<QuestionOption>,
     ) {}
 
+    private isStudentInClass(
+        studentNumber: number | null | undefined,
+        studentLetter: string | null | undefined,
+        scheduleNumber: number | string | null | undefined,
+        scheduleLetter: string | null | undefined,
+    ): boolean {
+        // Защита от null/undefined
+        if (
+            studentNumber === null ||
+            studentNumber === undefined ||
+            studentLetter === null ||
+            studentLetter === undefined ||
+            scheduleNumber === null ||
+            scheduleNumber === undefined ||
+            scheduleLetter === null ||
+            scheduleLetter === undefined
+        ) {
+            return false;
+        }
+
+        // Нормализуем числитель класса
+        const normalizedStudentNumber = Number(studentNumber);
+        const normalizedScheduleNumber = Number(scheduleNumber);
+
+        // Проверяем, что числа валидные
+        if (isNaN(normalizedStudentNumber) || isNaN(normalizedScheduleNumber)) {
+            return false;
+        }
+
+        // Нормализуем букву класса
+        const normalizedStudentLetter = String(studentLetter)
+            .trim()
+            .toUpperCase();
+        const normalizedScheduleLetter = String(scheduleLetter)
+            .trim()
+            .toUpperCase();
+
+        // Проверяем не пустые ли буквы
+        if (
+            normalizedStudentLetter.length === 0 ||
+            normalizedScheduleLetter.length === 0
+        ) {
+            return false;
+        }
+
+        // Проверяем числовую часть
+        if (normalizedStudentNumber !== normalizedScheduleNumber) {
+            return false;
+        }
+
+        // Проверяем буквенную часть
+        if (normalizedStudentLetter !== normalizedScheduleLetter) {
+            return false;
+        }
+
+        return true;
+    }
+
     async createAttempt(testId: number, user: JwtPayload): Promise<any> {
-        console.log("createAttempt called - testId:", testId, "user:", user);
+        console.log("createAttempt called - testId:", testId);
+        console.log("User data:", {
+            sub: user.sub,
+            email: user.email,
+            role: user.role,
+            classNumber: user.classNumber,
+            classLetter: user.classLetter,
+        });
 
         const test = await this.testRepository.findOne({
             where: { id: testId },
@@ -47,10 +114,83 @@ export class TestAttemptService {
             throw new NotFoundException(`Тест с ID ${testId} не найден`);
         }
 
+        // Нормализуем classSchedules если это строка
+        let classSchedules = test.classSchedules;
+        if (typeof classSchedules === "string") {
+            try {
+                classSchedules = JSON.parse(classSchedules);
+            } catch (e) {
+                classSchedules = [];
+            }
+        }
+
+        console.log("Test loaded:", {
+            testId: test.id,
+            status: test.status,
+            classSchedules: classSchedules,
+            classSchedulesJSON: JSON.stringify(classSchedules),
+        });
+
         if (test.status !== "active") {
             throw new ForbiddenException(
                 `Тест должен быть активным для прохождения. Текущий статус: ${test.status}`,
             );
+        }
+
+        // Проверка доступа для студентов
+        if (user.role === "student") {
+            // Студент должен иметь класс
+            if (!user.classNumber || !user.classLetter) {
+                console.log("Denying access: student has no class");
+                throw new ForbiddenException(
+                    `У вас не установлен класс. Обратитесь к администратору.`,
+                );
+            }
+
+            console.log("Student attempting to take test:", {
+                userId: user.sub,
+                studentClass: `${user.classNumber}${user.classLetter}`,
+                classSchedules: JSON.stringify(classSchedules),
+            });
+
+            // Проверяем, есть ли класс студента в расписании
+            if (!classSchedules || classSchedules.length === 0) {
+                console.log("Denying access: no schedules");
+                throw new ForbiddenException(
+                    `У этого теста нет расписания. Вы не можете его пройти.`,
+                );
+            }
+
+            const studentSchedule = classSchedules.find((schedule: any) =>
+                this.isStudentInClass(
+                    user.classNumber,
+                    user.classLetter,
+                    schedule.classNumber,
+                    schedule.classLetter,
+                ),
+            );
+
+            if (!studentSchedule) {
+                console.log("Denying access: class not in schedules");
+                throw new ForbiddenException(
+                    `Этот тест не предназначен для вашего класса.`,
+                );
+            }
+
+            console.log("Student schedule found:", studentSchedule);
+
+            // Проверяем, не просрочен ли срок
+            const now = new Date();
+            const dueDate = new Date(studentSchedule.dueDate);
+
+            if (!isNaN(dueDate.getTime()) && now > dueDate) {
+                console.log("Denying access: deadline passed");
+                throw new ForbiddenException(
+                    `Срок прохождения этого теста истек.`,
+                );
+            }
+
+            console.log("Access granted to student");
         }
 
         const attempt = this.attemptRepository.create({
@@ -73,6 +213,7 @@ export class TestAttemptService {
     async getAttempt(
         testId: number,
         attemptId: number,
+        user?: JwtPayload,
         validateStatus: boolean = true,
     ): Promise<any> {
         const attempt = await this.attemptRepository.findOne({
@@ -83,6 +224,13 @@ export class TestAttemptService {
         if (!attempt) {
             throw new NotFoundException(
                 `Попытка с ID ${attemptId} для теста ${testId} не найдена`,
+            );
+        }
+
+        // Проверяем собственность попытки
+        if (user && attempt.userId !== user.sub) {
+            throw new ForbiddenException(
+                `Вы не можете просмотреть эту попытку`,
             );
         }
 
@@ -200,8 +348,49 @@ export class TestAttemptService {
         selectedOptionId?: number,
         selectedOptionIds?: number[],
         textAnswer?: string,
+        user?: JwtPayload,
     ): Promise<TestAnswer> {
-        await this.getAttempt(testId, attemptId);
+        await this.getAttempt(testId, attemptId, user);
+
+        // Проверяем доступ на текущий момент (на случай смены класса)
+        if (user && user.role === "student") {
+            // Студент должен иметь класс
+            if (!user.classNumber || !user.classLetter) {
+                throw new ForbiddenException(
+                    `У вас не установлен класс. Вы не можете отвечать на тесты.`,
+                );
+            }
+
+            const test = await this.testRepository.findOne({
+                where: { id: testId },
+            });
+
+            if (test) {
+                let classSchedules = test.classSchedules;
+                if (typeof classSchedules === "string") {
+                    try {
+                        classSchedules = JSON.parse(classSchedules);
+                    } catch (e) {
+                        classSchedules = [];
+                    }
+                }
+
+                const studentSchedule = classSchedules.find((schedule: any) =>
+                    this.isStudentInClass(
+                        user.classNumber,
+                        user.classLetter,
+                        schedule.classNumber,
+                        schedule.classLetter,
+                    ),
+                );
+
+                if (!studentSchedule) {
+                    throw new ForbiddenException(
+                        `Вы больше не можете отвечать на этот тест.`,
+                    );
+                }
+            }
+        }
 
         let answer = await this.answerRepository.findOne({
             where: { attemptId, questionId },
@@ -244,7 +433,7 @@ export class TestAttemptService {
     }
 
     async submitTest(testId: number, attemptId: number, user: JwtPayload) {
-        const attempt = await this.getAttempt(testId, attemptId);
+        const attempt = await this.getAttempt(testId, attemptId, user);
 
         if (attempt.userId !== user.sub) {
             throw new ForbiddenException(
@@ -259,6 +448,46 @@ export class TestAttemptService {
 
         if (!test) {
             throw new NotFoundException(`Тест с ID ${testId} не найден`);
+        }
+
+        // Повторная проверка доступа для студентов (на случай смены класса во время теста)
+        if (user.role === "student") {
+            // Студент должен иметь класс
+            if (!user.classNumber || !user.classLetter) {
+                throw new ForbiddenException(
+                    `У вас не установлен класс. Вы не можете завершить тест.`,
+                );
+            }
+
+            let classSchedules = test.classSchedules;
+            if (typeof classSchedules === "string") {
+                try {
+                    classSchedules = JSON.parse(classSchedules);
+                } catch (e) {
+                    classSchedules = [];
+                }
+            }
+
+            if (!classSchedules || classSchedules.length === 0) {
+                throw new ForbiddenException(
+                    `Этот тест больше не предназначен для вашего класса.`,
+                );
+            }
+
+            const studentSchedule = classSchedules.find((schedule: any) =>
+                this.isStudentInClass(
+                    user.classNumber,
+                    user.classLetter,
+                    schedule.classNumber,
+                    schedule.classLetter,
+                ),
+            );
+
+            if (!studentSchedule) {
+                throw new ForbiddenException(
+                    `Этот тест больше не предназначен для вашего класса.`,
+                );
+            }
         }
 
         const answers = await this.answerRepository.find({
@@ -439,7 +668,7 @@ export class TestAttemptService {
     }
 
     async getResults(testId: number, attemptId: number, user: JwtPayload) {
-        const attempt = await this.getAttempt(testId, attemptId, false);
+        const attempt = await this.getAttempt(testId, attemptId, user, false);
 
         if (attempt.userId !== user.sub) {
             throw new ForbiddenException(
@@ -454,6 +683,46 @@ export class TestAttemptService {
 
         if (!test) {
             throw new NotFoundException(`Тест с ID ${testId} не найден`);
+        }
+
+        // Повторная проверка доступа для студентов (на случай смены класса)
+        if (user.role === "student") {
+            // Студент должен иметь класс
+            if (!user.classNumber || !user.classLetter) {
+                throw new ForbiddenException(
+                    `У вас не установлен класс. Вы не можете просмотреть результаты.`,
+                );
+            }
+
+            let classSchedules = test.classSchedules;
+            if (typeof classSchedules === "string") {
+                try {
+                    classSchedules = JSON.parse(classSchedules);
+                } catch (e) {
+                    classSchedules = [];
+                }
+            }
+
+            if (!classSchedules || classSchedules.length === 0) {
+                throw new ForbiddenException(
+                    `Этот тест больше не предназначен для вашего класса.`,
+                );
+            }
+
+            const studentSchedule = classSchedules.find((schedule: any) =>
+                this.isStudentInClass(
+                    user.classNumber,
+                    user.classLetter,
+                    schedule.classNumber,
+                    schedule.classLetter,
+                ),
+            );
+
+            if (!studentSchedule) {
+                throw new ForbiddenException(
+                    `Этот тест больше не предназначен для вашего класса.`,
+                );
+            }
         }
 
         const answers = await this.answerRepository.find({

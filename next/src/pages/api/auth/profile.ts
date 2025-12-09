@@ -30,6 +30,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 return res.status(response.status).json(data);
             }
 
+            const setCookieHeader = response.headers.get("set-cookie");
+            if (setCookieHeader) {
+                res.setHeader("Set-Cookie", setCookieHeader);
+            }
+
             return res.status(200).json(data);
         } catch (error) {
             console.error("Error updating profile:", error);

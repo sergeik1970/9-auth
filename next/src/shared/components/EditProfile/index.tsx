@@ -8,6 +8,7 @@ import {
     selectSettingsError,
     selectSettingsSuccess,
 } from "../../store/slices/settings";
+import { getTests } from "../../store/slices/test";
 import { RootState } from "../../store/store";
 import { User } from "../../types/auth";
 import Modal from "../Modal";
@@ -29,7 +30,7 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
         lastName: user.lastName || "",
         patronymic: user.patronymic || "",
         classNumber: user.classNumber?.toString() || "",
-        classLetter: user.classLetter || "",
+        classLetter: user.classLetter?.toLowerCase() || "",
     });
 
     const [locationNames, setLocationNames] = useState({
@@ -44,7 +45,7 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
             lastName: user.lastName || "",
             patronymic: user.patronymic || "",
             classNumber: user.classNumber?.toString() || "",
-            classLetter: user.classLetter || "",
+            classLetter: user.classLetter?.toLowerCase() || "",
         });
     }, [user]);
 
@@ -121,8 +122,8 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
         if (formData.patronymic !== user.patronymic) updateData.patronymic = formData.patronymic;
         if (formData.classNumber !== user.classNumber?.toString())
             updateData.classNumber = formData.classNumber ? parseInt(formData.classNumber) : null;
-        if (formData.classLetter !== user.classLetter)
-            updateData.classLetter = formData.classLetter || null;
+        if (formData.classLetter?.toUpperCase() !== user.classLetter?.toUpperCase())
+            updateData.classLetter = formData.classLetter?.toUpperCase() || null;
 
         if (
             user.role === "student" &&
@@ -153,9 +154,19 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
         }
 
         dispatch(updateProfile(updateData) as any).then((action: any) => {
-            if (action.type === "settings/updateProfile/fulfilled") {
+            if (action.meta.requestStatus === "fulfilled") {
                 setPasswords({ currentPassword: "", password: "", confirmPassword: "" });
                 setShowPasswordChange(false);
+
+                const classChanged =
+                    updateData.classNumber !== undefined || updateData.classLetter !== undefined;
+
+                if (classChanged) {
+                    setTimeout(() => {
+                        dispatch(getTests() as any);
+                    }, 100);
+                }
+
                 onSuccess?.();
             }
         });

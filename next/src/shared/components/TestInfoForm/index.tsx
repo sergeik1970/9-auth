@@ -7,6 +7,7 @@ export interface TestInfoData {
     title: string;
     description: string;
     timeLimit?: number;
+    allowedClasses: { classNumber: number; classLetter: string }[];
 }
 
 interface TestInfoFormProps {

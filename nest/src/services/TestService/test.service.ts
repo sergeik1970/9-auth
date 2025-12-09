@@ -2,6 +2,7 @@ import {
     Injectable,
     NotFoundException,
     ForbiddenException,
+    Logger,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Test, TestStatus, ClassSchedule } from "src/entities/Test/test.entity";
@@ -46,6 +47,8 @@ export interface JwtPayload {
 
 @Injectable()
 export class TestService {
+    private readonly logger = new Logger(TestService.name);
+
     constructor(
         @InjectRepository(Test)
         private readonly testRepository: Repository<Test>,
@@ -59,32 +62,118 @@ export class TestService {
         private readonly answerRepository: Repository<TestAnswer>,
     ) {}
 
+    private isStudentInClass(
+        studentNumber: number | null | undefined,
+        studentLetter: string | null | undefined,
+        scheduleNumber: number | string | null | undefined,
+        scheduleLetter: string | null | undefined,
+    ): boolean {
+        // Защита от null/undefined
+        if (
+            studentNumber === null ||
+            studentNumber === undefined ||
+            studentLetter === null ||
+            studentLetter === undefined ||
+            scheduleNumber === null ||
+            scheduleNumber === undefined ||
+            scheduleLetter === null ||
+            scheduleLetter === undefined
+        ) {
+            return false;
+        }
+
+        // Нормализуем числитель класса
+        const normalizedStudentNumber = Number(studentNumber);
+        const normalizedScheduleNumber = Number(scheduleNumber);
+
+        // Проверяем, что числа валидные
+        if (isNaN(normalizedStudentNumber) || isNaN(normalizedScheduleNumber)) {
+            return false;
+        }
+
+        // Нормализуем букву класса
+        const normalizedStudentLetter = String(studentLetter)
+            .trim()
+            .toUpperCase();
+        const normalizedScheduleLetter = String(scheduleLetter)
+            .trim()
+            .toUpperCase();
+
+        // Проверяем не пустые ли буквы
+        if (
+            normalizedStudentLetter.length === 0 ||
+            normalizedScheduleLetter.length === 0
+        ) {
+            return false;
+        }
+
+        // Проверяем числовую часть
+        if (normalizedStudentNumber !== normalizedScheduleNumber) {
+            return false;
+        }
+
+        // Проверяем буквенную часть
+        if (normalizedStudentLetter !== normalizedScheduleLetter) {
+            return false;
+        }
+
+        return true;
+    }
+
     private async checkAndUpdateTestStatus(test: Test): Promise<Test> {
-        if (!test.classSchedules || test.classSchedules.length === 0) {
+        try {
+            if (!test.classSchedules || test.classSchedules.length === 0) {
+                return test;
+            }
+
+            const now = new Date();
+            const nowUtc = now.getTime();
+
+            let maxDueDateMs = -Infinity;
+
+            for (const schedule of test.classSchedules) {
+                const dueDate = new Date(schedule.dueDate);
+                const dueDateMs = dueDate.getTime();
+
+                if (!isNaN(dueDateMs)) {
+                    maxDueDateMs = Math.max(maxDueDateMs, dueDateMs);
+                }
+            }
+
+            if (maxDueDateMs === -Infinity) {
+                return test;
+            }
+
+            this.logger.log(`[Test ${test.id}] Status check:`, {
+                currentTimeUTC: new Date(nowUtc).toISOString(),
+                maxDueDateUTC: new Date(maxDueDateMs).toISOString(),
+                isExpired: nowUtc > maxDueDateMs,
+                testStatus: test.status,
+                testTitle: test.title,
+            });
+
+            if (
+                nowUtc > maxDueDateMs &&
+                test.status !== TestStatus.COMPLETED &&
+                test.status !== TestStatus.ARCHIVED
+            ) {
+                this.logger.log(
+                    `[Test ${test.id}] Deadline has passed. Updating status from ${test.status} to COMPLETED`,
+                );
+                test.status = TestStatus.COMPLETED;
+                await this.testRepository.update(test.id, {
+                    status: TestStatus.COMPLETED,
+                });
+            }
+
+            return test;
+        } catch (error) {
+            this.logger.error(
+                `Error checking status for test ${test.id}: ${error.message}`,
+                error.stack,
+            );
             return test;
         }
-
-        const now = new Date();
-        const maxDueDate = new Date(
-            Math.max(
-                ...test.classSchedules.map((s) =>
-                    new Date(s.dueDate).getTime(),
-                ),
-            ),
-        );
-
-        if (
-            now > maxDueDate &&
-            test.status !== TestStatus.COMPLETED &&
-            test.status !== TestStatus.ARCHIVED
-        ) {
-            test.status = TestStatus.COMPLETED;
-            await this.testRepository.update(test.id, {
-                status: TestStatus.COMPLETED,
-            });
-        }
-
-        return test;
     }
 
     // Создание нового теста
@@ -144,6 +233,13 @@ export class TestService {
 
     // Получение всех тестов
     async getAllTests(user?: JwtPayload): Promise<Test[]> {
+        console.log("getAllTests called with user:", {
+            sub: user?.sub,
+            role: user?.role,
+            classNumber: user?.classNumber,
+            classLetter: user?.classLetter,
+        });
+
         let tests: Test[] = [];
 
         // Если пользователь преподаватель, показываем его собственные тесты
@@ -156,6 +252,15 @@ export class TestService {
                 },
             });
         } else if (user && user.role === "student") {
+            // Студенту нужен класс для просмотра тестов
+            if (!user.classNumber || !user.classLetter) {
+                this.logger.log(`[Student ${user.sub}] No class assigned`, {
+                    classNumber: user.classNumber,
+                    classLetter: user.classLetter,
+                });
+                return [];
+            }
+
             // Студентам показываем только активные тесты, доступные для их класса
             const allActiveTests = await this.testRepository.find({
                 where: { status: TestStatus.ACTIVE },
@@ -165,27 +270,146 @@ export class TestService {
                 },
             });
 
+            this.logger.log(
+                `[Student ${user.sub}] Loaded ${allActiveTests.length} ACTIVE tests`,
+                {
+                    studentClass: `${user.classNumber}${user.classLetter}`,
+                    firstTestSchedules:
+                        allActiveTests.length > 0
+                            ? JSON.stringify(allActiveTests[0].classSchedules)
+                            : "no tests",
+                },
+            );
+
             // Фильтруем по классам ученика
             tests = allActiveTests.filter((test) => {
-                if (!test.classSchedules || test.classSchedules.length === 0) {
+                // Нормализуем classSchedules если это строка
+                let classSchedules = test.classSchedules;
+                if (typeof classSchedules === "string") {
+                    try {
+                        classSchedules = JSON.parse(classSchedules);
+                    } catch (e) {
+                        classSchedules = [];
+                    }
+                }
+
+                if (!classSchedules || classSchedules.length === 0) {
+                    this.logger.debug(
+                        `[Test ${test.id}] Filtered out: no classSchedules`,
+                        {
+                            classSchedules: classSchedules,
+                        },
+                    );
                     return false;
                 }
+
                 // Проверяем, есть ли класс ученика в classSchedules
-                return test.classSchedules.some(
-                    (schedule) =>
-                        schedule.classNumber === user.classNumber &&
-                        schedule.classLetter === user.classLetter,
+                const studentSchedule = classSchedules.find((schedule: any) =>
+                    this.isStudentInClass(
+                        user.classNumber,
+                        user.classLetter,
+                        schedule.classNumber,
+                        schedule.classLetter,
+                    ),
                 );
+
+                if (!studentSchedule) {
+                    this.logger.debug(
+                        `[Test ${test.id}] Filtered out: class mismatch`,
+                        {
+                            testTitle: test.title,
+                            studentClass: `${user.classNumber}${user.classLetter}`,
+                            scheduleClasses: classSchedules.map(
+                                (s: any) => `${s.classNumber}${s.classLetter}`,
+                            ),
+                        },
+                    );
+                    return false;
+                }
+
+                // Проверяем, не просрочен ли срок выполнения для этого класса
+                const now = new Date();
+                const dueDate = new Date(studentSchedule.dueDate);
+
+                // Проверяем, валидна ли дата
+                if (isNaN(dueDate.getTime())) {
+                    this.logger.log(
+                        `[Test ${test.id}] Filtered out: invalid date`,
+                        {
+                            testTitle: test.title,
+                            studentClass: `${user.classNumber}${user.classLetter}`,
+                            invalidDate: studentSchedule.dueDate,
+                        },
+                    );
+                    return false;
+                }
+
+                if (now > dueDate) {
+                    this.logger.log(
+                        `[Test ${test.id}] Filtered out: deadline passed`,
+                        {
+                            testTitle: test.title,
+                            studentClass: `${user.classNumber}${user.classLetter}`,
+                            dueDate: dueDate.toISOString(),
+                            currentTime: now.toISOString(),
+                        },
+                    );
+                    return false;
+                }
+
+                this.logger.log(`[Test ${test.id}] Available for student`, {
+                    testTitle: test.title,
+                    studentClass: `${user.classNumber}${user.classLetter}`,
+                    dueDate: dueDate.toISOString(),
+                });
+
+                return true;
+            });
+
+            console.log(`[Student filtering] Results:`, {
+                userId: user.sub,
+                totalLoadedTests: allActiveTests.length,
+                availableTests: tests.length,
+                studentClass: `${user.classNumber}${user.classLetter}`,
+                availableTestIds: tests.map((t) => ({
+                    id: t.id,
+                    title: t.title,
+                })),
+            });
+
+            this.logger.log(
+                `[Student ${user.sub}] Filtered to ${tests.length} available tests`,
+            );
+
+            // Для студентов показываем только их расписание в каждом тесте
+            tests = tests.map((test) => {
+                let classSchedules = test.classSchedules;
+                if (typeof classSchedules === "string") {
+                    try {
+                        classSchedules = JSON.parse(classSchedules);
+                    } catch (e) {
+                        classSchedules = [];
+                    }
+                }
+
+                const studentSchedule = classSchedules.find((schedule: any) =>
+                    this.isStudentInClass(
+                        user.classNumber,
+                        user.classLetter,
+                        schedule.classNumber,
+                        schedule.classLetter,
+                    ),
+                );
+
+                if (studentSchedule) {
+                    test.classSchedules = [studentSchedule];
+                }
+
+                return test;
             });
         } else {
-            // Неавторизованным пользователям показываем только активные тесты
-            tests = await this.testRepository.find({
-                where: { status: TestStatus.ACTIVE },
-                relations: ["creator", "questions", "questions.options"],
-                order: {
-                    createdAt: "DESC",
-                },
-            });
+            // Неавторизованные пользователи не видят тесты
+            tests = [];
         }
 
         return await Promise.all(
@@ -194,7 +418,7 @@ export class TestService {
     }
 
     // Получение теста по ID
-    async getTestById(id: number): Promise<Test> {
+    async getTestById(id: number, user?: JwtPayload): Promise<Test> {
         const test = await this.testRepository.findOne({
             where: { id },
             relations: ["creator", "questions", "questions.options"],
@@ -204,8 +428,99 @@ export class TestService {
             throw new NotFoundException(`Тест с ID ${id} не найден`);
         }
 
-        console.log(`GetTestById ${id}:`, {
-            dueDate: test.dueDate,
+        // Проверяем доступ для студентов
+        if (user && user.role === "student") {
+            // Студент должен иметь класс
+            if (!user.classNumber || !user.classLetter) {
+                this.logger.log(
+                    `[getTestById] Student ${user.sub} denied access to test ${id}: no class assigned`,
+                    {
+                        classNumber: user.classNumber,
+                        classLetter: user.classLetter,
+                    },
+                );
+                throw new NotFoundException(`Тест с ID ${id} не найден`);
+            }
+
+            // Нормализуем classSchedules если это строка
+            let classSchedules = test.classSchedules;
+            if (typeof classSchedules === "string") {
+                try {
+                    classSchedules = JSON.parse(classSchedules);
+                } catch (e) {
+                    classSchedules = [];
+                }
+            }
+
+            // Студент может видеть только активные тесты, предназначенные для его класса
+            if (test.status !== TestStatus.ACTIVE) {
+                this.logger.log(
+                    `[getTestById] Student ${user.sub} denied access to test ${id}: not active`,
+                    {
+                        status: test.status,
+                        studentClass: `${user.classNumber}${user.classLetter}`,
+                    },
+                );
+                throw new NotFoundException(`Тест с ID ${id} не найден`);
+            }
+
+            // Проверяем, есть ли класс студента в расписании
+            if (!classSchedules || classSchedules.length === 0) {
+                this.logger.log(
+                    `[getTestById] Student ${user.sub} denied access to test ${id}: no schedules`,
+                    {
+                        studentClass: `${user.classNumber}${user.classLetter}`,
+                    },
+                );
+                throw new NotFoundException(`Тест с ID ${id} не найден`);
+            }
+
+            const studentSchedule = classSchedules.find((schedule: any) =>
+                this.isStudentInClass(
+                    user.classNumber,
+                    user.classLetter,
+                    schedule.classNumber,
+                    schedule.classLetter,
+                ),
+            );
+
+            if (!studentSchedule) {
+                this.logger.log(
+                    `[getTestById] Student ${user.sub} denied access to test ${id}: class not in schedules`,
+                    {
+                        studentClass: `${user.classNumber}${user.classLetter}`,
+                        scheduleClasses: classSchedules.map(
+                            (s: any) => `${s.classNumber}${s.classLetter}`,
+                        ),
+                    },
+                );
+                throw new NotFoundException(`Тест с ID ${id} не найден`);
+            }
+
+            // Проверяем, не просрочен ли срок
+            const now = new Date();
+            const dueDate = new Date(studentSchedule.dueDate);
+
+            if (!isNaN(dueDate.getTime()) && now > dueDate) {
+                this.logger.log(
+                    `[getTestById] Student ${user.sub} denied access to test ${id}: deadline passed`,
+                    {
+                        studentClass: `${user.classNumber}${user.classLetter}`,
+                        dueDate: dueDate.toISOString(),
+                        currentTime: now.toISOString(),
+                    },
+                );
+                throw new NotFoundException(`Тест с ID ${id} не найден`);
+            }
+
+            // Для студентов показываем только его расписание
+            test.classSchedules = [studentSchedule];
+        }
+
+        this.logger.log(`[getTestById] Test ${id} loaded:`, {
+            title: test.title,
+            classSchedulesLength: test.classSchedules?.length || 0,
+            classSchedules: JSON.stringify(test.classSchedules),
             status: test.status,
         });
 
@@ -219,6 +534,13 @@ export class TestService {
         user: JwtPayload,
     ): Promise<Test> {
         try {
+            this.logger.log(`[Test ${id}] updateTest called with:`, {
+                hasClassSchedules: !!updateData.classSchedules,
+                classSchedules: JSON.stringify(updateData.classSchedules),
+                classSchedulesLength: updateData.classSchedules?.length || 0,
+                updateDataKeys: Object.keys(updateData || {}),
+            });
+
             const test = await this.getTestById(id);
 
             // Проверка, что пользователь - создатель теста
@@ -230,6 +552,24 @@ export class TestService {
 
             const { questions, ...testUpdateData } = updateData;
 
+            console.log(`[DIRECT LOG] Test ${id} - After destructuring:`, {
+                updateDataKeys: Object.keys(updateData),
+                updateDataHasClassSchedules: !!updateData.classSchedules,
+                classSchedulesInUpdateData: updateData.classSchedules,
+                testUpdateDataKeys: Object.keys(testUpdateData),
+                testUpdateDataHasClassSchedules:
+                    !!testUpdateData.classSchedules,
+                classSchedulesInTestUpdateData: testUpdateData.classSchedules,
+            });
+
+            this.logger.log(`[Test ${id}] After destructuring:`, {
+                hasClassSchedulesInUpdateData: !!updateData.classSchedules,
+                hasClassSchedulesInTestUpdateData:
+                    !!testUpdateData.classSchedules,
+                classSchedules: JSON.stringify(testUpdateData.classSchedules),
+                testUpdateDataKeys: Object.keys(testUpdateData),
+            });
+
             // Обновляем вопросы если они были переданы
             if (questions && questions.length > 0) {
                 // Получаем все вопросы текущего теста
@@ -237,8 +577,8 @@ export class TestService {
                     where: { testId: id },
                 });
 
-                console.log(
-                    `[UpdateTest] Old questions: ${oldQuestions.length}, New questions: ${questions.length}`,
+                this.logger.debug(
+                    `[Test ${id}] Old questions: ${oldQuestions.length}, New questions: ${questions.length}`,
                 );
 
                 // УДАЛЯЕМ ТОЛЬКО вопросы которых больше нет в новом списке
@@ -284,19 +624,22 @@ export class TestService {
 
                     if (existingQuestion) {
                         // Обновляем текст вопроса
-                        await this.questionRepository.update(existingQuestion.id, {
-                            text: questionDto.text,
-                            type: questionDto.type as QuestionType,
-                            correctTextAnswer: questionDto.correctTextAnswer,
-                        });
-
-                        // Проверяем изменились ли варианты ответа (текст или флаг isCorrect)
-                        const oldOptions = await this.questionOptionRepository.find(
+                        await this.questionRepository.update(
+                            existingQuestion.id,
                             {
-                                where: { questionId: existingQuestion.id },
-                                order: { order: "ASC" },
+                                text: questionDto.text,
+                                type: questionDto.type as QuestionType,
+                                correctTextAnswer:
+                                    questionDto.correctTextAnswer,
                             },
                         );
+
+                        // Проверяем изменились ли варианты ответа (текст или флаг isCorrect)
+                        const oldOptions =
+                            await this.questionOptionRepository.find({
+                                where: { questionId: existingQuestion.id },
+                                order: { order: "ASC" },
+                            });
 
                         // Сравниваем текст И флаг isCorrect
                         const newOptionsSignature = (questionDto.options || [])
@@ -371,12 +714,16 @@ export class TestService {
                                 if (answer.selectedOptionText) {
                                     const matchingOption = newOptions.find(
                                         (opt) =>
-                                            opt.text === answer.selectedOptionText,
+                                            opt.text ===
+                                            answer.selectedOptionText,
                                     );
                                     if (matchingOption) {
                                         await this.answerRepository.update(
                                             { id: answer.id },
-                                            { selectedOptionId: matchingOption.id },
+                                            {
+                                                selectedOptionId:
+                                                    matchingOption.id,
+                                            },
                                         );
                                         console.log(
                                             `[UpdateTest] Reconnected answer ${answer.id} to option ${matchingOption.id}`,
@@ -406,7 +753,10 @@ export class TestService {
                         const savedQuestion =
                             await this.questionRepository.save(question);
 
-                        if (questionDto.options && questionDto.options.length > 0) {
+                        if (
+                            questionDto.options &&
+                            questionDto.options.length > 0
+                        ) {
                             const options = questionDto.options.map((opt) =>
                                 this.questionOptionRepository.create({
                                     text: opt.text,
@@ -425,14 +775,83 @@ export class TestService {
                 }
             }
 
-            console.log(`Updating test ${id} with:`, {
-                ...testUpdateData,
-                classSchedulesType: Array.isArray(testUpdateData.classSchedules) ? "array" : typeof testUpdateData.classSchedules,
-                classSchedulesValue: JSON.stringify(testUpdateData.classSchedules),
+            this.logger.log(`[Test ${id}] Before update - testUpdateData:`, {
+                hasClassSchedules: !!testUpdateData.classSchedules,
+                classSchedulesLength:
+                    testUpdateData.classSchedules?.length || 0,
+                classSchedules: JSON.stringify(testUpdateData.classSchedules),
+                title: testUpdateData.title,
+                updateDataKeys: Object.keys(testUpdateData),
             });
-            await this.testRepository.update(id, testUpdateData);
 
-            return this.getTestById(id);
+            const updateObject: any = { ...testUpdateData };
+            if (
+                testUpdateData.classSchedules &&
+                testUpdateData.classSchedules.length > 0
+            ) {
+                updateObject.classSchedules = testUpdateData.classSchedules.map(
+                    (schedule: any) => {
+                        const dueDate = new Date(schedule.dueDate);
+                        // Проверяем корректность даты
+                        if (isNaN(dueDate.getTime())) {
+                            this.logger.warn(
+                                `[Test ${id}] Invalid date in classSchedules for class ${schedule.classNumber}${schedule.classLetter}: ${schedule.dueDate}`,
+                            );
+                        }
+                        return {
+                            ...schedule,
+                            classLetter: schedule.classLetter?.toUpperCase(),
+                            dueDate: dueDate.toISOString(),
+                        };
+                    },
+                );
+            }
+
+            console.log(`[DIRECT LOG] Test ${id} - updateObject before DB:`, {
+                keys: Object.keys(updateObject),
+                hasClassSchedules: !!updateObject.classSchedules,
+                classSchedulesValue: updateObject.classSchedules,
+                classSchedulesJSON: JSON.stringify(updateObject.classSchedules),
+            });
+
+            this.logger.log(`[Test ${id}] Sending to update:`, {
+                updateObjectKeys: Object.keys(updateObject),
+                classSchedulesExists: updateObject.classSchedules !== undefined,
+                classSchedules: JSON.stringify(updateObject.classSchedules),
+            });
+
+            // Используем save вместо update для надежного сохранения complexных объектов
+            const testToUpdate = await this.testRepository.findOne({
+                where: { id },
+                relations: ["questions", "questions.options"],
+            });
+
+            if (!testToUpdate) {
+                throw new NotFoundException(`Тест ${id} не найден`);
+            }
+
+            Object.assign(testToUpdate, updateObject);
+            const savedTest = await this.testRepository.save(testToUpdate);
+
+            console.log(`[DIRECT LOG] Test ${id} - Saved:`, {
+                classSchedulesJSON: JSON.stringify(savedTest.classSchedules),
+            });
+
+            this.logger.log(`[Test ${id}] Test saved:`, {
+                classSchedulesLength: savedTest.classSchedules?.length || 0,
+                classSchedules: JSON.stringify(savedTest.classSchedules),
+            });
+
+            const updatedTest = await this.getTestById(id);
+
+            this.logger.log(`[Test ${id}] After update - database:`, {
+                title: updatedTest.title,
+                classSchedulesLength: updatedTest.classSchedules?.length || 0,
+                classSchedules: JSON.stringify(updatedTest.classSchedules),
+                status: updatedTest.status,
+            });
+
+            return updatedTest;
         } catch (error) {
             console.error(`[UpdateTest Error] Test ID: ${id}`, error);
             throw error;
@@ -468,9 +887,22 @@ export class TestService {
             );
         }
 
+        this.logger.log(`[Test ${id}] Publishing test`, {
+            title: test.title,
+            classSchedules: test.classSchedules,
+        });
+
         await this.testRepository.update(id, { status: TestStatus.ACTIVE });
 
-        return this.getTestById(id);
+        const updatedTest = await this.getTestById(id);
+
+        this.logger.log(`[Test ${id}] Test published successfully`, {
+            title: updatedTest.title,
+            status: updatedTest.status,
+            classSchedules: updatedTest.classSchedules,
+        });
+
+        return updatedTest;
     }
 
     // Завершение теста (ACTIVE -> COMPLETED)

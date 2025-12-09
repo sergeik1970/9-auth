@@ -7,6 +7,7 @@ import {
 import { createApiUrl, API_ENDPOINTS } from "../../config/api";
 import { User, AuthState, RegisterUserData, LoginUserData } from "../../types/auth";
 import { RootState } from "../store";
+import { updateProfile } from "./settings";
 
 const initialState: AuthState = {
     user: null,
@@ -190,6 +191,11 @@ const authSlice = createSlice({
                 state.initialized = true;
                 // state.error = action.payload as string;
             });
+        builder.addCase(updateProfile.fulfilled, (state, action: PayloadAction<User>) => {
+            if (state.user) {
+                state.user = action.payload;
+            }
+        });
     },
 });
 

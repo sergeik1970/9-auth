@@ -5,6 +5,7 @@ import {
     Get,
     HttpCode,
     HttpStatus,
+    Logger,
     Param,
     Patch,
     Post,
@@ -21,6 +22,8 @@ import { JwtAuthGuard } from "src/modules/AuthModule/jwt-auth.guard";
 
 @Controller("tests")
 export class TestController {
+    private readonly logger = new Logger(TestController.name);
+
     constructor(
         private readonly testService: TestService,
         private readonly attemptService: TestAttemptService,
@@ -54,6 +57,7 @@ export class TestController {
     @Post(":id/publish")
     @UseGuards(JwtAuthGuard)
     publishTest(@Param("id", ParseIntPipe) id: number, @Req() req: any) {
+        this.logger.log(`[POST /tests/${id}/publish] publishTest called`);
         return this.testService.publishTest(id, req.user);
     }
 
@@ -84,8 +88,9 @@ export class TestController {
     }
 
     @Get(":id")
-    getTestById(@Param("id", ParseIntPipe) id: number) {
-        return this.testService.getTestById(id);
+    @UseGuards(JwtAuthGuard)
+    getTestById(@Param("id", ParseIntPipe) id: number, @Req() req: any) {
+        return this.testService.getTestById(id, req.user);
     }
 
     @Patch(":id")
@@ -95,6 +100,16 @@ export class TestController {
         @Body() updateData: Partial<CreateTestDto>,
         @Req() req: any,
     ) {
+        console.log(`[PATCH /tests/${id}] Controller received:`, {
+            bodyKeys: Object.keys(updateData),
+            hasClassSchedules: !!updateData.classSchedules,
+            classSchedules: updateData.classSchedules,
+        });
+        this.logger.log(`[PATCH /tests/${id}] updateTest called`, {
+            hasClassSchedules: !!updateData.classSchedules,
+            classSchedulesLength: updateData.classSchedules?.length || 0,
+            classSchedules: updateData.classSchedules,
+        });
         return this.testService.updateTest(id, updateData, req.user);
     }
 

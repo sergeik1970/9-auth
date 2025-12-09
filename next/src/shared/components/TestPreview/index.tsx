@@ -157,9 +157,22 @@ const TestPreview = ({
 
     useEffect(() => {
         // Загружаем тест при монтировании компонента, если есть ID
+        // Всегда перезагружаем свежие данные, чтобы получить актуальные даты
         if (id) {
             dispatch(getTestById(id));
         }
+    }, [dispatch, id]);
+
+    // При фокусе на окно - обновляем данные теста
+    useEffect(() => {
+        const handleFocus = () => {
+            if (id) {
+                dispatch(getTestById(id));
+            }
+        };
+
+        window.addEventListener("focus", handleFocus);
+        return () => window.removeEventListener("focus", handleFocus);
     }, [dispatch, id]);
 
     useEffect(() => {
@@ -568,37 +581,35 @@ const TestPreview = ({
                     const shouldShow = test.classSchedules && test.classSchedules.length > 0;
 
                     if (shouldShow) {
-                        const userSchedule = test.classSchedules.find(
-                            (schedule) =>
-                                schedule.classNumber === user?.classNumber &&
-                                schedule.classLetter === user?.classLetter,
-                        );
+                        const userSchedule = test.classSchedules?.[0];
 
-                        return (
-                            <div className={styles.infoItem}>
-                                <strong>Сроки выполнения по классам:</strong>
-                                <ul style={{ margin: "8px 0", paddingLeft: "20px" }}>
-                                    {test.classSchedules.map((schedule, idx) => (
-                                        <li key={idx}>
-                                            Класс {schedule.classNumber}
-                                            {schedule.classLetter}:{" "}
-                                            {formatDeadline(schedule.dueDate)}
-                                        </li>
-                                    ))}
-                                </ul>
-                                {userSchedule && user && (
-                                    <p
-                                        style={{
-                                            fontSize: "13px",
-                                            color: "#666",
-                                            margin: "4px 0 0 0",
-                                        }}
-                                    >
-                                        ℹ️ Ваш класс: {formatDeadline(userSchedule.dueDate)}
+                        // Для студентов показываем только их срок, для учителей - все сроки по классам
+                        if (isOwner) {
+                            return (
+                                <div className={styles.infoItem}>
+                                    <strong>Сроки выполнения по классам:</strong>
+                                    <ul style={{ margin: "8px 0", paddingLeft: "20px" }}>
+                                        {test.classSchedules?.map((schedule, idx) => (
+                                            <li key={idx}>
+                                                Класс {schedule.classNumber}
+                                                {schedule.classLetter}:{" "}
+                                                {formatDeadline(schedule.dueDate)}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            );
+                        } else {
+                            // Для студентов показываем только их срок
+                            return (
+                                <div className={styles.infoItem}>
+                                    <p style={{ margin: 0 }}>
+                                        <strong>Срок выполнения</strong> до{" "}
+                                        {formatDeadline(userSchedule?.dueDate || "")}
                                     </p>
-                                )}
-                            </div>
-                        );
+                                </div>
+                            );
+                        }
                     }
                     return null;
                 })()}
