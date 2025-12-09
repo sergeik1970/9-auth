@@ -35,6 +35,12 @@ export class TestController {
         return this.testService.getAllTests(req.user);
     }
 
+    @Get("available")
+    @UseGuards(JwtAuthGuard)
+    getAvailableTests(@Req() req: any) {
+        return this.testService.getAvailableTests(req.user);
+    }
+
     @Get("active-attempts")
     @UseGuards(JwtAuthGuard)
     getActiveAttempts(@Req() req: any) {

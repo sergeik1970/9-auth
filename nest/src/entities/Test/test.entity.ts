@@ -23,6 +23,9 @@ export interface ClassSchedule {
     classNumber: number;
     classLetter: string;
     dueDate: string;
+    schoolId?: number;
+    regionId?: number;
+    settlementId?: number;
 }
 
 @Entity("tests")

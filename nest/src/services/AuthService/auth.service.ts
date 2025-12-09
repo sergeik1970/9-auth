@@ -276,10 +276,22 @@ export class AuthService {
         if (user.classLetter) {
             payload.classLetter = user.classLetter;
         }
+        if (user.schoolId) {
+            payload.schoolId = user.schoolId;
+        }
+        if (user.regionId) {
+            payload.regionId = user.regionId;
+        }
+        if (user.settlementId) {
+            payload.settlementId = user.settlementId;
+        }
         console.log(`[generateToken] User ${user.id}:`, {
             role: user.role,
             classNumber: user.classNumber,
             classLetter: user.classLetter,
+            schoolId: user.schoolId,
+            regionId: user.regionId,
+            settlementId: user.settlementId,
             payload,
         });
         return this.jwtService.sign(payload);

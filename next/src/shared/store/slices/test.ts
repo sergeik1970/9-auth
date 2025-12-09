@@ -48,6 +48,28 @@ export const getTests = createAsyncThunk("tests/getTests", async (_, { rejectWit
     }
 });
 
+export const getAvailableTests = createAsyncThunk(
+    "tests/getAvailableTests",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await fetch(createApiUrl("/api/tests/available"), {
+                credentials: "include",
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ошибка при загрузке доступных тестов: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data as Test[];
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : "Ошибка загрузки доступных тестов",
+            );
+        }
+    },
+);
+
 export const getTestById = createAsyncThunk(
     "tests/getTestById",
     async (id: number, { rejectWithValue }) => {
@@ -418,6 +440,18 @@ const testsSlice = createSlice({
                 state.items = action.payload;
             })
             .addCase(getTests.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+            .addCase(getAvailableTests.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(getAvailableTests.fulfilled, (state, action: PayloadAction<Test[]>) => {
+                state.loading = false;
+                state.items = action.payload;
+            })
+            .addCase(getAvailableTests.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             });

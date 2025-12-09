@@ -8,9 +8,10 @@ import {
     selectSettingsError,
     selectSettingsSuccess,
 } from "../../store/slices/settings";
-import { getTests } from "../../store/slices/test";
+import { getTests, getAvailableTests } from "../../store/slices/test";
 import { RootState } from "../../store/store";
 import { User } from "../../types/auth";
+import { isTeacher } from "../../utils/roles";
 import Modal from "../Modal";
 
 interface EditProfileProps {
@@ -163,7 +164,11 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
 
                 if (classChanged) {
                     setTimeout(() => {
-                        dispatch(getTests() as any);
+                        if (isTeacher(user.role)) {
+                            dispatch(getTests() as any);
+                        } else {
+                            dispatch(getAvailableTests() as any);
+                        }
                     }, 100);
                 }
 

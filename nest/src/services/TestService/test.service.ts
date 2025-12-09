@@ -43,6 +43,9 @@ export interface JwtPayload {
     role: string;
     classNumber?: number;
     classLetter?: string;
+    schoolId?: number;
+    regionId?: number;
+    settlementId?: number;
 }
 
 @Injectable()
@@ -67,8 +70,14 @@ export class TestService {
         studentLetter: string | null | undefined,
         scheduleNumber: number | string | null | undefined,
         scheduleLetter: string | null | undefined,
+        studentSchoolId?: number | null,
+        scheduleSchoolId?: number | null,
+        studentRegionId?: number | null,
+        scheduleRegionId?: number | null,
+        studentSettlementId?: number | null,
+        scheduleSettlementId?: number | null,
     ): boolean {
-        // Защита от null/undefined
+        // Защита от null/undefined для класса
         if (
             studentNumber === null ||
             studentNumber === undefined ||
@@ -114,6 +123,39 @@ export class TestService {
 
         // Проверяем буквенную часть
         if (normalizedStudentLetter !== normalizedScheduleLetter) {
+            return false;
+        }
+
+        // Проверяем школу - ОБЯЗАТЕЛЬНО требуется
+        if (
+            scheduleSchoolId === undefined ||
+            scheduleSchoolId === null ||
+            studentSchoolId === undefined ||
+            studentSchoolId === null ||
+            studentSchoolId !== scheduleSchoolId
+        ) {
+            return false;
+        }
+
+        // Проверяем регион - ОБЯЗАТЕЛЬНО требуется
+        if (
+            scheduleRegionId === undefined ||
+            scheduleRegionId === null ||
+            studentRegionId === undefined ||
+            studentRegionId === null ||
+            studentRegionId !== scheduleRegionId
+        ) {
+            return false;
+        }
+
+        // Проверяем город/поселение - ОБЯЗАТЕЛЬНО требуется
+        if (
+            scheduleSettlementId === undefined ||
+            scheduleSettlementId === null ||
+            studentSettlementId === undefined ||
+            studentSettlementId === null ||
+            studentSettlementId !== scheduleSettlementId
+        ) {
             return false;
         }
 
@@ -310,6 +352,12 @@ export class TestService {
                         user.classLetter,
                         schedule.classNumber,
                         schedule.classLetter,
+                        user.schoolId,
+                        schedule.schoolId,
+                        user.regionId,
+                        schedule.regionId,
+                        user.settlementId,
+                        schedule.settlementId,
                     ),
                 );
 
@@ -398,6 +446,12 @@ export class TestService {
                         user.classLetter,
                         schedule.classNumber,
                         schedule.classLetter,
+                        user.schoolId,
+                        schedule.schoolId,
+                        user.regionId,
+                        schedule.regionId,
+                        user.settlementId,
+                        schedule.settlementId,
                     ),
                 );
 
@@ -481,6 +535,12 @@ export class TestService {
                     user.classLetter,
                     schedule.classNumber,
                     schedule.classLetter,
+                    user.schoolId,
+                    schedule.schoolId,
+                    user.regionId,
+                    schedule.regionId,
+                    user.settlementId,
+                    schedule.settlementId,
                 ),
             );
 
@@ -802,6 +862,9 @@ export class TestService {
                             ...schedule,
                             classLetter: schedule.classLetter?.toUpperCase(),
                             dueDate: dueDate.toISOString(),
+                            schoolId: user.schoolId,
+                            regionId: user.regionId,
+                            settlementId: user.settlementId,
                         };
                     },
                 );
@@ -1125,5 +1188,88 @@ export class TestService {
         }
 
         await this.testRepository.delete(id);
+    }
+
+    // Получение доступных тестов для студента по его школе, региону, городу и классу
+    async getAvailableTests(user: JwtPayload): Promise<Test[]> {
+        this.logger.log(`[getAvailableTests] Student ${user.sub}:`, {
+            schoolId: user.schoolId,
+            regionId: user.regionId,
+            settlementId: user.settlementId,
+            classNumber: user.classNumber,
+            classLetter: user.classLetter,
+        });
+
+        // Проверяем что у студента есть все необходимые параметры
+        if (
+            !user.schoolId ||
+            !user.regionId ||
+            !user.settlementId ||
+            !user.classNumber ||
+            !user.classLetter
+        ) {
+            this.logger.log(
+                `[getAvailableTests] Student ${user.sub} missing required parameters`,
+            );
+            return [];
+        }
+
+        // Получаем все активные тесты
+        const allActiveTests = await this.testRepository.find({
+            where: { status: TestStatus.ACTIVE },
+            relations: ["creator", "questions", "questions.options"],
+            order: {
+                createdAt: "DESC",
+            },
+        });
+
+        this.logger.log(
+            `[getAvailableTests] Found ${allActiveTests.length} active tests`,
+        );
+
+        // Фильтруем тесты по параметрам студента
+        const availableTests = allActiveTests.filter((test) => {
+            if (!test.classSchedules || test.classSchedules.length === 0) {
+                return false;
+            }
+
+            // Ищем расписание которое совпадает со всеми параметрами студента
+            const matchingSchedule = test.classSchedules.find((schedule: any) => {
+                const scheduleSchoolId = Number(schedule.schoolId);
+                const scheduleRegionId = Number(schedule.regionId);
+                const scheduleSettlementId = Number(schedule.settlementId);
+                const scheduleClassNumber = Number(schedule.classNumber);
+                const scheduleClassLetter = String(schedule.classLetter)
+                    .trim()
+                    .toUpperCase();
+
+                const normalizedStudentLetter = String(user.classLetter)
+                    .trim()
+                    .toUpperCase();
+
+                const matches =
+                    scheduleSchoolId === user.schoolId &&
+                    scheduleRegionId === user.regionId &&
+                    scheduleSettlementId === user.settlementId &&
+                    scheduleClassNumber === user.classNumber &&
+                    scheduleClassLetter === normalizedStudentLetter;
+
+                if (matches) {
+                    this.logger.debug(
+                        `[getAvailableTests] Test ${test.id}: Found matching schedule for student`,
+                    );
+                }
+
+                return matches;
+            });
+
+            return !!matchingSchedule;
+        });
+
+        this.logger.log(
+            `[getAvailableTests] Returning ${availableTests.length} available tests for student`,
+        );
+
+        return availableTests;
     }
 }

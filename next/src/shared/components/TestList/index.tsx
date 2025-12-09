@@ -6,7 +6,12 @@ import EmptyState from "@/shared/components/EmptyState";
 import Button from "@/shared/components/Button";
 import TestCard from "@/shared/components/TestCard";
 import { isTeacher, type UserRole } from "@/shared/utils/roles";
-import { getTests, getActiveAttempts, selectTest } from "@/shared/store/slices/test";
+import {
+    getTests,
+    getAvailableTests,
+    getActiveAttempts,
+    selectTest,
+} from "@/shared/store/slices/test";
 import styles from "./index.module.scss";
 
 interface TestListProps {
@@ -45,9 +50,13 @@ const TestList = ({
     }, []);
 
     useEffect(() => {
-        dispatch(getTests());
+        if (isUserTeacher) {
+            dispatch(getTests());
+        } else {
+            dispatch(getAvailableTests());
+        }
         dispatch(getActiveAttempts());
-    }, [dispatch]);
+    }, [dispatch, isUserTeacher]);
 
     // Обработка ошибок из Redux
     useEffect(() => {
@@ -66,7 +75,11 @@ const TestList = ({
 
     const handleRefresh = () => {
         setIsRefreshing(true);
-        dispatch(getTests());
+        if (isUserTeacher) {
+            dispatch(getTests());
+        } else {
+            dispatch(getAvailableTests());
+        }
         dispatch(getActiveAttempts());
         setTimeout(() => setIsRefreshing(false), 600);
     };

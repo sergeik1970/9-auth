@@ -22,6 +22,9 @@ export interface JwtPayload {
     role: string;
     classNumber?: number;
     classLetter?: string;
+    schoolId?: number;
+    regionId?: number;
+    settlementId?: number;
 }
 
 @Injectable()
@@ -44,8 +47,14 @@ export class TestAttemptService {
         studentLetter: string | null | undefined,
         scheduleNumber: number | string | null | undefined,
         scheduleLetter: string | null | undefined,
+        studentSchoolId?: number | null,
+        scheduleSchoolId?: number | null,
+        studentRegionId?: number | null,
+        scheduleRegionId?: number | null,
+        studentSettlementId?: number | null,
+        scheduleSettlementId?: number | null,
     ): boolean {
-        // Защита от null/undefined
+        // Защита от null/undefined для класса
         if (
             studentNumber === null ||
             studentNumber === undefined ||
@@ -91,6 +100,39 @@ export class TestAttemptService {
 
         // Проверяем буквенную часть
         if (normalizedStudentLetter !== normalizedScheduleLetter) {
+            return false;
+        }
+
+        // Проверяем школу - ОБЯЗАТЕЛЬНО требуется
+        if (
+            scheduleSchoolId === undefined ||
+            scheduleSchoolId === null ||
+            studentSchoolId === undefined ||
+            studentSchoolId === null ||
+            studentSchoolId !== scheduleSchoolId
+        ) {
+            return false;
+        }
+
+        // Проверяем регион - ОБЯЗАТЕЛЬНО требуется
+        if (
+            scheduleRegionId === undefined ||
+            scheduleRegionId === null ||
+            studentRegionId === undefined ||
+            studentRegionId === null ||
+            studentRegionId !== scheduleRegionId
+        ) {
+            return false;
+        }
+
+        // Проверяем город/поселение - ОБЯЗАТЕЛЬНО требуется
+        if (
+            scheduleSettlementId === undefined ||
+            scheduleSettlementId === null ||
+            studentSettlementId === undefined ||
+            studentSettlementId === null ||
+            studentSettlementId !== scheduleSettlementId
+        ) {
             return false;
         }
 
@@ -167,6 +209,12 @@ export class TestAttemptService {
                     user.classLetter,
                     schedule.classNumber,
                     schedule.classLetter,
+                    user.schoolId,
+                    schedule.schoolId,
+                    user.regionId,
+                    schedule.regionId,
+                    user.settlementId,
+                    schedule.settlementId,
                 ),
             );
 
@@ -381,6 +429,12 @@ export class TestAttemptService {
                         user.classLetter,
                         schedule.classNumber,
                         schedule.classLetter,
+                        user.schoolId,
+                        schedule.schoolId,
+                        user.regionId,
+                        schedule.regionId,
+                        user.settlementId,
+                        schedule.settlementId,
                     ),
                 );
 
@@ -480,6 +534,12 @@ export class TestAttemptService {
                     user.classLetter,
                     schedule.classNumber,
                     schedule.classLetter,
+                    user.schoolId,
+                    schedule.schoolId,
+                    user.regionId,
+                    schedule.regionId,
+                    user.settlementId,
+                    schedule.settlementId,
                 ),
             );
 
@@ -715,6 +775,12 @@ export class TestAttemptService {
                     user.classLetter,
                     schedule.classNumber,
                     schedule.classLetter,
+                    user.schoolId,
+                    schedule.schoolId,
+                    user.regionId,
+                    schedule.regionId,
+                    user.settlementId,
+                    schedule.settlementId,
                 ),
             );
 
