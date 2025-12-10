@@ -11,6 +11,35 @@
     margin-bottom: 2rem;
 }
 
+.banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    background-color: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 8px;
+}
+
+.bannerIcon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    color: #d97706;
+}
+
+.bannerContent {
+    flex: 1;
+}
+
+.bannerText {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #92400e;
+    font-weight: 500;
+}
+
 .list {
     display: grid;
     gap: 1rem;

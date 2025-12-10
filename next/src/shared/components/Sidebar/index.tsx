@@ -1,4 +1,5 @@
 import React, { ReactElement } from "react";
+import { BarChart3 } from "lucide-react";
 import { useSelector } from "@/shared/store/store";
 import { useRouter } from "next/router";
 import { isTeacher } from "@/shared/utils/roles";
@@ -95,10 +96,12 @@ const Sidebar = ({ isOpen = false, onClose, isDesktop = false }: SideBarProps): 
         </svg>
     );
 
+    const statisticsIcon = <BarChart3 size={24} />;
+
     const teacherMenuItems: MenuItem[] = [
         { icon: homeIcon, label: "Главная", href: "/dashboard" },
         { icon: testsIcon, label: "Мои тесты", href: "/dashboard/tests" },
-        { icon: "📊", label: "Статистика", href: "/dashboard/statistics" },
+        { icon: statisticsIcon, label: "Статистика", href: "/dashboard/statistics" },
         { icon: usersIcon, label: "Ученики", href: "/students" },
         { icon: settingsIcon, label: "Настройки", href: "/dashboard/settings" },
     ];

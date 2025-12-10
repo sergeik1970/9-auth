@@ -1,4 +1,5 @@
 import React, { ReactElement, useEffect } from "react";
+import { AlertTriangle } from "lucide-react";
 import { useDispatch, useSelector } from "@/shared/store/store";
 import { fetchStudents, selectUsers } from "@/shared/store/slices/users";
 import LoadingState from "@/shared/components/LoadingState";
@@ -27,6 +28,14 @@ const StudentsList = (): ReactElement => {
     return (
         <div className={styles.container}>
             <h1 className={styles.title}>Ученики</h1>
+            <div className={styles.banner}>
+                <AlertTriangle className={styles.bannerIcon} />
+                <div className={styles.bannerContent}>
+                    <p className={styles.bannerText}>
+                        Этот раздел находится в разработке и может работать с ошибками.
+                    </p>
+                </div>
+            </div>
             <div className={styles.list}>
                 {students.map((student) => (
                     <div key={student.id} className={styles.studentCard}>
