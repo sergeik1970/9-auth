@@ -58,6 +58,13 @@ export default function GradingCriteriaComponent({
         {},
     );
 
+    useEffect(() => {
+        if (initialCriteria) {
+            setCriteria(initialCriteria);
+            setInputValues({});
+        }
+    }, [initialCriteria]);
+
     const handleChange = (key: keyof GradingCriteria, value: string) => {
         setInputValues((prev) => ({ ...prev, [key]: value }));
 
@@ -234,13 +241,14 @@ export default function GradingCriteriaComponent({
             return;
         }
 
-        dispatch(updateGradingCriteria({ gradingCriteria: criteria }) as any).then(
-            (action: any) => {
-                if (action.type === "settings/updateGradingCriteria/fulfilled") {
+        dispatch(updateGradingCriteria({ gradingCriteria: criteria }) as any)
+            .then((result: any) => {
+                if (result && !result.error) {
                     onSuccess?.();
                 }
-            },
-        );
+            })
+            .catch(() => {
+            });
     };
 
     useEffect(() => {

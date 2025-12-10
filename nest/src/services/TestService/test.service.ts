@@ -1245,34 +1245,36 @@ export class TestService {
             }
 
             // Ищем расписание которое совпадает со всеми параметрами студента
-            const matchingSchedule = test.classSchedules.find((schedule: any) => {
-                const scheduleSchoolId = Number(schedule.schoolId);
-                const scheduleRegionId = Number(schedule.regionId);
-                const scheduleSettlementId = Number(schedule.settlementId);
-                const scheduleClassNumber = Number(schedule.classNumber);
-                const scheduleClassLetter = String(schedule.classLetter)
-                    .trim()
-                    .toUpperCase();
+            const matchingSchedule = test.classSchedules.find(
+                (schedule: any) => {
+                    const scheduleSchoolId = Number(schedule.schoolId);
+                    const scheduleRegionId = Number(schedule.regionId);
+                    const scheduleSettlementId = Number(schedule.settlementId);
+                    const scheduleClassNumber = Number(schedule.classNumber);
+                    const scheduleClassLetter = String(schedule.classLetter)
+                        .trim()
+                        .toUpperCase();
 
-                const normalizedStudentLetter = String(user.classLetter)
-                    .trim()
-                    .toUpperCase();
+                    const normalizedStudentLetter = String(user.classLetter)
+                        .trim()
+                        .toUpperCase();
 
-                const matches =
-                    scheduleSchoolId === user.schoolId &&
-                    scheduleRegionId === user.regionId &&
-                    scheduleSettlementId === user.settlementId &&
-                    scheduleClassNumber === user.classNumber &&
-                    scheduleClassLetter === normalizedStudentLetter;
+                    const matches =
+                        scheduleSchoolId === user.schoolId &&
+                        scheduleRegionId === user.regionId &&
+                        scheduleSettlementId === user.settlementId &&
+                        scheduleClassNumber === user.classNumber &&
+                        scheduleClassLetter === normalizedStudentLetter;
 
-                if (matches) {
-                    this.logger.debug(
-                        `[getAvailableTests] Test ${test.id}: Found matching schedule for student`,
-                    );
-                }
+                    if (matches) {
+                        this.logger.debug(
+                            `[getAvailableTests] Test ${test.id}: Found matching schedule for student`,
+                        );
+                    }
 
-                return matches;
-            });
+                    return matches;
+                },
+            );
 
             return !!matchingSchedule;
         });

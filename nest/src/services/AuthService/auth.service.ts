@@ -181,12 +181,14 @@ export class AuthService {
                 "patronymic",
                 "role",
                 "isAdmin",
+                "avatar",
                 "regionId",
                 "settlementId",
                 "schoolId",
                 "educationalInstitutionCustom",
                 "classNumber",
                 "classLetter",
+                "gradingCriteria",
                 "createdAt",
                 "updatedAt",
             ],
@@ -222,12 +224,14 @@ export class AuthService {
                 "patronymic",
                 "role",
                 "isAdmin",
+                "avatar",
                 "regionId",
                 "settlementId",
                 "schoolId",
                 "educationalInstitutionCustom",
                 "classNumber",
                 "classLetter",
+                "gradingCriteria",
                 "createdAt",
                 "updatedAt",
             ],
@@ -246,12 +250,14 @@ export class AuthService {
                 "patronymic",
                 "role",
                 "isAdmin",
+                "avatar",
                 "regionId",
                 "settlementId",
                 "schoolId",
                 "educationalInstitutionCustom",
                 "classNumber",
                 "classLetter",
+                "gradingCriteria",
                 "createdAt",
                 "updatedAt",
             ],
@@ -372,10 +378,17 @@ export class AuthService {
         if (
             criteria.excellent <= 0 ||
             criteria.good <= 0 ||
-            criteria.satisfactory <= 0 ||
-            criteria.poor <= 0
+            criteria.satisfactory <= 0
         ) {
-            throw new ConflictException("Все критерии должны быть > 0");
+            throw new ConflictException(
+                "Отлично, Хорошо и Удовлетворительно должны быть > 0",
+            );
+        }
+
+        if (criteria.poor < 0) {
+            throw new ConflictException(
+                "Неудовлетворительно не может быть < 0",
+            );
         }
 
         if (

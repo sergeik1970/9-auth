@@ -490,7 +490,13 @@ export class TestAttemptService {
     }
 
     async submitTest(testId: number, attemptId: number, user: JwtPayload) {
-        const attempt = await this.getAttempt(testId, attemptId, user, true, true);
+        const attempt = await this.getAttempt(
+            testId,
+            attemptId,
+            user,
+            true,
+            true,
+        );
 
         console.log(`[SubmitTest] Starting submit for attempt ${attemptId}`);
 
@@ -559,7 +565,9 @@ export class TestAttemptService {
             where: { attemptId },
         });
 
-        console.log(`[SubmitTest] Attempt ${attemptId}: Status=${attempt.status}, Found ${answers.length} answers`);
+        console.log(
+            `[SubmitTest] Attempt ${attemptId}: Status=${attempt.status}, Found ${answers.length} answers`,
+        );
 
         let correctAnswers = 0;
         const totalQuestions = test.questions.length;
@@ -749,7 +757,9 @@ export class TestAttemptService {
         });
 
         if (!attempt.startedAt) {
-            console.error(`[CompleteAttempt] ERROR: startedAt is null or undefined for attempt ${attemptId}`);
+            console.error(
+                `[CompleteAttempt] ERROR: startedAt is null or undefined for attempt ${attemptId}`,
+            );
             throw new HttpException(
                 "Ошибка: время начала теста не установлено",
                 HttpStatus.BAD_REQUEST,
@@ -906,7 +916,9 @@ export class TestAttemptService {
         console.log(`[CompleteAttempt] Before save:`, {
             startedAt: attempt.startedAt,
             completedAt: attempt.completedAt,
-            timeDiffMs: new Date(attempt.completedAt).getTime() - new Date(attempt.startedAt).getTime(),
+            timeDiffMs:
+                new Date(attempt.completedAt).getTime() -
+                new Date(attempt.startedAt).getTime(),
         });
 
         await this.answerRepository.save(answers);
@@ -940,7 +952,10 @@ export class TestAttemptService {
             );
         }
 
-        if (attempt.status === AttemptStatus.IN_PROGRESS && attempt.completedAt) {
+        if (
+            attempt.status === AttemptStatus.IN_PROGRESS &&
+            attempt.completedAt
+        ) {
             console.log(`[GetResults] Auto-completing attempt ${attemptId}`);
             attempt.status = AttemptStatus.COMPLETED;
             attempt = await this.attemptRepository.save(attempt);

@@ -100,7 +100,7 @@ const formatTime = (minutes: number): string => {
 
 const formatTimeSpent = (seconds: number): string => {
     if (!seconds || seconds < 0) return "0с";
-    
+
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
@@ -184,6 +184,23 @@ const TestPreview = ({
         }
     }, [error, onError]);
 
+    const hasScheduleChanges = (): boolean => {
+        if (!test?.classSchedules) return false;
+        if (!editingClassSchedules) return false;
+        if (test.classSchedules.length !== editingClassSchedules.length) return true;
+
+        return test.classSchedules.some((original, index) => {
+            const current = editingClassSchedules[index];
+            if (!current) return true;
+
+            return (
+                original.classNumber !== current.classNumber ||
+                original.classLetter !== current.classLetter ||
+                new Date(original.dueDate).getTime() !== new Date(current.dueDate).getTime()
+            );
+        });
+    };
+
     useEffect(() => {
         if (test) {
             console.log("Test loaded:", {
@@ -252,7 +269,10 @@ const TestPreview = ({
                 }),
             ).unwrap();
 
-            await dispatch(publishTest(test.id)).unwrap();
+            if (test.status !== "active") {
+                await dispatch(publishTest(test.id)).unwrap();
+            }
+
             await dispatch(getTestById(test.id));
         } catch (err) {
             console.error("Error publishing test:", err);
@@ -415,6 +435,7 @@ const TestPreview = ({
                 </div>
                 {isOwner &&
                     (test.status === "draft" ||
+                        test.status === "active" ||
                         test.status === "completed" ||
                         test.status === "archived") && (
                         <div className={styles.infoItem}>
@@ -452,9 +473,10 @@ const TestPreview = ({
                                                     value={schedule.classNumber}
                                                     onChange={(e) => {
                                                         const updated = [...editingClassSchedules];
-                                                        updated[index].classNumber = parseInt(
-                                                            e.target.value,
-                                                        );
+                                                        updated[index] = {
+                                                            ...updated[index],
+                                                            classNumber: parseInt(e.target.value),
+                                                        };
                                                         setEditingClassSchedules(updated);
                                                     }}
                                                     disabled={isPublishing}
@@ -477,7 +499,10 @@ const TestPreview = ({
                                                     value={schedule.classLetter}
                                                     onChange={(e) => {
                                                         const updated = [...editingClassSchedules];
-                                                        updated[index].classLetter = e.target.value;
+                                                        updated[index] = {
+                                                            ...updated[index],
+                                                            classLetter: e.target.value,
+                                                        };
                                                         setEditingClassSchedules(updated);
                                                     }}
                                                     disabled={isPublishing}
@@ -513,7 +538,10 @@ const TestPreview = ({
                                                 value={schedule.dueDate}
                                                 onChange={(newDate) => {
                                                     const updated = [...editingClassSchedules];
-                                                    updated[index].dueDate = newDate;
+                                                    updated[index] = {
+                                                        ...updated[index],
+                                                        dueDate: newDate,
+                                                    };
                                                     setEditingClassSchedules(updated);
                                                 }}
                                                 disabled={isPublishing}
@@ -568,30 +596,58 @@ const TestPreview = ({
                             </div>
 
                             <div style={{ display: "flex", gap: "12px" }}>
-                                <Button
-                                    size="small"
-                                    onClick={handlePublish}
-                                    disabled={
-                                        isPublishing ||
-                                        validationErrors.length > 0 ||
-                                        !editingClassSchedules ||
-                                        editingClassSchedules.length === 0 ||
-                                        editingClassSchedules.some((s) => !s.dueDate)
-                                    }
-                                    variant="primary"
-                                    style={{ whiteSpace: "nowrap" }}
-                                    title={
-                                        !editingClassSchedules || editingClassSchedules.length === 0
-                                            ? "Добавьте хотя бы один класс со сроком выполнения."
-                                            : editingClassSchedules.some((s) => !s.dueDate)
-                                              ? "Установите срок выполнения для всех классов."
-                                              : validationErrors.length > 0
-                                                ? "Тест содержит ошибки валидации. Отредактируйте тест перед публикацией."
-                                                : ""
-                                    }
-                                >
-                                    {isPublishing ? "Публикация..." : "Опубликовать"}
-                                </Button>
+                                {test.status === "active" ? (
+                                    hasScheduleChanges() && (
+                                        <Button
+                                            size="small"
+                                            onClick={handlePublish}
+                                            disabled={
+                                                isPublishing ||
+                                                !editingClassSchedules ||
+                                                editingClassSchedules.length === 0 ||
+                                                editingClassSchedules.some((s) => !s.dueDate)
+                                            }
+                                            variant="primary"
+                                            style={{ whiteSpace: "nowrap" }}
+                                            title={
+                                                !editingClassSchedules ||
+                                                editingClassSchedules.length === 0
+                                                    ? "Добавьте хотя бы один класс со сроком выполнения."
+                                                    : editingClassSchedules.some((s) => !s.dueDate)
+                                                      ? "Установите срок выполнения для всех классов."
+                                                      : ""
+                                            }
+                                        >
+                                            {isPublishing ? "Сохранение..." : "Сохранить сроки"}
+                                        </Button>
+                                    )
+                                ) : (
+                                    <Button
+                                        size="small"
+                                        onClick={handlePublish}
+                                        disabled={
+                                            isPublishing ||
+                                            validationErrors.length > 0 ||
+                                            !editingClassSchedules ||
+                                            editingClassSchedules.length === 0 ||
+                                            editingClassSchedules.some((s) => !s.dueDate)
+                                        }
+                                        variant="primary"
+                                        style={{ whiteSpace: "nowrap" }}
+                                        title={
+                                            !editingClassSchedules ||
+                                            editingClassSchedules.length === 0
+                                                ? "Добавьте хотя бы один класс со сроком выполнения."
+                                                : editingClassSchedules.some((s) => !s.dueDate)
+                                                  ? "Установите срок выполнения для всех классов."
+                                                  : validationErrors.length > 0
+                                                    ? "Тест содержит ошибки валидации. Отредактируйте тест перед публикацией."
+                                                    : ""
+                                        }
+                                    >
+                                        {isPublishing ? "Публикация..." : "Опубликовать"}
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     )}
