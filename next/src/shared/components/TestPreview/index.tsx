@@ -99,9 +99,11 @@ const formatTime = (minutes: number): string => {
 };
 
 const formatTimeSpent = (seconds: number): string => {
+    if (!seconds || seconds < 0) return "0с";
+    
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
 
     const parts = [];
     if (hours > 0) parts.push(`${hours}ч`);
@@ -638,7 +640,11 @@ const TestPreview = ({
                 {test.creator && (
                     <div className={styles.infoItem}>
                         <strong>Автор:</strong>
-                        <p>{test.creator.name}</p>
+                        <p>
+                            {[test.creator.lastName, test.creator.name, test.creator.patronymic]
+                                .filter(Boolean)
+                                .join(" ")}
+                        </p>
                     </div>
                 )}
             </div>

@@ -118,7 +118,11 @@ const CreateTest = ({ onSuccess, onError }: CreateTestProps): ReactElement => {
             ).unwrap();
 
             clearDraftFromStorage();
-            router.push("/dashboard");
+            if (result?.id) {
+                router.push(`/tests/detail?id=${result.id}`);
+            } else {
+                router.push("/dashboard");
+            }
         } catch (error) {
             if (onError) {
                 onError(error as string);

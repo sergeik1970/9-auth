@@ -1233,6 +1233,17 @@ export class TestService {
                 return false;
             }
 
+            if (test.dueDate) {
+                const dueDate = new Date(test.dueDate);
+                const now = new Date();
+                if (dueDate < now) {
+                    this.logger.debug(
+                        `[getAvailableTests] Test ${test.id}: Skipped - due date expired (${test.dueDate})`,
+                    );
+                    return false;
+                }
+            }
+
             // Ищем расписание которое совпадает со всеми параметрами студента
             const matchingSchedule = test.classSchedules.find((schedule: any) => {
                 const scheduleSchoolId = Number(schedule.schoolId);

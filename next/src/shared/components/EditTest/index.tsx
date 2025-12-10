@@ -184,7 +184,7 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
             return;
         }
         if (!hasChanges()) {
-            router.push("/dashboard");
+            router.push(`/tests/detail?id=${testId}`);
             return;
         }
         setIsConfirmModalOpen(true);
@@ -216,7 +216,7 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
             ) {
                 setRecalculateModalOpen(true);
             } else {
-                router.push("/dashboard");
+                router.push(`/tests/detail?id=${testId}`);
             }
         } catch (error) {
             console.error("Error saving test:", error);
@@ -241,7 +241,7 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
             ).unwrap();
 
             setRecalculateModalOpen(false);
-            router.push("/dashboard");
+            router.push(`/tests/detail?id=${testId}`);
         } catch (error) {
             console.error("Error recalculating attempts:", error);
             setSaveDraftErrorMessage(
@@ -273,8 +273,7 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
                 }),
             ).unwrap();
 
-            setSaveDraftModalType("success");
-            setSaveDraftModalOpen(true);
+            router.push(`/tests/detail?id=${testId}`);
         } catch (error) {
             console.error("Error saving draft:", error);
             setSaveDraftErrorMessage(
@@ -435,22 +434,6 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
             />
 
             <Modal
-                isOpen={saveDraftModalOpen && saveDraftModalType === "success"}
-                title="Тест сохранен как черновик"
-                message="Тест успешно сохранен как черновик в разделе «Мои тесты». Вы будете перенаправлены на главную страницу."
-                onConfirm={() => {
-                    setSaveDraftModalOpen(false);
-                    router.push("/dashboard");
-                }}
-                onCancel={() => {
-                    setSaveDraftModalOpen(false);
-                    router.push("/dashboard");
-                }}
-                confirmText="ОК"
-                cancelText="ОК"
-            />
-
-            <Modal
                 isOpen={saveDraftModalOpen && saveDraftModalType === "error"}
                 title="Ошибка при сохранении"
                 message={saveDraftErrorMessage}
@@ -497,7 +480,7 @@ const EditTest = ({ testId }: EditTestProps): ReactElement => {
                             <Button
                                 onClick={() => {
                                     setRecalculateModalOpen(false);
-                                    router.push("/dashboard");
+                                    router.push(`/tests/detail?id=${testId}`);
                                 }}
                                 disabled={isRecalculating}
                                 variant="outline"

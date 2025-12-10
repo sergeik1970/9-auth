@@ -143,16 +143,28 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
     }, 500);
 
     const handleConfirmSubmit = useCallback(async () => {
-        if (isSubmitted) return;
+        console.log("[TestTaker] handleConfirmSubmit called, isSubmitted:", isSubmitted);
+        if (isSubmitted) {
+            console.log("[TestTaker] Already submitted, returning");
+            return;
+        }
 
         setIsSubmitted(true);
         try {
+            console.log("[TestTaker] Pausing timer");
             pause();
-            await saveCurrentAnswer();
+            try {
+                console.log("[TestTaker] Saving current answer");
+                await saveCurrentAnswer();
+            } catch (error) {
+                console.error("[TestTaker] Error saving final answer:", error);
+            }
+            console.log("[TestTaker] Submitting test");
             const results = await submitTest();
+            console.log("[TestTaker] Test submitted successfully, redirecting to results");
             router.push(`/tests/${test.id}/results?attemptId=${results.attemptId}`);
         } catch (error) {
-            console.error("Error submitting test:", error);
+            console.error("[TestTaker] Error submitting test:", error);
             setIsSubmitted(false);
             resume();
         }
@@ -163,7 +175,9 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
     };
 
     useEffect(() => {
+        console.log("[TestTaker] Timer effect: isTimeUp:", isTimeUp, "isSubmitted:", isSubmitted);
         if (isTimeUp && !isSubmitted) {
+            console.log("[TestTaker] Time is up and not submitted yet, calling handleConfirmSubmit");
             handleConfirmSubmit();
         }
     }, [isTimeUp, isSubmitted, handleConfirmSubmit]);

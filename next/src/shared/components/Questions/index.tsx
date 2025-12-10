@@ -1,4 +1,5 @@
-import React, { ReactElement, useCallback } from "react";
+import React, { ReactElement, useCallback, useRef } from "react";
+import { ArrowDown } from "lucide-react";
 import Button from "@/shared/components/Button";
 import Question from "@/shared/components/Question";
 import { QuestionFormData } from "@/shared/types/question";
@@ -15,6 +16,14 @@ const Questions: React.FC<QuestionsProps> = ({
     onChange,
     disabled = false,
 }): ReactElement => {
+    const addQuestionBottomRef = useRef<HTMLDivElement>(null);
+
+    const handleScrollToBottom = useCallback(() => {
+        if (addQuestionBottomRef.current) {
+            addQuestionBottomRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, []);
+
     const handleAddQuestion = useCallback(() => {
         const newQuestion: QuestionFormData = {
             text: "",
@@ -149,14 +158,51 @@ const Questions: React.FC<QuestionsProps> = ({
         <div className={styles.section} id="questions-section">
             <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>Вопросы</h2>
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAddQuestion}
-                    disabled={disabled}
-                >
-                    Добавить вопрос
-                </Button>
+                <div style={{ display: "flex", gap: "8px" }}>
+                    {questions.length > 5 && (
+                        <button
+                            type="button"
+                            onClick={handleScrollToBottom}
+                            disabled={disabled}
+                            style={{
+                                padding: "8px 12px",
+                                borderRadius: "6px",
+                                border: "1px solid #d1d5db",
+                                backgroundColor: "#fff",
+                                color: "#374151",
+                                cursor: disabled ? "not-allowed" : "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "14px",
+                                fontWeight: 500,
+                                transition: "all 0.2s ease",
+                                opacity: disabled ? 0.5 : 1,
+                            }}
+                            onMouseEnter={(e) => {
+                                if (!disabled) {
+                                    e.currentTarget.style.borderColor = "#3b82f6";
+                                    e.currentTarget.style.color = "#3b82f6";
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = "#d1d5db";
+                                e.currentTarget.style.color = "#374151";
+                            }}
+                            title="Перейти вниз"
+                        >
+                            <ArrowDown size={18} />
+                        </button>
+                    )}
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleAddQuestion}
+                        disabled={disabled}
+                    >
+                        Добавить вопрос
+                    </Button>
+                </div>
             </div>
 
             {questions.length === 0 ? (
@@ -192,7 +238,7 @@ const Questions: React.FC<QuestionsProps> = ({
                         ))}
                     </div>
 
-                    <div className={styles.addQuestionBottom}>
+                    <div className={styles.addQuestionBottom} ref={addQuestionBottomRef}>
                         <Button
                             type="button"
                             variant="outline"

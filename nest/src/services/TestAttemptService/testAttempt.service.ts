@@ -263,6 +263,7 @@ export class TestAttemptService {
         attemptId: number,
         user?: JwtPayload,
         validateStatus: boolean = true,
+        skipTimeCheck: boolean = false,
     ): Promise<any> {
         const attempt = await this.attemptRepository.findOne({
             where: { id: attemptId, testId },
@@ -282,7 +283,7 @@ export class TestAttemptService {
             );
         }
 
-        if (validateStatus) {
+        if (validateStatus && !skipTimeCheck) {
             this.checkAttemptTimeLimit(attempt);
         }
 
@@ -489,7 +490,9 @@ export class TestAttemptService {
     }
 
     async submitTest(testId: number, attemptId: number, user: JwtPayload) {
-        const attempt = await this.getAttempt(testId, attemptId, user);
+        const attempt = await this.getAttempt(testId, attemptId, user, true, true);
+
+        console.log(`[SubmitTest] Starting submit for attempt ${attemptId}`);
 
         if (attempt.userId !== user.sub) {
             throw new ForbiddenException(
@@ -556,9 +559,7 @@ export class TestAttemptService {
             where: { attemptId },
         });
 
-        console.log(
-            `[SubmitTest] Attempt ${attemptId}: found ${answers.length} answers`,
-        );
+        console.log(`[SubmitTest] Attempt ${attemptId}: Status=${attempt.status}, Found ${answers.length} answers`);
 
         let correctAnswers = 0;
         const totalQuestions = test.questions.length;
@@ -626,6 +627,13 @@ export class TestAttemptService {
 
         await this.answerRepository.save(answers);
         const savedAttempt = await this.attemptRepository.save(attempt);
+
+        console.log(`[SubmitTest] Attempt ${attemptId} saved successfully:`, {
+            status: savedAttempt.status,
+            correctAnswers: savedAttempt.correctAnswers,
+            totalQuestions: savedAttempt.totalQuestions,
+            score: savedAttempt.score,
+        });
 
         const answerMap = new Map(answers.map((a) => [a.questionId, a]));
 
@@ -729,13 +737,213 @@ export class TestAttemptService {
         };
     }
 
+    async completeAttempt(testId: number, attemptId: number, user: JwtPayload) {
+        const attempt = await this.getAttempt(testId, attemptId, user);
+
+        console.log(`[CompleteAttempt] Initial attempt times:`, {
+            startedAt: attempt.startedAt,
+            startedAtType: typeof attempt.startedAt,
+            startedAtString: String(attempt.startedAt),
+            completedAt: attempt.completedAt,
+            completedAtType: typeof attempt.completedAt,
+        });
+
+        if (!attempt.startedAt) {
+            console.error(`[CompleteAttempt] ERROR: startedAt is null or undefined for attempt ${attemptId}`);
+            throw new HttpException(
+                "Ошибка: время начала теста не установлено",
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        if (attempt.userId !== user.sub) {
+            throw new ForbiddenException(
+                "Вы можете завершить только свои попытки",
+            );
+        }
+
+        if (attempt.status !== AttemptStatus.IN_PROGRESS) {
+            throw new HttpException(
+                "Попытка уже завершена",
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        const test = await this.testRepository.findOne({
+            where: { id: testId },
+            relations: ["questions", "questions.options"],
+        });
+
+        if (!test) {
+            throw new NotFoundException(`Тест с ID ${testId} не найден`);
+        }
+
+        console.log(
+            `[CompleteAttempt] Test ${testId} loaded with ${test.questions?.length || 0} questions`,
+        );
+        test.questions?.forEach((q) => {
+            console.log(
+                `[CompleteAttempt] Q${q.id}: ${q.type} with ${q.options?.length || 0} options`,
+            );
+        });
+
+        const answers = await this.answerRepository.find({
+            where: { attemptId },
+        });
+
+        console.log(
+            `[CompleteAttempt] Attempt ${attemptId}: found ${answers.length} answers`,
+        );
+
+        let correctAnswers = 0;
+        const totalQuestions = test.questions.length;
+
+        for (const answer of answers) {
+            const question = test.questions.find(
+                (q) => q.id === answer.questionId,
+            );
+            if (!question) {
+                console.log(
+                    `[CompleteAttempt] Question ${answer.questionId} not found`,
+                );
+                continue;
+            }
+
+            console.log(
+                `[CompleteAttempt] Checking answer for question ${question.id} (${question.type}):`,
+                {
+                    selectedOptionId: answer.selectedOptionId,
+                    selectedOptionIds: answer.selectedOptionIds,
+                    textAnswer: answer.textAnswer,
+                },
+            );
+
+            if (
+                question.type === "single_choice" ||
+                question.type === "multiple_choice"
+            ) {
+                if (!question.options || question.options.length === 0) {
+                    console.log(
+                        `[CompleteAttempt] ERROR: Q${question.id} has no options loaded!`,
+                    );
+                    continue;
+                }
+
+                const correctOptions = question.options.filter(
+                    (o) => o.isCorrect,
+                );
+                const correctOptionIds = correctOptions.map((o) => o.id);
+
+                console.log(
+                    `[CompleteAttempt] Q${question.id} has ${question.options.length} options, ${correctOptionIds.length} correct`,
+                );
+                console.log(
+                    `[CompleteAttempt] Correct option IDs: ${correctOptionIds}`,
+                );
+
+                if (question.type === "single_choice") {
+                    if (
+                        answer.selectedOptionId &&
+                        correctOptionIds.includes(answer.selectedOptionId)
+                    ) {
+                        correctAnswers++;
+                        answer.isCorrect = true;
+                        console.log(
+                            `[CompleteAttempt] Single choice correct for Q${question.id}`,
+                        );
+                    } else {
+                        answer.isCorrect = false;
+                    }
+                } else {
+                    const selectedIds = answer.selectedOptionIds
+                        ? JSON.parse(answer.selectedOptionIds)
+                        : [];
+                    console.log(
+                        `[CompleteAttempt] Selected IDs: ${selectedIds}, Correct IDs: ${correctOptionIds}`,
+                    );
+                    if (
+                        JSON.stringify(selectedIds.sort()) ===
+                        JSON.stringify(correctOptionIds.sort())
+                    ) {
+                        correctAnswers++;
+                        answer.isCorrect = true;
+                        console.log(
+                            `[CompleteAttempt] Multiple choice correct for Q${question.id}`,
+                        );
+                    } else {
+                        answer.isCorrect = false;
+                    }
+                }
+            } else if (question.type === "text_input") {
+                if (
+                    answer.textAnswer &&
+                    answer.textAnswer.toLowerCase() ===
+                        question.correctTextAnswer?.toLowerCase()
+                ) {
+                    correctAnswers++;
+                    answer.isCorrect = true;
+                    console.log(
+                        `[CompleteAttempt] Text input correct for Q${question.id}`,
+                    );
+                } else {
+                    answer.isCorrect = false;
+                }
+            }
+        }
+
+        console.log(
+            `[CompleteAttempt] Final result: ${correctAnswers}/${totalQuestions} correct`,
+        );
+
+        const percentage = (correctAnswers / totalQuestions) * 100;
+
+        attempt.status = AttemptStatus.COMPLETED;
+        attempt.completedAt = new Date();
+        attempt.correctAnswers = correctAnswers;
+        attempt.totalQuestions = totalQuestions;
+        attempt.score = Math.round(percentage * 100) / 100;
+
+        console.log(`[CompleteAttempt] Before save:`, {
+            startedAt: attempt.startedAt,
+            completedAt: attempt.completedAt,
+            timeDiffMs: new Date(attempt.completedAt).getTime() - new Date(attempt.startedAt).getTime(),
+        });
+
+        await this.answerRepository.save(answers);
+        await this.attemptRepository.save(attempt);
+
+        return {
+            attemptId: attempt.id,
+            status: attempt.status,
+            completedAt: attempt.completedAt,
+            correctAnswers: attempt.correctAnswers,
+            totalQuestions: attempt.totalQuestions,
+            score: attempt.score,
+        };
+    }
+
     async getResults(testId: number, attemptId: number, user: JwtPayload) {
-        const attempt = await this.getAttempt(testId, attemptId, user, false);
+        let attempt = await this.getAttempt(testId, attemptId, user, false);
+
+        console.log(`[GetResults] Attempt ${attemptId}:`, {
+            status: attempt.status,
+            correctAnswers: attempt.correctAnswers,
+            totalQuestions: attempt.totalQuestions,
+            score: attempt.score,
+            completedAt: attempt.completedAt,
+            startedAt: attempt.startedAt,
+        });
 
         if (attempt.userId !== user.sub) {
             throw new ForbiddenException(
                 "Вы можете просмотреть только свои результаты",
             );
+        }
+
+        if (attempt.status === AttemptStatus.IN_PROGRESS && attempt.completedAt) {
+            console.log(`[GetResults] Auto-completing attempt ${attemptId}`);
+            attempt.status = AttemptStatus.COMPLETED;
+            attempt = await this.attemptRepository.save(attempt);
         }
 
         const test = await this.testRepository.findOne({
@@ -799,18 +1007,32 @@ export class TestAttemptService {
 
         const answerMap = new Map(answers.map((a) => [a.questionId, a]));
 
+        const correctAnswers = attempt.correctAnswers ?? 0;
+        const totalQuestions = attempt.totalQuestions ?? test.questions.length;
+        const percentage = attempt.score ?? 0;
+
+        const startedAtMs = new Date(attempt.startedAt).getTime();
+        const completedAtMs = new Date(attempt.completedAt).getTime();
+        const timeDiffMs = completedAtMs - startedAtMs;
+        const timeSpent = Math.floor(timeDiffMs / 1000);
+
+        console.log(`[GetResults] Time calculation:`, {
+            startedAt: attempt.startedAt,
+            completedAt: attempt.completedAt,
+            startedAtMs,
+            completedAtMs,
+            timeDiffMs,
+            timeSpent,
+        });
+
         return {
             attemptId: attempt.id,
             testId,
-            percentage: attempt.score,
-            score: attempt.correctAnswers,
-            totalQuestions: attempt.totalQuestions,
-            correctAnswers: attempt.correctAnswers,
-            timeSpent: Math.floor(
-                (new Date(attempt.completedAt).getTime() -
-                    new Date(attempt.startedAt).getTime()) /
-                    1000,
-            ),
+            percentage: Math.round(percentage * 100) / 100,
+            score: correctAnswers,
+            totalQuestions: totalQuestions,
+            correctAnswers: correctAnswers,
+            timeSpent: timeSpent,
             gradingCriteria: test.creator?.gradingCriteria || null,
             answers: [...test.questions]
                 .sort((a, b) => a.order - b.order)

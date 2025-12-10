@@ -59,7 +59,7 @@ const TestDetailPage = (): ReactElement => {
         <div className={styles.container}>
             <div className={styles.header}>
                 <button className={styles.backButton} onClick={() => router.back()}>
-                    ← Назад
+                    ← Ко всем тестам
                 </button>
                 <h1 className={styles.title}>Детали теста</h1>
             </div>

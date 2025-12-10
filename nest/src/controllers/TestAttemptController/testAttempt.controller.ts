@@ -83,4 +83,15 @@ export class TestAttemptController {
     ) {
         return this.attemptService.getResults(testId, attemptId, req.user);
     }
+
+    @Post(":testId/attempts/:attemptId/complete")
+    @UseGuards(JwtAuthGuard)
+    @HttpCode(HttpStatus.OK)
+    completeAttempt(
+        @Param("testId", ParseIntPipe) testId: number,
+        @Param("attemptId", ParseIntPipe) attemptId: number,
+        @Req() req: any,
+    ) {
+        return this.attemptService.completeAttempt(testId, attemptId, req.user);
+    }
 }
