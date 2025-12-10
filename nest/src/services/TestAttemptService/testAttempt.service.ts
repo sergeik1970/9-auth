@@ -373,6 +373,8 @@ export class TestAttemptService {
                 ? `${attempt.user.lastName || ""} ${attempt.user.name || ""}`.trim() ||
                   "Unknown"
                 : "Unknown",
+            classNumber: attempt.user?.classNumber || null,
+            classLetter: attempt.user?.classLetter || null,
             correctAnswers: Number(attempt.correctAnswers ?? 0),
             totalQuestions: Number(attempt.totalQuestions ?? 0),
             percentage: Number(attempt.score ?? 0),

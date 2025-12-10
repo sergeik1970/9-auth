@@ -151,6 +151,7 @@ const TestPreview = ({
     const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
     const [collapsingStudents, setCollapsingStudents] = useState<Set<string>>(new Set());
     const [errorModal, setErrorModal] = useState<string | null>(null);
+    const [selectedClass, setSelectedClass] = useState<string | null>(null);
 
     // Получаем ID теста из URL, если не передан через props
     const id = testId || (router.query.id ? Number(router.query.id) : undefined);
@@ -341,6 +342,21 @@ const TestPreview = ({
             newExpanded.add(studentName);
             setExpandedStudents(newExpanded);
         }
+    };
+
+    const getTestClasses = (): string[] => {
+        if (!test?.classSchedules) return [];
+        return test.classSchedules.map(
+            (schedule) => `${schedule.classNumber}${schedule.classLetter}`,
+        );
+    };
+
+    const filterAttemptsByClass = (attempts: any[], classKey: string | null) => {
+        if (!classKey) return attempts;
+        return attempts.filter((attempt) => {
+            const attemptClass = `${attempt.classNumber}${attempt.classLetter}`;
+            return attemptClass === classKey;
+        });
     };
 
     const handleArchive = async () => {
@@ -711,8 +727,62 @@ const TestPreview = ({
             {isOwner && testAttempts && testAttempts.length > 0 && (
                 <div style={{ marginTop: "32px" }}>
                     <h3 style={{ marginBottom: "16px", fontSize: "18px", fontWeight: 600 }}>
-                        Результаты ({testAttempts.length})
+                        Результаты ({filterAttemptsByClass(testAttempts, selectedClass).length}
+                        {selectedClass ? ` из ${testAttempts.length}` : ""})
                     </h3>
+                    {getTestClasses().length > 0 && (
+                        <div
+                            style={{
+                                marginBottom: "16px",
+                                display: "flex",
+                                gap: "8px",
+                                flexWrap: "wrap",
+                            }}
+                        >
+                            <button
+                                onClick={() => setSelectedClass(null)}
+                                style={{
+                                    padding: "8px 16px",
+                                    borderRadius: "6px",
+                                    border:
+                                        selectedClass === null
+                                            ? "2px solid #10b981"
+                                            : "1px solid #d1d5db",
+                                    backgroundColor: selectedClass === null ? "#ecfdf5" : "#fff",
+                                    color: selectedClass === null ? "#10b981" : "#374151",
+                                    cursor: "pointer",
+                                    fontSize: "14px",
+                                    fontWeight: selectedClass === null ? 600 : 500,
+                                    transition: "all 0.2s ease",
+                                }}
+                            >
+                                Все классы
+                            </button>
+                            {getTestClasses().map((classKey) => (
+                                <button
+                                    key={classKey}
+                                    onClick={() => setSelectedClass(classKey)}
+                                    style={{
+                                        padding: "8px 16px",
+                                        borderRadius: "6px",
+                                        border:
+                                            selectedClass === classKey
+                                                ? "2px solid #3b82f6"
+                                                : "1px solid #d1d5db",
+                                        backgroundColor:
+                                            selectedClass === classKey ? "#eff6ff" : "#fff",
+                                        color: selectedClass === classKey ? "#3b82f6" : "#374151",
+                                        cursor: "pointer",
+                                        fontSize: "14px",
+                                        fontWeight: selectedClass === classKey ? 600 : 500,
+                                        transition: "all 0.2s ease",
+                                    }}
+                                >
+                                    {classKey}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                     <div
                         style={{
                             overflowX: "auto",
@@ -796,7 +866,11 @@ const TestPreview = ({
                                 </tr>
                             </thead>
                             <tbody>
-                                {Object.entries(groupAttemptsByStudent(testAttempts))
+                                {Object.entries(
+                                    groupAttemptsByStudent(
+                                        filterAttemptsByClass(testAttempts, selectedClass),
+                                    ),
+                                )
                                     .sort(([nameA], [nameB]) => {
                                         const firstNameA = (nameA || "").split(" ")[0] || "";
                                         const firstNameB = (nameB || "").split(" ")[0] || "";
