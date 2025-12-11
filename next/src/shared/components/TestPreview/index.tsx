@@ -790,7 +790,8 @@ const TestPreview = ({
                             test.classSchedules?.find(
                                 (s) =>
                                     s.classNumber === user?.classNumber &&
-                                    s.classLetter?.toUpperCase() === user?.classLetter?.toUpperCase(),
+                                    s.classLetter?.toUpperCase() ===
+                                        user?.classLetter?.toUpperCase(),
                             ) || test.classSchedules?.[0];
 
                         // Для студентов показываем только их срок, для учителей - все сроки по классам
@@ -894,7 +895,8 @@ const TestPreview = ({
                             test.classSchedules?.find(
                                 (s) =>
                                     s.classNumber === user?.classNumber &&
-                                    s.classLetter?.toUpperCase() === user?.classLetter?.toUpperCase(),
+                                    s.classLetter?.toUpperCase() ===
+                                        user?.classLetter?.toUpperCase(),
                             ) || test.classSchedules?.[0];
                         const remainingAttempts = getRemainingAttempts(userSchedule);
                         const isAttemptsExhausted = remainingAttempts === 0;
@@ -950,6 +952,234 @@ const TestPreview = ({
                     </Button>
                 )}
             </div>
+
+            {!isOwner &&
+                user &&
+                testAttempts &&
+                testAttempts.length > 0 &&
+                (() => {
+                    const studentCompletedAttempts = testAttempts
+                        .filter(
+                            (attempt) =>
+                                attempt.userId === user.id && attempt.status === "completed",
+                        )
+                        .sort((a, b) => {
+                            const dateA = new Date(a.completedAt || 0).getTime();
+                            const dateB = new Date(b.completedAt || 0).getTime();
+                            return dateB - dateA;
+                        });
+
+                    if (studentCompletedAttempts.length === 0) return null;
+
+                    return (
+                        <div style={{ marginTop: "32px" }}>
+                            <h3 style={{ marginBottom: "16px", fontSize: "18px", fontWeight: 600 }}>
+                                Мои результаты ({studentCompletedAttempts.length})
+                            </h3>
+                            <div
+                                style={{
+                                    overflowX: "auto",
+                                    borderRadius: "8px",
+                                    border: "1px solid #e5e7eb",
+                                }}
+                            >
+                                <table
+                                    style={{
+                                        width: "100%",
+                                        borderCollapse: "collapse",
+                                        fontSize: "14px",
+                                    }}
+                                >
+                                    <thead>
+                                        <tr
+                                            style={{
+                                                backgroundColor: "#f9fafb",
+                                                borderBottom: "1px solid #e5e7eb",
+                                            }}
+                                        >
+                                            <th
+                                                style={{
+                                                    padding: "12px",
+                                                    textAlign: "left",
+                                                    fontWeight: 600,
+                                                    color: "#374151",
+                                                }}
+                                            >
+                                                Дата и время
+                                            </th>
+                                            <th
+                                                style={{
+                                                    padding: "12px 8px",
+                                                    textAlign: "center",
+                                                    fontWeight: 600,
+                                                    color: "#374151",
+                                                }}
+                                            >
+                                                Оценка
+                                            </th>
+                                            <th
+                                                style={{
+                                                    padding: "12px 8px",
+                                                    textAlign: "center",
+                                                    fontWeight: 600,
+                                                    color: "#374151",
+                                                }}
+                                            >
+                                                Баллы
+                                            </th>
+                                            <th
+                                                style={{
+                                                    padding: "12px 8px",
+                                                    textAlign: "center",
+                                                    fontWeight: 600,
+                                                    color: "#374151",
+                                                }}
+                                            >
+                                                Результат
+                                            </th>
+                                            <th
+                                                style={{
+                                                    padding: "12px 8px",
+                                                    textAlign: "center",
+                                                    fontWeight: 600,
+                                                    color: "#374151",
+                                                }}
+                                            >
+                                                Время
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {studentCompletedAttempts.map((attempt, idx) => (
+                                            <tr
+                                                key={idx}
+                                                style={{
+                                                    borderBottom:
+                                                        idx < studentCompletedAttempts.length - 1
+                                                            ? "1px solid #e5e7eb"
+                                                            : "none",
+                                                    backgroundColor: "#ffffff",
+                                                }}
+                                            >
+                                                <td
+                                                    style={{
+                                                        padding: "12px",
+                                                        color: "#374151",
+                                                    }}
+                                                >
+                                                    {attempt.completedAt
+                                                        ? new Date(
+                                                              attempt.completedAt,
+                                                          ).toLocaleDateString("ru-RU", {
+                                                              day: "2-digit",
+                                                              month: "2-digit",
+                                                              year: "numeric",
+                                                              hour: "2-digit",
+                                                              minute: "2-digit",
+                                                          })
+                                                        : "-"}
+                                                </td>
+                                                <td
+                                                    style={{
+                                                        padding: "12px 8px",
+                                                        textAlign: "center",
+                                                        color: getGradeColor(
+                                                            attempt.percentage || 0,
+                                                            user?.gradingCriteria,
+                                                        ),
+                                                        fontWeight: 600,
+                                                        fontSize: "16px",
+                                                        minWidth: "50px",
+                                                    }}
+                                                >
+                                                    {getGrade(
+                                                        attempt.percentage || 0,
+                                                        user?.gradingCriteria,
+                                                    )}
+                                                </td>
+                                                <td
+                                                    style={{
+                                                        padding: "12px 8px",
+                                                        textAlign: "center",
+                                                        color: "#1f2937",
+                                                        fontWeight: 500,
+                                                    }}
+                                                >
+                                                    {attempt.correctAnswers || 0}/
+                                                    {attempt.totalQuestions || 0}
+                                                </td>
+                                                <td
+                                                    style={{
+                                                        padding: "12px 8px",
+                                                        textAlign: "center",
+                                                        color: "#1f2937",
+                                                    }}
+                                                >
+                                                    <div
+                                                        style={{
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            justifyContent: "center",
+                                                            gap: "8px",
+                                                        }}
+                                                    >
+                                                        <div
+                                                            style={{
+                                                                height: "8px",
+                                                                backgroundColor: "#e5e7eb",
+                                                                width: "100px",
+                                                                borderRadius: "4px",
+                                                                overflow: "hidden",
+                                                            }}
+                                                        >
+                                                            <div
+                                                                style={{
+                                                                    height: "100%",
+                                                                    backgroundColor: getGradeColor(
+                                                                        attempt.percentage || 0,
+                                                                        user?.gradingCriteria,
+                                                                    ),
+                                                                    width:
+                                                                        Math.round(
+                                                                            attempt.percentage || 0,
+                                                                        ) + "%",
+                                                                    transition: "width 0.3s ease",
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <span
+                                                            style={{
+                                                                color: "#6b7280",
+                                                                fontSize: "12px",
+                                                                minWidth: "35px",
+                                                            }}
+                                                        >
+                                                            {Math.round(attempt.percentage || 0)}%
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td
+                                                    style={{
+                                                        padding: "12px 8px",
+                                                        textAlign: "center",
+                                                        color: "#6b7280",
+                                                        fontSize: "13px",
+                                                    }}
+                                                >
+                                                    {attempt.timeSpent
+                                                        ? `${Math.floor(attempt.timeSpent / 60)}м ${
+                                                              attempt.timeSpent % 60
+                                                          }с`
+                                                        : "—"}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    );
+                })()}
 
             {isOwner && testAttempts && testAttempts.length > 0 && (
                 <div style={{ marginTop: "32px" }}>
