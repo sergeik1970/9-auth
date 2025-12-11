@@ -247,8 +247,7 @@ export default function GradingCriteriaComponent({
                     onSuccess?.();
                 }
             })
-            .catch(() => {
-            });
+            .catch(() => {});
     };
 
     useEffect(() => {

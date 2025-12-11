@@ -353,23 +353,31 @@ export class TestAttemptService {
         user: JwtPayload,
     ): Promise<any[]> {
         const test = await this.testRepository.findOne({
-            where: { id: testId, creatorId: user.sub },
+            where: { id: testId },
         });
 
         if (!test) {
-            throw new ForbiddenException(
-                "Вы не можете просмотреть результаты для этого теста",
-            );
+            throw new ForbiddenException("Тест не найден");
+        }
+
+        const isTeacher = test.creatorId === user.sub;
+
+        let where: any = { testId };
+
+        // Если это не учитель, показываем только его попытки
+        if (!isTeacher) {
+            where.userId = user.sub;
         }
 
         const attempts = await this.attemptRepository.find({
-            where: { testId, status: AttemptStatus.COMPLETED },
+            where,
             relations: ["user"],
-            order: { completedAt: "DESC" },
+            order: { completedAt: "DESC", createdAt: "DESC" },
         });
 
         return attempts.map((attempt) => ({
             id: attempt.id,
+            userId: attempt.userId,
             studentName: attempt.user
                 ? `${attempt.user.lastName || ""} ${attempt.user.name || ""}`.trim() ||
                   "Unknown"

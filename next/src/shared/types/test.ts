@@ -11,6 +11,7 @@ export interface ClassSchedule {
     classNumber: number;
     classLetter: string;
     dueDate: string;
+    maxAttempts?: number;
 }
 
 export interface Test {
@@ -49,6 +50,9 @@ export interface TestAttempt {
     startedAt: string;
     completedAt?: string;
     answers?: TestAnswer[];
+    classNumber?: number;
+    classLetter?: string;
+    studentName?: string;
 }
 
 export interface TestAnswer {

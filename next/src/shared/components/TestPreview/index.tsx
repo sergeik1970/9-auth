@@ -166,11 +166,12 @@ const TestPreview = ({
         }
     }, [dispatch, id]);
 
-    // При фокусе на окно - обновляем данные теста
+    // При фокусе на окно - обновляем данные теста и попыток
     useEffect(() => {
         const handleFocus = () => {
             if (id) {
                 dispatch(getTestById(id));
+                dispatch(getTestAttempts(id));
             }
         };
 
@@ -196,17 +197,14 @@ const TestPreview = ({
             return (
                 original.classNumber !== current.classNumber ||
                 original.classLetter !== current.classLetter ||
-                new Date(original.dueDate).getTime() !== new Date(current.dueDate).getTime()
+                new Date(original.dueDate).getTime() !== new Date(current.dueDate).getTime() ||
+                (original.maxAttempts || 1) !== (current.maxAttempts || 1)
             );
         });
     };
 
     useEffect(() => {
         if (test) {
-            console.log("Test loaded:", {
-                classSchedules: test.classSchedules,
-                status: test.status,
-            });
             const errors = getTestValidationErrors({
                 title: test.title,
                 description: test.description,
@@ -381,6 +379,20 @@ const TestPreview = ({
         });
     };
 
+    const getRemainingAttempts = (schedule?: ClassSchedule): number | null => {
+        if (!schedule || schedule.maxAttempts === undefined) return null;
+
+        const studentAttempts = testAttempts.filter(
+            (attempt) =>
+                attempt.userId === user?.id &&
+                attempt.classNumber === schedule.classNumber &&
+                attempt.classLetter?.toUpperCase() === schedule.classLetter?.toUpperCase() &&
+                attempt.status === "completed",
+        ).length;
+
+        return Math.max(0, schedule.maxAttempts - studentAttempts);
+    };
+
     const handleArchive = async () => {
         if (!test?.id) return;
         if (validationErrors.length > 0) {
@@ -408,6 +420,8 @@ const TestPreview = ({
     if (!test) {
         return <div className={styles.error}>Тест не найден</div>;
     }
+
+    const userSchedule = test.classSchedules?.[0];
 
     return (
         <div className={styles.content}>
@@ -445,7 +459,7 @@ const TestPreview = ({
                             <div style={{ marginBottom: "16px" }}>
                                 {editingClassSchedules.map((schedule, index) => (
                                     <div
-                                        key={index}
+                                        key={`${schedule.classNumber}-${schedule.classLetter}-${index}`}
                                         style={{
                                             display: "flex",
                                             gap: "12px",
@@ -513,10 +527,10 @@ const TestPreview = ({
                                                     }}
                                                 >
                                                     {Array.from({ length: 32 }, (_, i) =>
-                                                        String.fromCharCode(1072 + i),
+                                                        String.fromCharCode(1040 + i),
                                                     ).map((letter) => (
                                                         <option key={letter} value={letter}>
-                                                            {letter.toUpperCase()}
+                                                            {letter}
                                                         </option>
                                                     ))}
                                                 </select>
@@ -548,6 +562,118 @@ const TestPreview = ({
                                             />
                                         </div>
 
+                                        <div>
+                                            <label
+                                                style={{
+                                                    display: "block",
+                                                    marginBottom: "4px",
+                                                    fontSize: "12px",
+                                                    fontWeight: "600",
+                                                }}
+                                            >
+                                                Попытки
+                                            </label>
+                                            <div
+                                                style={{
+                                                    display: "flex",
+                                                    gap: "4px",
+                                                    alignItems: "center",
+                                                }}
+                                            >
+                                                <button
+                                                    onClick={() => {
+                                                        const updated = [...editingClassSchedules];
+                                                        const currentAttempts =
+                                                            updated[index].maxAttempts || 1;
+                                                        if (currentAttempts > 1) {
+                                                            updated[index] = {
+                                                                ...updated[index],
+                                                                maxAttempts: currentAttempts - 1,
+                                                            };
+                                                            setEditingClassSchedules(updated);
+                                                        }
+                                                    }}
+                                                    disabled={
+                                                        isPublishing ||
+                                                        !schedule.maxAttempts ||
+                                                        schedule.maxAttempts <= 1
+                                                    }
+                                                    style={{
+                                                        padding: "4px 8px",
+                                                        border: "1px solid #ccc",
+                                                        borderRadius: "4px",
+                                                        backgroundColor: "#fff",
+                                                        cursor: "pointer",
+                                                        fontSize: "14px",
+                                                        fontWeight: "600",
+                                                    }}
+                                                    title="Уменьшить"
+                                                >
+                                                    −
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    value={schedule.maxAttempts || 1}
+                                                    onChange={(e) => {
+                                                        const value = Math.min(
+                                                            Math.max(
+                                                                parseInt(e.target.value) || 1,
+                                                                1,
+                                                            ),
+                                                            100,
+                                                        );
+                                                        const updated = [...editingClassSchedules];
+                                                        updated[index] = {
+                                                            ...updated[index],
+                                                            maxAttempts: value,
+                                                        };
+                                                        setEditingClassSchedules(updated);
+                                                    }}
+                                                    disabled={isPublishing}
+                                                    style={{
+                                                        width: "50px",
+                                                        padding: "4px",
+                                                        border: "1px solid #ccc",
+                                                        borderRadius: "4px",
+                                                        textAlign: "center",
+                                                        fontSize: "14px",
+                                                    }}
+                                                    min="1"
+                                                    max="100"
+                                                />
+                                                <button
+                                                    onClick={() => {
+                                                        const updated = [...editingClassSchedules];
+                                                        const currentAttempts =
+                                                            updated[index].maxAttempts || 1;
+                                                        if (currentAttempts < 100) {
+                                                            updated[index] = {
+                                                                ...updated[index],
+                                                                maxAttempts: currentAttempts + 1,
+                                                            };
+                                                            setEditingClassSchedules(updated);
+                                                        }
+                                                    }}
+                                                    disabled={
+                                                        isPublishing ||
+                                                        (schedule.maxAttempts || 1) >= 100
+                                                    }
+                                                    style={{
+                                                        padding: "4px 8px",
+                                                        border: "1px solid #ccc",
+                                                        borderRadius: "4px",
+                                                        backgroundColor: "#fff",
+                                                        cursor: "pointer",
+                                                        fontSize: "14px",
+                                                        fontWeight: "600",
+                                                    }}
+                                                    title="Увеличить"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+
                                         {editingClassSchedules.length > 1 && (
                                             <button
                                                 onClick={() => {
@@ -577,7 +703,12 @@ const TestPreview = ({
                                     onClick={() => {
                                         setEditingClassSchedules([
                                             ...editingClassSchedules,
-                                            { classNumber: 1, classLetter: "А", dueDate: "" },
+                                            {
+                                                classNumber: 1,
+                                                classLetter: "А",
+                                                dueDate: "",
+                                                maxAttempts: 1,
+                                            },
                                         ]);
                                     }}
                                     disabled={isPublishing}
@@ -655,7 +786,12 @@ const TestPreview = ({
                     const shouldShow = test.classSchedules && test.classSchedules.length > 0;
 
                     if (shouldShow) {
-                        const userSchedule = test.classSchedules?.[0];
+                        const userSchedule =
+                            test.classSchedules?.find(
+                                (s) =>
+                                    s.classNumber === user?.classNumber &&
+                                    s.classLetter?.toUpperCase() === user?.classLetter?.toUpperCase(),
+                            ) || test.classSchedules?.[0];
 
                         // Для студентов показываем только их срок, для учителей - все сроки по классам
                         if (isOwner) {
@@ -675,12 +811,24 @@ const TestPreview = ({
                             );
                         } else {
                             // Для студентов показываем только их срок
+                            const remainingAttempts = getRemainingAttempts(userSchedule);
                             return (
                                 <div className={styles.infoItem}>
                                     <p style={{ margin: 0 }}>
                                         <strong>Срок выполнения</strong> до{" "}
                                         {formatDeadline(userSchedule?.dueDate || "")}
                                     </p>
+                                    {remainingAttempts !== null && (
+                                        <p
+                                            style={{
+                                                margin: "8px 0 0 0",
+                                                color:
+                                                    remainingAttempts === 0 ? "#dc2626" : "#0891b2",
+                                            }}
+                                        >
+                                            <strong>Осталось попыток:</strong> {remainingAttempts}
+                                        </p>
+                                    )}
                                 </div>
                             );
                         }
@@ -738,19 +886,36 @@ const TestPreview = ({
             )}
 
             <div className={styles.actions}>
-                {onStartTest && test.status === "active" && !isOwner && (
-                    <Button
-                        onClick={onStartTest}
-                        disabled={isStarting}
-                        variant={isActiveAttempt ? "primary" : "outline"}
-                    >
-                        {isStarting
-                            ? "Загрузка..."
-                            : isActiveAttempt
-                              ? "Продолжить тест"
-                              : "Начать тест"}
-                    </Button>
-                )}
+                {onStartTest &&
+                    test.status === "active" &&
+                    !isOwner &&
+                    (() => {
+                        const userSchedule =
+                            test.classSchedules?.find(
+                                (s) =>
+                                    s.classNumber === user?.classNumber &&
+                                    s.classLetter?.toUpperCase() === user?.classLetter?.toUpperCase(),
+                            ) || test.classSchedules?.[0];
+                        const remainingAttempts = getRemainingAttempts(userSchedule);
+                        const isAttemptsExhausted = remainingAttempts === 0;
+
+                        return (
+                            <Button
+                                onClick={onStartTest}
+                                disabled={isStarting || isAttemptsExhausted}
+                                variant={isActiveAttempt ? "primary" : "outline"}
+                                title={isAttemptsExhausted ? "Количество попыток исчерпано" : ""}
+                            >
+                                {isStarting
+                                    ? "Загрузка..."
+                                    : isAttemptsExhausted
+                                      ? "Нет попыток"
+                                      : isActiveAttempt
+                                        ? "Продолжить тест"
+                                        : "Начать тест"}
+                            </Button>
+                        );
+                    })()}
                 {isOwner && test.id && test.status === "active" && (
                     <Button
                         onClick={handleComplete}

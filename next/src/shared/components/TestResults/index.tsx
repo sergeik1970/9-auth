@@ -62,7 +62,7 @@ export const TestResults: React.FC<TestResultsProps> = ({ results, onRetry, onGo
 
     const formatTime = (seconds: number) => {
         if (!seconds || seconds < 0) return "0с";
-        
+
         const hours = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
         const secs = Math.floor(seconds % 60);

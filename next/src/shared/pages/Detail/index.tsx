@@ -1,12 +1,13 @@
 import React, { ReactElement, useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { useSelector } from "@/shared/store/store";
+import { useDispatch, useSelector } from "@/shared/store/store";
 import { selectAuth } from "@/shared/store/slices/auth";
-import { selectTest } from "@/shared/store/slices/test";
+import { selectTest, getTestAttempts } from "@/shared/store/slices/test";
 import TestPreview from "@/shared/components/TestPreview";
 import styles from "./index.module.scss";
 
 const TestDetailPage = (): ReactElement => {
+    const dispatch = useDispatch();
     const router = useRouter();
     const [id, setId] = useState<string | number | null>(null);
     const [attemptId, setAttemptId] = useState<number | null>(null);
@@ -29,6 +30,28 @@ const TestDetailPage = (): ReactElement => {
             setAttemptId(Number(resolvedAttemptId));
         }
     }, [router.isReady, router.query.id, router.query.attemptId]);
+
+    useEffect(() => {
+        if (id && typeof id === "string") {
+            dispatch(getTestAttempts(Number(id)));
+        }
+    }, [id, dispatch]);
+
+    useEffect(() => {
+        const handleRouteChange = (url: string) => {
+            if (
+                id &&
+                url.includes(`/tests/${id}`) &&
+                !url.includes("/take") &&
+                !url.includes("/results")
+            ) {
+                dispatch(getTestAttempts(Number(id)));
+            }
+        };
+
+        router.events.on("routeChangeComplete", handleRouteChange);
+        return () => router.events.off("routeChangeComplete", handleRouteChange);
+    }, [id, dispatch, router.events]);
 
     const handleStartTest = async () => {
         if (!id) return;

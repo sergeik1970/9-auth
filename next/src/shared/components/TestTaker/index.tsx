@@ -177,7 +177,9 @@ export const TestTaker: React.FC<TestTakerProps> = ({ test, attemptId }) => {
     useEffect(() => {
         console.log("[TestTaker] Timer effect: isTimeUp:", isTimeUp, "isSubmitted:", isSubmitted);
         if (isTimeUp && !isSubmitted) {
-            console.log("[TestTaker] Time is up and not submitted yet, calling handleConfirmSubmit");
+            console.log(
+                "[TestTaker] Time is up and not submitted yet, calling handleConfirmSubmit",
+            );
             handleConfirmSubmit();
         }
     }, [isTimeUp, isSubmitted, handleConfirmSubmit]);
