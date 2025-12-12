@@ -1,5 +1,6 @@
 import React, { ReactElement, useEffect } from "react";
 import { useRouter } from "next/router";
+import { ClipboardList } from "lucide-react";
 import { useSelector, useDispatch } from "@/shared/store/store";
 import LoadingState from "@/shared/components/LoadingState";
 import EmptyState from "@/shared/components/EmptyState";
@@ -359,7 +360,7 @@ const TestList = ({
                 <EmptyState
                     title="Нет доступных тестов"
                     message="Пока нет активных тестов для прохождения"
-                    icon="📝"
+                    icon={<ClipboardList size={48} />}
                 />
             ) : (
                 <div>

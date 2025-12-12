@@ -506,13 +506,19 @@ export class TestService {
                 }
             }
 
-            // Студент может видеть только активные тесты, предназначенные для его класса
-            if (test.status !== TestStatus.ACTIVE) {
+            // Проверяем, есть ли у студента активная попытка на этот тест
+            const hasActiveAttempt = await this.attemptRepository.findOne({
+                where: { testId: id, userId: user.sub, status: AttemptStatus.IN_PROGRESS },
+            });
+
+            // Студент может видеть активные тесты или тесты, на которые у него есть активная попытка
+            if (test.status !== TestStatus.ACTIVE && !hasActiveAttempt) {
                 this.logger.log(
-                    `[getTestById] Student ${user.sub} denied access to test ${id}: not active`,
+                    `[getTestById] Student ${user.sub} denied access to test ${id}: not active and no active attempt`,
                     {
                         status: test.status,
                         studentClass: `${user.classNumber}${user.classLetter}`,
+                        hasActiveAttempt: !!hasActiveAttempt,
                     },
                 );
                 throw new NotFoundException(`Тест с ID ${id} не найден`);
@@ -557,11 +563,11 @@ export class TestService {
                 throw new NotFoundException(`Тест с ID ${id} не найден`);
             }
 
-            // Проверяем, не просрочен ли срок
+            // Проверяем, не просрочен ли срок (но позволяем продолжить, если есть активная попытка)
             const now = new Date();
             const dueDate = new Date(studentSchedule.dueDate);
 
-            if (!isNaN(dueDate.getTime()) && now > dueDate) {
+            if (!isNaN(dueDate.getTime()) && now > dueDate && !hasActiveAttempt) {
                 this.logger.log(
                     `[getTestById] Student ${user.sub} denied access to test ${id}: deadline passed`,
                     {

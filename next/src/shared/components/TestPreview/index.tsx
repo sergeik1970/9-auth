@@ -904,9 +904,16 @@ const TestPreview = ({
 
             <div className={styles.actions}>
                 {onStartTest &&
-                    test.status === "active" &&
                     !isOwner &&
                     (() => {
+                        const hasActiveAttempt = testAttempts?.some(
+                            (attempt) =>
+                                attempt.userId === user?.id && attempt.status === "in_progress",
+                        );
+                        const canStartTest = test.status === "active" || hasActiveAttempt;
+
+                        if (!canStartTest) return null;
+
                         const userSchedule =
                             test.classSchedules?.find(
                                 (s) =>
@@ -915,20 +922,22 @@ const TestPreview = ({
                                         user?.classLetter?.toUpperCase(),
                             ) || test.classSchedules?.[0];
                         const remainingAttempts = getRemainingAttempts(userSchedule);
-                        const isAttemptsExhausted = remainingAttempts === 0;
+                        const isAttemptsExhausted = remainingAttempts === 0 && !hasActiveAttempt;
 
                         return (
                             <Button
                                 onClick={onStartTest}
                                 disabled={isStarting || isAttemptsExhausted}
-                                variant={isActiveAttempt ? "primary" : "outline"}
+                                variant={
+                                    isActiveAttempt || hasActiveAttempt ? "primary" : "outline"
+                                }
                                 title={isAttemptsExhausted ? "Количество попыток исчерпано" : ""}
                             >
                                 {isStarting
                                     ? "Загрузка..."
                                     : isAttemptsExhausted
                                       ? "Нет попыток"
-                                      : isActiveAttempt
+                                      : isActiveAttempt || hasActiveAttempt
                                         ? "Продолжить тест"
                                         : "Начать тест"}
                             </Button>

@@ -173,6 +173,19 @@ export class TestAttemptService {
             classSchedulesJSON: JSON.stringify(classSchedules),
         });
 
+        // Проверяем, есть ли у ученика уже активная попытка
+        const existingAttempt = await this.attemptRepository.findOne({
+            where: { testId, userId: user.sub, status: AttemptStatus.IN_PROGRESS },
+        });
+
+        if (existingAttempt) {
+            console.log("Found existing active attempt:", existingAttempt.id);
+            return {
+                ...existingAttempt,
+                serverTime: new Date().getTime(),
+            };
+        }
+
         if (test.status !== "active") {
             throw new ForbiddenException(
                 `Тест должен быть активным для прохождения. Текущий статус: ${test.status}`,
