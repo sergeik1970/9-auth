@@ -1,0 +1,79 @@
+.container {
+    padding: 24px;
+    max-width: 1200px;
+}
+
+.title {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: #1f2937;
+}
+
+.error {
+    background-color: #fee2e2;
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+.empty {
+    text-align: center;
+    padding: 40px;
+    color: #6b7280;
+    font-size: 16px;
+}
+
+.userList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.userItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background-color: #f9fafb;
+        border-color: #d1d5db;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+}
+
+.userInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.userName {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.userClass {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.userRole {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 12px;
+    background-color: #f3f4f6;
+    border-radius: 4px;
+    color: #374151;
+    white-space: nowrap;
+    margin-left: 16px;
+}

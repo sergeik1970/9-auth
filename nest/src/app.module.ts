@@ -6,6 +6,7 @@ import { TestModule } from "./modules/TestModule/test.module";
 import { QuestionModule } from "./modules/QuestionModule/question.module";
 import { UserModule } from "./modules/UserModule/user.module";
 import { RegionModule } from "./modules/RegionModule/region.module";
+import { AdminModule } from "./modules/AdminModule/admin.module";
 
 @Module({
     imports: [
@@ -25,6 +26,7 @@ import { RegionModule } from "./modules/RegionModule/region.module";
         QuestionModule,
         UserModule,
         RegionModule,
+        AdminModule,
     ],
     controllers: [],
     providers: [],

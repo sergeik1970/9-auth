@@ -18,6 +18,7 @@ export enum UserRole {
     // PUPIL = "pupil",
     TEACHER = "teacher",
     STUDENT = "student",
+    ADMIN = "admin",
     // PROFESSOR = "professor",
 }
 
@@ -50,9 +51,6 @@ export class User {
         default: UserRole.STUDENT,
     })
     role: UserRole;
-
-    @Column("boolean", { default: false })
-    isAdmin: boolean = false;
 
     @Column({ type: "text", nullable: true })
     avatar: string;

@@ -17,8 +17,7 @@ export interface User {
     educationalInstitutionCustom?: string;
     classNumber?: number;
     classLetter?: string;
-    role: "student" | "teacher";
-    isAdmin?: boolean;
+    role: "student" | "teacher" | "admin";
     avatar?: string;
     gradingCriteria?: GradingCriteria | null;
     createdAt: string;
@@ -44,7 +43,7 @@ export interface AuthFormData {
     educationalInstitution?: string;
     classNumber?: string;
     classLetter?: string;
-    role?: "student" | "teacher";
+    role?: "student" | "teacher" | "admin";
     confirmPassword?: string;
     regionId?: number;
     settlementId?: number;
@@ -64,7 +63,7 @@ export interface RegisterUserData {
     educationalInstitutionCustom?: string;
     classNumber?: number;
     classLetter?: string;
-    role: "student" | "teacher";
+    role: "student" | "teacher" | "admin";
 }
 
 export interface LoginUserData {

@@ -1,0 +1,134 @@
+.container {
+    padding: 24px;
+    max-width: 600px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+
+    h1 {
+        font-size: 24px;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+    }
+}
+
+.backButton {
+    padding: 8px 12px;
+    background: none;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #374151;
+    transition: all 0.2s;
+
+    &:hover {
+        background-color: #f9fafb;
+        border-color: #9ca3af;
+    }
+}
+
+.error {
+    background-color: #fee2e2;
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+.form {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.formGroup {
+    margin-bottom: 16px;
+
+    label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+
+    input,
+    select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: all 0.2s;
+
+        &:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+    }
+
+    select {
+        cursor: pointer;
+    }
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+}
+
+.testsSection {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 24px;
+    margin-top: 24px;
+
+    h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0 0 12px 0;
+    }
+
+    p {
+        font-size: 14px;
+        color: #6b7280;
+        margin: 0;
+    }
+}
+
+.modalContent {
+    padding: 24px 0;
+
+    p {
+        font-size: 14px;
+        color: #6b7280;
+        margin: 0 0 12px 0;
+
+        &:last-of-type {
+            margin-bottom: 20px;
+        }
+    }
+}
+
+.modalActions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}

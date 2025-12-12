@@ -2,7 +2,7 @@ import React, { ReactElement } from "react";
 import { BarChart3, ClipboardList } from "lucide-react";
 import { useSelector } from "@/shared/store/store";
 import { useRouter } from "next/router";
-import { isTeacher } from "@/shared/utils/roles";
+import { isTeacher, isAdmin } from "@/shared/utils/roles";
 import styles from "./index.module.scss";
 import Link from "next/link";
 import { selectAuth } from "@/shared/store/slices/auth";
@@ -114,7 +114,18 @@ const Sidebar = ({ isOpen = false, onClose, isDesktop = false }: SideBarProps): 
         { icon: settingsIcon, label: "Настройки", href: "/dashboard/settings" },
     ];
 
-    const menuItems = user?.role && isTeacher(user.role) ? teacherMenuItems : studentMenuItems;
+    const adminMenuItems: MenuItem[] = [
+        { icon: homeIcon, label: "Главная", href: "/dashboard" },
+        { icon: usersIcon, label: "Пользователи", href: "/admin/users" },
+        { icon: settingsIcon, label: "Настройки", href: "/dashboard/settings" },
+    ];
+
+    const menuItems =
+        user?.role && isAdmin(user.role)
+            ? adminMenuItems
+            : user?.role && isTeacher(user.role)
+              ? teacherMenuItems
+              : studentMenuItems;
 
     const getActiveMenuItem = (href: string) => {
         const currentPath = router.asPath;
