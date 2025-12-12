@@ -1,5 +1,5 @@
 import React, { ReactElement } from "react";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, ClipboardList } from "lucide-react";
 import { useSelector } from "@/shared/store/store";
 import { useRouter } from "next/router";
 import { isTeacher } from "@/shared/utils/roles";
@@ -98,6 +98,8 @@ const Sidebar = ({ isOpen = false, onClose, isDesktop = false }: SideBarProps): 
 
     const statisticsIcon = <BarChart3 size={24} />;
 
+    const availableTestsIcon = <ClipboardList size={24} />;
+
     const teacherMenuItems: MenuItem[] = [
         { icon: homeIcon, label: "Главная", href: "/dashboard" },
         { icon: testsIcon, label: "Мои тесты", href: "/dashboard/tests" },
@@ -108,8 +110,7 @@ const Sidebar = ({ isOpen = false, onClose, isDesktop = false }: SideBarProps): 
 
     const studentMenuItems: MenuItem[] = [
         { icon: homeIcon, label: "Главная", href: "/dashboard" },
-        { icon: "📝", label: "Доступные тесты", href: "/dashboard/tests" },
-        { icon: "📊", label: "Мои результаты", href: "/dashboard/results" },
+        { icon: availableTestsIcon, label: "Доступные тесты", href: "/dashboard/tests" },
         { icon: settingsIcon, label: "Настройки", href: "/dashboard/settings" },
     ];
 

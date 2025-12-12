@@ -365,10 +365,21 @@ const TestPreview = ({
     };
 
     const getTestClasses = (): string[] => {
-        if (!test?.classSchedules) return [];
-        return test.classSchedules.map(
-            (schedule) => `${schedule.classNumber}${schedule.classLetter}`,
-        );
+        const classesSet = new Set<string>();
+
+        if (test?.classSchedules) {
+            test.classSchedules.forEach((schedule) => {
+                classesSet.add(`${schedule.classNumber}${schedule.classLetter?.toUpperCase()}`);
+            });
+        }
+
+        if (testAttempts && testAttempts.length > 0) {
+            testAttempts.forEach((attempt) => {
+                classesSet.add(`${attempt.classNumber}${attempt.classLetter?.toUpperCase()}`);
+            });
+        }
+
+        return Array.from(classesSet).sort();
     };
 
     const filterAttemptsByClass = (attempts: any[], classKey: string | null) => {
@@ -377,6 +388,11 @@ const TestPreview = ({
             const attemptClass = `${attempt.classNumber}${attempt.classLetter}`;
             return attemptClass === classKey;
         });
+    };
+
+    const getUniqueStudentCount = (attempts: any[]): number => {
+        const uniqueUserIds = new Set(attempts.map((attempt) => attempt.userId));
+        return uniqueUserIds.size;
     };
 
     const getRemainingAttempts = (schedule?: ClassSchedule): number | null => {
@@ -1184,8 +1200,9 @@ const TestPreview = ({
             {isOwner && testAttempts && testAttempts.length > 0 && (
                 <div style={{ marginTop: "32px" }}>
                     <h3 style={{ marginBottom: "16px", fontSize: "18px", fontWeight: 600 }}>
-                        Результаты ({filterAttemptsByClass(testAttempts, selectedClass).length}
-                        {selectedClass ? ` из ${testAttempts.length}` : ""})
+                        Результаты (
+                        {getUniqueStudentCount(filterAttemptsByClass(testAttempts, selectedClass))}
+                        {selectedClass ? ` из ${getUniqueStudentCount(testAttempts)}` : ""})
                     </h3>
                     {getTestClasses().length > 0 && (
                         <div
