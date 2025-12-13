@@ -100,6 +100,43 @@ const Sidebar = ({ isOpen = false, onClose, isDesktop = false }: SideBarProps): 
 
     const availableTestsIcon = <ClipboardList size={24} />;
 
+    const buildingIcon = (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <path d="M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1" />
+            <path d="M9 7h6" />
+            <path d="M9 11h6" />
+            <path d="M9 15h6" />
+        </svg>
+    );
+
+    const mapIcon = (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z" />
+            <path d="M9 3v12" />
+            <path d="M15 6v12" />
+        </svg>
+    );
+
     const teacherMenuItems: MenuItem[] = [
         { icon: homeIcon, label: "Главная", href: "/dashboard" },
         { icon: testsIcon, label: "Мои тесты", href: "/dashboard/tests" },
@@ -117,6 +154,8 @@ const Sidebar = ({ isOpen = false, onClose, isDesktop = false }: SideBarProps): 
     const adminMenuItems: MenuItem[] = [
         { icon: homeIcon, label: "Главная", href: "/dashboard" },
         { icon: usersIcon, label: "Пользователи", href: "/admin/users" },
+        { icon: mapIcon, label: "Населённые пункты", href: "/admin/settlements" },
+        { icon: buildingIcon, label: "Школы", href: "/admin/schools" },
         { icon: settingsIcon, label: "Настройки", href: "/dashboard/settings" },
     ];
 

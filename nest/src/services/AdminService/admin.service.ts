@@ -1,11 +1,12 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, Not } from "typeorm";
 import { User, UserRole } from "src/entities/User/user.entity";
 import { Test } from "src/entities/Test/test.entity";
 import { TestAttempt, AttemptStatus } from "src/entities/TestAttempt/testAttempt.entity";
 import { Region } from "src/entities/Region/region.entity";
 import { School } from "src/entities/School/school.entity";
+import { Settlement } from "src/entities/Settlement/settlement.entity";
 
 export interface JwtPayload {
     sub: number;
@@ -31,6 +32,8 @@ export class AdminService {
         private readonly regionRepository: Repository<Region>,
         @InjectRepository(School)
         private readonly schoolRepository: Repository<School>,
+        @InjectRepository(Settlement)
+        private readonly settlementRepository: Repository<Settlement>,
     ) {}
 
     async getAllUsers(user: JwtPayload): Promise<any[]> {
@@ -174,5 +177,246 @@ export class AdminService {
         await this.userRepository.remove(targetUser);
 
         return { message: "User deleted successfully" };
+    }
+
+    async createSettlement(
+        regionId: number,
+        name: string,
+        user: JwtPayload,
+    ): Promise<Settlement> {
+        if (user.role !== "admin") {
+            throw new ForbiddenException("Only admins can create settlements");
+        }
+
+        if (!regionId || !name) {
+            throw new BadRequestException("Region ID and name are required");
+        }
+
+        const region = await this.regionRepository.findOne({
+            where: { id: regionId },
+        });
+
+        if (!region) {
+            throw new NotFoundException(`Region with ID ${regionId} not found`);
+        }
+
+        const existingSettlement = await this.settlementRepository.findOne({
+            where: { name, regionId },
+        });
+
+        if (existingSettlement) {
+            throw new BadRequestException(
+                `Settlement with name "${name}" already exists in this region`,
+            );
+        }
+
+        const settlement = this.settlementRepository.create({
+            name,
+            regionId,
+        });
+
+        return await this.settlementRepository.save(settlement);
+    }
+
+    async getSettlements(
+        regionId?: number,
+        user?: JwtPayload,
+    ): Promise<Settlement[]> {
+        if (user && user.role !== "admin") {
+            throw new ForbiddenException("Only admins can access this resource");
+        }
+
+        if (regionId) {
+            const region = await this.regionRepository.findOne({
+                where: { id: regionId },
+            });
+
+            if (!region) {
+                throw new NotFoundException(`Region with ID ${regionId} not found`);
+            }
+
+            return await this.settlementRepository.find({
+                where: { regionId },
+                relations: ["region", "schools"],
+            });
+        }
+
+        return await this.settlementRepository.find({
+            relations: ["region", "schools"],
+        });
+    }
+
+    async createSchool(
+        regionId: number,
+        settlementId: number,
+        name: string,
+        user: JwtPayload,
+    ): Promise<School> {
+        if (user.role !== "admin") {
+            throw new ForbiddenException("Only admins can create schools");
+        }
+
+        if (!regionId || !settlementId || !name) {
+            throw new BadRequestException(
+                "Region ID, Settlement ID, and name are required",
+            );
+        }
+
+        const region = await this.regionRepository.findOne({
+            where: { id: regionId },
+        });
+
+        if (!region) {
+            throw new NotFoundException(`Region with ID ${regionId} not found`);
+        }
+
+        const settlement = await this.settlementRepository.findOne({
+            where: { id: settlementId, regionId },
+        });
+
+        if (!settlement) {
+            throw new NotFoundException(
+                `Settlement with ID ${settlementId} not found in this region`,
+            );
+        }
+
+        const existingSchool = await this.schoolRepository.findOne({
+            where: { name, settlementId },
+        });
+
+        if (existingSchool) {
+            throw new BadRequestException(
+                `School with name "${name}" already exists in this settlement`,
+            );
+        }
+
+        const school = this.schoolRepository.create({
+            name,
+            settlementId,
+        });
+
+        return await this.schoolRepository.save(school);
+    }
+
+    async getSchools(
+        settlementId?: number,
+        user?: JwtPayload,
+    ): Promise<School[]> {
+        if (user && user.role !== "admin") {
+            throw new ForbiddenException("Only admins can access this resource");
+        }
+
+        if (settlementId) {
+            const settlement = await this.settlementRepository.findOne({
+                where: { id: settlementId },
+            });
+
+            if (!settlement) {
+                throw new NotFoundException(`Settlement with ID ${settlementId} not found`);
+            }
+
+            return await this.schoolRepository.find({
+                where: { settlementId },
+                relations: ["settlement"],
+            });
+        }
+
+        return await this.schoolRepository.find({
+            relations: ["settlement"],
+        });
+    }
+
+    async getSchoolById(id: number, user: JwtPayload): Promise<School> {
+        if (user.role !== "admin") {
+            throw new ForbiddenException("Only admins can access this resource");
+        }
+
+        const school = await this.schoolRepository.findOne({
+            where: { id },
+            relations: ["settlement"],
+        });
+
+        if (!school) {
+            throw new NotFoundException(`School with ID ${id} not found`);
+        }
+
+        return school;
+    }
+
+    async updateSchool(
+        id: number,
+        regionId: number,
+        settlementId: number,
+        name: string,
+        user: JwtPayload,
+    ): Promise<School> {
+        if (user.role !== "admin") {
+            throw new ForbiddenException("Only admins can update schools");
+        }
+
+        if (!regionId || !settlementId || !name) {
+            throw new BadRequestException(
+                "Region ID, Settlement ID, and name are required",
+            );
+        }
+
+        const school = await this.schoolRepository.findOne({
+            where: { id },
+        });
+
+        if (!school) {
+            throw new NotFoundException(`School with ID ${id} not found`);
+        }
+
+        const region = await this.regionRepository.findOne({
+            where: { id: regionId },
+        });
+
+        if (!region) {
+            throw new NotFoundException(`Region with ID ${regionId} not found`);
+        }
+
+        const settlement = await this.settlementRepository.findOne({
+            where: { id: settlementId, regionId },
+        });
+
+        if (!settlement) {
+            throw new NotFoundException(
+                `Settlement with ID ${settlementId} not found in this region`,
+            );
+        }
+
+        const existingSchool = await this.schoolRepository.findOne({
+            where: { name, settlementId, id: Not(id) },
+        });
+
+        if (existingSchool) {
+            throw new BadRequestException(
+                `School with name "${name}" already exists in this settlement`,
+            );
+        }
+
+        school.name = name;
+        school.settlementId = settlementId;
+
+        return await this.schoolRepository.save(school);
+    }
+
+    async deleteSchool(id: number, user: JwtPayload): Promise<{ message: string }> {
+        if (user.role !== "admin") {
+            throw new ForbiddenException("Only admins can delete schools");
+        }
+
+        const school = await this.schoolRepository.findOne({
+            where: { id },
+        });
+
+        if (!school) {
+            throw new NotFoundException(`School with ID ${id} not found`);
+        }
+
+        await this.schoolRepository.remove(school);
+
+        return { message: "School deleted successfully" };
     }
 }

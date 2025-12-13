@@ -9,25 +9,24 @@ const HeroSection = (): ReactElement => {
         <section className={styles.hero}>
             <div className={styles.container}>
                 <div className={styles.content}>
-                    <h1 className={styles.title}>
-                        Создавайте интеллектуальные тесты за минуты
-                        <span className={styles.highlight}> легко и эффективно</span>
-                    </h1>
-                    <p className={styles.subtitle}>
-                        Современная платформа, которая помогает легко создавать, запускать и
-                        анализировать тесты. Простые инструменты, надёжная архитектура и умная
-                        работа с данными делают процесс тестирования удобным и понятным на каждом
-                        этапе.
+                    <h1 className={styles.title}>Создавайте онлайн-тесты за минуты</h1>
+                    <p className={styles.keyDifferentiator}>
+                        Без ссылок — задания автоматически появляются в профиле ученика
+                    </p>
+                    <p className={styles.description}>
+                        Современная платформа для создания, проведения и анализа тестов
                     </p>
                     <div className={styles.actions}>
+                        <div className={styles.primaryButtonWrapper}>
+                            <Link href="/auth">
+                                <Button variant="primary" size="large">
+                                    Начать
+                                </Button>
+                            </Link>
+                        </div>
                         <Link href="/auth">
                             <Button variant="primary" size="large">
-                                Начать работу
-                            </Button>
-                        </Link>
-                        <Link href="/dashboard">
-                            <Button variant="outline" size="large">
-                                Посмотреть демо
+                                Войти
                             </Button>
                         </Link>
                     </div>

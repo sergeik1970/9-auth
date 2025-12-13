@@ -1,0 +1,167 @@
+.whoIsItFor {
+  background: white;
+  padding: 40px 0;
+  position: relative;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 32px;
+  color: #1f2937;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.card {
+  background: #f9fafb;
+  padding: 24px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: #10b981;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+.emoji {
+  font-size: 40px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: #1f2937;
+}
+
+.cardDescription {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #6b7280;
+  margin: 0;
+}
+
+@media (min-width: 375px) {
+  .title {
+    font-size: 28px;
+  }
+
+  .emoji {
+    font-size: 44px;
+  }
+
+  .cardTitle {
+    font-size: 17px;
+  }
+
+  .cardDescription {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 480px) {
+  .whoIsItFor {
+    padding: 50px 0;
+  }
+
+  .container {
+    padding: 0 20px;
+  }
+
+  .title {
+    font-size: 32px;
+    margin-bottom: 36px;
+  }
+
+  .grid {
+    gap: 24px;
+  }
+
+  .card {
+    padding: 28px;
+  }
+}
+
+@media (min-width: 768px) {
+  .whoIsItFor {
+    padding: 60px 0;
+  }
+
+  .title {
+    font-size: 36px;
+    margin-bottom: 40px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px;
+  }
+
+  .card {
+    padding: 32px;
+  }
+
+  .emoji {
+    font-size: 48px;
+    margin-bottom: 4px;
+  }
+
+  .cardTitle {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+
+  .cardDescription {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .whoIsItFor {
+    padding: 70px 0;
+  }
+
+  .title {
+    font-size: 40px;
+    margin-bottom: 48px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+
+  .card {
+    padding: 24px;
+  }
+
+  .emoji {
+    font-size: 44px;
+  }
+
+  .cardTitle {
+    font-size: 16px;
+  }
+
+  .cardDescription {
+    font-size: 15px;
+  }
+}

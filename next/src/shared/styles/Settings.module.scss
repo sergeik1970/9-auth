@@ -57,6 +57,38 @@
   font-size: 16px;
 }
 
+.footer {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: center;
+}
+
+.logoutButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 16px;
@@ -74,5 +106,10 @@
       border-left-color: #10b981;
       border-bottom: none;
     }
+  }
+
+  .logoutButton {
+    width: 100%;
+    justify-content: center;
   }
 }

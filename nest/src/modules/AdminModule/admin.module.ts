@@ -7,11 +7,12 @@ import { Test } from "src/entities/Test/test.entity";
 import { TestAttempt } from "src/entities/TestAttempt/testAttempt.entity";
 import { Region } from "src/entities/Region/region.entity";
 import { School } from "src/entities/School/school.entity";
+import { Settlement } from "src/entities/Settlement/settlement.entity";
 import { AuthModule } from "../AuthModule/auth.module";
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([User, Test, TestAttempt, Region, School]),
+        TypeOrmModule.forFeature([User, Test, TestAttempt, Region, School, Settlement]),
         AuthModule,
     ],
     controllers: [AdminController],

@@ -6,7 +6,7 @@ import DashboardLayout from "../../shared/components/DashboardLayout";
 import EditProfile from "../../shared/components/EditProfile";
 import GradingCriteria from "../../shared/components/GradingCriteria";
 import { RootState } from "../../shared/store/store";
-import { getCurrentUser } from "../../shared/store/slices/auth";
+import { getCurrentUser, logoutUser } from "../../shared/store/slices/auth";
 import styles from "../../shared/styles/Settings.module.scss";
 
 export default function SettingsPage() {
@@ -39,6 +39,11 @@ export default function SettingsPage() {
 
     const onSuccess = () => {
         dispatch(getCurrentUser() as any);
+    };
+
+    const handleLogout = async () => {
+        await dispatch(logoutUser() as any);
+        router.push("/");
     };
 
     return (
@@ -124,6 +129,28 @@ export default function SettingsPage() {
                                 onSuccess={onSuccess}
                             />
                         )}
+                    </div>
+
+                    <div className={styles.footer}>
+                        <button className={styles.logoutButton} onClick={handleLogout}>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                style={{ marginRight: "8px" }}
+                            >
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                <polyline points="16 17 21 12 16 7" />
+                                <line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                            Выйти
+                        </button>
                     </div>
                 </div>
             </DashboardLayout>
