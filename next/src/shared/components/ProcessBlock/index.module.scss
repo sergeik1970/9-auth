@@ -22,9 +22,9 @@
 }
 
 .stepNumber {
-  min-width: 48px;
-  width: 48px;
-  height: 48px;
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -32,17 +32,8 @@
   color: white;
   border-radius: 50%;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 16px;
   flex-shrink: 0;
-}
-
-@media (max-width: 480px) {
-  .stepNumber {
-    min-width: 43.2px;
-    width: 43.2px;
-    height: 43.2px;
-    font-size: 16px;
-  }
 }
 
 .stepContent {
@@ -65,7 +56,7 @@
 
 .stepDivider {
   height: 20px;
-  margin-left: 23px;
+  margin-left: 20px;
   border-left: 2px dashed #d1d5db;
 }
 
@@ -82,9 +73,9 @@
   }
 
   .stepNumber {
-    width: 52px;
-    height: 52px;
-    font-size: 20px;
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
   }
 
   .stepTitle {
