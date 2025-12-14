@@ -29,7 +29,7 @@ const FAQBlock = (): ReactElement => {
     };
 
     return (
-        <section className={styles.faq}>
+        <section className={styles.faq} id="faq">
             <div className={styles.container}>
                 <h2 className={styles.title}>Часто задаваемые вопросы</h2>
                 <p className={styles.subtitle}>Снимаем основные барьеры</p>

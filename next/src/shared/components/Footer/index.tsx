@@ -27,39 +27,18 @@ const Footer = (): ReactElement => {
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/auth" className={styles.link}>
-                                    Войти
-                                </Link>
-                            </li>
-                            <li>
                                 <a href="#features" className={styles.link}>
                                     Преимущества
                                 </a>
                             </li>
                             <li>
-                                <a href="#contact" className={styles.link}>
-                                    Контакты
+                                <a href="#faq" className={styles.link}>
+                                    Вопросы
                                 </a>
                             </li>
-                        </ul>
-                    </div>
-
-                    <div className={styles.section}>
-                        <h4 className={styles.sectionTitle}>Для пользователей</h4>
-                        <ul className={styles.linkList}>
                             <li>
                                 <Link href="/auth" className={styles.link}>
-                                    Как учителю
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/auth" className={styles.link}>
-                                    Как ученику
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/auth" className={styles.link}>
-                                    Как администратору
+                                    Авторизация
                                 </Link>
                             </li>
                         </ul>
@@ -69,7 +48,7 @@ const Footer = (): ReactElement => {
                         <h4 className={styles.sectionTitle}>О нас</h4>
                         <ul className={styles.linkList}>
                             <li>
-                                <a href="#" className={styles.link}>
+                                <a href="#how-it-works" className={styles.link}>
                                     О платформе
                                 </a>
                             </li>
@@ -85,23 +64,24 @@ const Footer = (): ReactElement => {
                             </li>
                         </ul>
                     </div>
+
+                    <div className={styles.section}>
+                        <h4 className={styles.sectionTitle}>Контакты</h4>
+                        <ul className={styles.linkList}>
+                            <li>
+                                <a href="mailto:support@skorix.ru" className={styles.link}>
+                                    support@skorix.ru
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div className={styles.divider}></div>
 
                 <div className={styles.bottom}>
                     <p className={styles.copyright}>© {currentYear} Skorix. Все права защищены.</p>
-                    <div className={styles.socials}>
-                        <a href="#" className={styles.socialLink} title="Twitter">
-                            𝕏
-                        </a>
-                        <a href="#" className={styles.socialLink} title="Telegram">
-                            ✈️
-                        </a>
-                        <a href="#" className={styles.socialLink} title="Email">
-                            ✉️
-                        </a>
-                    </div>
+                    <p className={styles.copyright}>С наступающим Новым Годом!</p>
                 </div>
             </div>
         </footer>

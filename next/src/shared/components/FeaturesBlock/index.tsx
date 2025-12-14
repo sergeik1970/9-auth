@@ -33,7 +33,7 @@ const FeaturesBlock = (): ReactElement => {
     ];
 
     return (
-        <section className={styles.featuresBlock}>
+        <section className={styles.featuresBlock} id="features">
             <div className={styles.container}>
                 <h2 className={styles.title}>Ключевые преимущества</h2>
                 <div className={styles.grid}>

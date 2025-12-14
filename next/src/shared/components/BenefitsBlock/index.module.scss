@@ -45,9 +45,18 @@
   margin-bottom: 24px;
 }
 
-.icon {
-  font-size: 36px;
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+}
+
+.groupIcon {
+  width: 36px;
+  height: 36px;
+  color: #10b981;
+  stroke-width: 2;
 }
 
 .columnTitle {
@@ -77,10 +86,10 @@
 
 .checkmark {
   color: #10b981;
-  font-weight: 700;
-  font-size: 18px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
-  margin-top: 2px;
+  stroke-width: 2.5;
 }
 
 .benefitText {
@@ -96,8 +105,9 @@
     gap: 12px;
   }
 
-  .icon {
-    font-size: 40px;
+  .groupIcon {
+    width: 40px;
+    height: 40px;
   }
 
   .columnTitle {
@@ -159,8 +169,9 @@
     margin-bottom: 32px;
   }
 
-  .icon {
-    font-size: 44px;
+  .groupIcon {
+    width: 44px;
+    height: 44px;
   }
 
   .columnTitle {
@@ -199,8 +210,9 @@
     margin-bottom: 36px;
   }
 
-  .icon {
-    font-size: 48px;
+  .groupIcon {
+    width: 48px;
+    height: 48px;
   }
 
   .columnTitle {

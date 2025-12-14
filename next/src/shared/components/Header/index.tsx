@@ -34,8 +34,8 @@ const Header = (): ReactElement => {
                             </Link>
                         </li>
                         <li>
-                            <Link href="#contact" className={styles.navLink}>
-                                Контакты
+                            <Link href="#faq" className={styles.navLink}>
+                                Вопросы
                             </Link>
                         </li>
                     </ul>
