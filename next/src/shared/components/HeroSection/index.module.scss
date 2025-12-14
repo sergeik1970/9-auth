@@ -64,16 +64,16 @@
 
 .actions {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-direction: row;
+  gap: 10px;
   margin-top: 16px;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
 
   a {
     display: inline-block;
     width: 100%;
-    max-width: 280px;
     transform: scale(1);
     transition: transform 0.2s ease;
 
@@ -97,8 +97,40 @@
 }
 
 .primaryButtonWrapper {
+  flex: 1;
+  min-width: 130px;
+  max-width: 150px;
+  
   a button {
     border: 2px solid white;
+  }
+}
+
+.secondaryButtonWrapper {
+  flex: 1;
+  min-width: 130px;
+  max-width: 150px;
+}
+
+@media (min-width: 375px) {
+  .primaryButtonWrapper {
+    max-width: 165px;
+  }
+  
+  .secondaryButtonWrapper {
+    max-width: 165px;
+  }
+}
+
+@media (min-width: 480px) {
+  .primaryButtonWrapper {
+    width: auto;
+    max-width: none;
+  }
+  
+  .secondaryButtonWrapper {
+    width: auto;
+    max-width: none;
   }
 }
 

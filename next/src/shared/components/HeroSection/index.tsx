@@ -24,11 +24,13 @@ const HeroSection = (): ReactElement => {
                                 </Button>
                             </Link>
                         </div>
-                        <Link href="/auth">
-                            <Button variant="primary" size="large">
-                                Войти
-                            </Button>
-                        </Link>
+                        <div className={styles.secondaryButtonWrapper}>
+                            <Link href="/auth">
+                                <Button variant="primary" size="large">
+                                    Войти
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
                 </div>
                 <div className={styles.visual}>

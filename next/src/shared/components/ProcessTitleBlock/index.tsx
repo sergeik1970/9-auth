@@ -5,7 +5,7 @@ const ProcessTitleBlock = (): ReactElement => {
     return (
         <section className={styles.processTitleBlock}>
             <div className={styles.container}>
-                <h2 className={styles.title}>Как работает <span className={styles.highlightText}>Skorix</span><br className={styles.titleBreak} /> — без ссылок</h2>
+                <h2 className={styles.title}>Как работает <span className={styles.highlightText}>Skorix</span></h2>
             </div>
         </section>
     );

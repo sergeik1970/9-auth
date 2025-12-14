@@ -11,10 +11,6 @@
   order: 1;
 }
 
-.differenceBlockWrapper {
-  order: 3;
-}
-
 .studentProfileBlockWrapper {
   order: 2;
 }
@@ -31,17 +27,13 @@
     grid-column: 1;
     grid-row: 1;
     order: unset;
-  }
-
-  .differenceBlockWrapper {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    order: unset;
+    padding-right: 24px;
   }
 
   .studentProfileBlockWrapper {
     grid-column: 2;
     grid-row: 1;
     order: unset;
+    padding-left: 24px;
   }
 }
