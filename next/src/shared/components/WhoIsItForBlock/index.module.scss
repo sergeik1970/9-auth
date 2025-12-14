@@ -31,6 +31,9 @@
   text-align: center;
   border: 1px solid #e5e7eb;
   transition: all 0.3s ease;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
 
   &:hover {
     border-color: #10b981;
@@ -39,10 +42,18 @@
   }
 }
 
-.emoji {
-  font-size: 40px;
+.iconWrapper {
   margin-bottom: 12px;
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+  color: #10b981;
+  stroke-width: 2;
 }
 
 .cardTitle {
@@ -64,8 +75,9 @@
     font-size: 28px;
   }
 
-  .emoji {
-    font-size: 44px;
+  .icon {
+    width: 44px;
+    height: 44px;
   }
 
   .cardTitle {
@@ -92,11 +104,14 @@
   }
 
   .grid {
+    grid-template-columns: repeat(2, minmax(0, 300px));
     gap: 24px;
+    justify-content: center;
   }
 
   .card {
     padding: 28px;
+    max-width: 300px;
   }
 }
 
@@ -111,16 +126,19 @@
   }
 
   .grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 300px));
     gap: 28px;
+    justify-content: center;
   }
 
   .card {
     padding: 32px;
+    max-width: 300px;
   }
 
-  .emoji {
-    font-size: 48px;
+  .icon {
+    width: 48px;
+    height: 48px;
     margin-bottom: 4px;
   }
 
@@ -145,16 +163,19 @@
   }
 
   .grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 300px));
     gap: 24px;
+    justify-content: center;
   }
 
   .card {
     padding: 24px;
+    max-width: 300px;
   }
 
-  .emoji {
-    font-size: 44px;
+  .icon {
+    width: 44px;
+    height: 44px;
   }
 
   .cardTitle {

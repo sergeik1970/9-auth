@@ -1,8 +1,9 @@
 import React, { ReactElement } from "react";
+import { Users, Award, Building2, Lightbulb } from "lucide-react";
 import styles from "./index.module.scss";
 
 interface WhoItem {
-    emoji: string;
+    icon: ReactElement;
     title: string;
     description: string;
 }
@@ -10,22 +11,22 @@ interface WhoItem {
 const WhoIsItForBlock = (): ReactElement => {
     const items: WhoItem[] = [
         {
-            emoji: "👩‍🏫",
+            icon: <Users className={styles.icon} />,
             title: "Учителям",
             description: "Контроль знаний без лишней рутины",
         },
         {
-            emoji: "🎓",
+            icon: <Award className={styles.icon} />,
             title: "Ученикам",
             description: "Все задания в одном месте",
         },
         {
-            emoji: "🏫",
+            icon: <Building2 className={styles.icon} />,
             title: "Школам",
             description: "Единая система тестирования",
         },
         {
-            emoji: "📚",
+            icon: <Lightbulb className={styles.icon} />,
             title: "Репетиторам",
             description: "Онлайн-задания и статистика",
         },
@@ -38,7 +39,7 @@ const WhoIsItForBlock = (): ReactElement => {
                 <div className={styles.grid}>
                     {items.map((item, index) => (
                         <div key={index} className={styles.card}>
-                            <div className={styles.emoji}>{item.emoji}</div>
+                            <div className={styles.iconWrapper}>{item.icon}</div>
                             <h3 className={styles.cardTitle}>{item.title}</h3>
                             <p className={styles.cardDescription}>{item.description}</p>
                         </div>

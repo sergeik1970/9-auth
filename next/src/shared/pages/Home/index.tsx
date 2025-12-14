@@ -7,7 +7,6 @@ import FeaturesBlock from "@/shared/components/FeaturesBlock";
 import ProcessTitleBlock from "@/shared/components/ProcessTitleBlock";
 import ProcessSectionBlock from "@/shared/components/ProcessSectionBlock";
 import WhoIsItForBlock from "@/shared/components/WhoIsItForBlock";
-import DemoTestBlock from "@/shared/components/DemoTestBlock";
 import BenefitsBlock from "@/shared/components/BenefitsBlock";
 import FAQBlock from "@/shared/components/FAQBlock";
 import CTABlock from "@/shared/components/CTABlock";
@@ -22,7 +21,6 @@ const HomePage = (): ReactElement => {
                 <ProcessTitleBlock />
                 <ProcessSectionBlock />
                 <WhoIsItForBlock />
-                <DemoTestBlock />
                 <BenefitsBlock />
                 <FAQBlock />
                 <CTABlock />

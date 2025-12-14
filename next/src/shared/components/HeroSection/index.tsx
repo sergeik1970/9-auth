@@ -19,7 +19,7 @@ const HeroSection = (): ReactElement => {
                     <div className={styles.actions}>
                         <div className={styles.primaryButtonWrapper}>
                             <Link href="/auth">
-                                <Button variant="primary" size="large">
+                                <Button className="button" variant="primary" size="large">
                                     Начать
                                 </Button>
                             </Link>

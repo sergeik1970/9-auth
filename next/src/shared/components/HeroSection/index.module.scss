@@ -69,7 +69,7 @@
   margin-top: 16px;
   justify-content: center;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 
   a {
     display: inline-block;
@@ -97,9 +97,9 @@
 }
 
 .primaryButtonWrapper {
-  flex: 1;
+  // flex: 1 1 auto;
   min-width: 130px;
-  max-width: 150px;
+  max-width: 200px;
   
   a button {
     border: 2px solid white;
@@ -107,29 +107,71 @@
 }
 
 .secondaryButtonWrapper {
-  flex: 1;
+  // flex: 1 1 auto;
   min-width: 130px;
-  max-width: 150px;
+  max-width: 200px;
 }
 
 @media (min-width: 375px) {
+  .button {
+    width: 150px;
+  }
   .primaryButtonWrapper {
-    max-width: 165px;
+    max-width: 220px;
   }
   
   .secondaryButtonWrapper {
-    max-width: 165px;
+    max-width: 220px;
   }
 }
 
 @media (min-width: 480px) {
+  .button {
+    width: 200px;
+  }
+  .actions {
+    gap: 8px;
+  }
+  
   .primaryButtonWrapper {
-    width: auto;
+    // width: 190px;
+    max-width: none;
+    // flex: 0 0 auto;
+  }
+  
+  .secondaryButtonWrapper {
+    // width: 190px;
+    max-width: none;
+    // flex: 0 0 auto;
+  }
+}
+
+@media (min-width: 768px) {
+  .primaryButtonWrapper {
+    width: 220px;
     max-width: none;
   }
   
   .secondaryButtonWrapper {
-    width: auto;
+    width: 220px;
+    max-width: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .actions {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .primaryButtonWrapper {
+    // width: 200px;
+    max-width: none;
+  }
+  
+  .secondaryButtonWrapper {
+    width: 200px;
     max-width: none;
   }
 }
@@ -161,6 +203,7 @@
       max-width: 350px;
 
       button {
+        width: 150px;
         height: 46px;
         font-size: 16px;
       }
@@ -207,6 +250,7 @@
       max-width: 300px;
 
       button {
+        width: 200px;
         height: 48px;
         padding: 0 28px;
       }
@@ -287,6 +331,7 @@
       max-width: 280px;
 
       button {
+        width: 200px;
         height: 50px;
         padding: 0 30px;
         font-size: 17px;
