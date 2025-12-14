@@ -33,7 +33,7 @@ const Footer = (): ReactElement => {
                             </li>
                             <li>
                                 <a href="#features" className={styles.link}>
-                                    Возможности
+                                    Преимущества
                                 </a>
                             </li>
                             <li>

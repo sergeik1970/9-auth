@@ -7,7 +7,7 @@ interface Feature {
     text: string;
 }
 
-const HowItWorksBlock = (): ReactElement => {
+const DifferenceBlock = (): ReactElement => {
     const features = [
         {
             icon: <XCircle className={`${styles.featureIcon} ${styles.featureIconMuted}`} />,
@@ -16,13 +16,13 @@ const HowItWorksBlock = (): ReactElement => {
         },
         {
             icon: <CheckCircle2 className={`${styles.featureIcon} ${styles.featureIconBright}`} />,
-            text: "Назначение через систему",
+            text: "Тест сразу в профиле ученика",
             isBright: true,
         },
     ];
 
     return (
-        <section className={styles.howItWorks}>
+        <section className={styles.differenceBlock}>
             <div className={styles.container}>
                 <h3 className={styles.highlightsTitle}>Главное отличие Skorix</h3>
                 <div className={styles.highlights}>
@@ -38,4 +38,4 @@ const HowItWorksBlock = (): ReactElement => {
     );
 };
 
-export default HowItWorksBlock;
+export default DifferenceBlock;

@@ -1,6 +1,6 @@
-.howItWorks {
+.differenceBlock {
   background: white;
-  padding: 40px 0;
+  padding: 12px 0;
   position: relative;
 }
 
@@ -15,6 +15,7 @@
   font-weight: 600;
   margin: 0 0 20px;
   color: #1f2937;
+  text-align: center;
 }
 
 .highlights {
@@ -72,8 +73,8 @@
 }
 
 @media (min-width: 480px) {
-  .howItWorks {
-    padding: 50px 0;
+  .differenceBlock {
+    padding: 16px 0;
   }
 
   .container {
@@ -97,14 +98,14 @@
 }
 
 @media (min-width: 768px) {
-  .howItWorks {
-    padding: 60px 0;
+  .differenceBlock {
+    padding: 20px 0;
   }
 }
 
 @media (min-width: 1024px) {
-  .howItWorks {
-    padding: 70px 0;
+  .differenceBlock {
+    padding: 0px 0;
   }
 
   .highlights {

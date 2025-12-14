@@ -30,7 +30,7 @@ const Header = (): ReactElement => {
                     <ul className={styles.navList}>
                         <li>
                             <Link href="#features" className={styles.navLink}>
-                                Возможности
+                                Преимущества
                             </Link>
                         </li>
                         <li>

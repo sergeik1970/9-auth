@@ -1,0 +1,47 @@
+.processSectionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.processBlockWrapper {
+  order: 1;
+}
+
+.differenceBlockWrapper {
+  order: 3;
+}
+
+.studentProfileBlockWrapper {
+  order: 2;
+}
+
+@media (min-width: 900px) {
+  .processSectionBlock {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0;
+  }
+
+  .processBlockWrapper {
+    grid-column: 1;
+    grid-row: 1;
+    order: unset;
+  }
+
+  .differenceBlockWrapper {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    order: unset;
+  }
+
+  .studentProfileBlockWrapper {
+    grid-column: 2;
+    grid-row: 1;
+    order: unset;
+  }
+}
