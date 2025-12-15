@@ -55,7 +55,7 @@
 }
 
 .stepDivider {
-  height: 20px;
+  height: 40px;
   margin-left: 20px;
   border-left: 2px dashed #d1d5db;
 }
@@ -105,7 +105,7 @@
 
   .step {
     gap: 24px;
-    margin-bottom: 28px;
+    margin-bottom: 0px;
   }
 
   .stepNumber {
@@ -154,7 +154,7 @@
   }
 
   .stepDivider {
-    height: 24px;
+    height: 48px;
     margin-left: 30px;
   }
 }
@@ -188,7 +188,7 @@
   }
 
   .stepDivider {
-    height: 28px;
+    height: 48px;
     margin-left: 32px;
   }
 }
