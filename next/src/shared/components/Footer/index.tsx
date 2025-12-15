@@ -64,17 +64,6 @@ const Footer = (): ReactElement => {
                             </li>
                         </ul>
                     </div>
-
-                    <div className={styles.section}>
-                        <h4 className={styles.sectionTitle}>Контакты</h4>
-                        <ul className={styles.linkList}>
-                            <li>
-                                <a href="mailto:support@skorix.ru" className={styles.link}>
-                                    support@skorix.ru
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
                 </div>
 
                 <div className={styles.divider}></div>
