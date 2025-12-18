@@ -9,7 +9,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: "Invalid test ID" });
     }
 
-    if (req.method === "POST") {
+    if (req.method === "GET") {
+        try {
+            const token = req.cookies.token;
+            const headers: HeadersInit = {
+                "Content-Type": "application/json",
+            };
+
+            if (token) {
+                headers.Cookie = `token=${token}`;
+            }
+
+            const response = await fetch(`${API_URL}/api/tests/${testId}/attempts`, {
+                method: "GET",
+                headers,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.text();
+                console.log("Backend response error:", response.status, errorData);
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            res.status(response.status).json(data);
+        } catch (error) {
+            console.error("Error fetching attempts:", error);
+            res.status(500).json({ error: "Failed to fetch attempts" });
+        }
+    } else if (req.method === "POST") {
         try {
             const token = req.cookies.token;
             const headers: HeadersInit = {

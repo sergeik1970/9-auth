@@ -10,9 +10,17 @@ interface TestResultsProps {
     results: TestResultsType;
     onRetry?: () => void;
     onGoBack?: () => void;
+    remainingAttempts?: number | null;
+    attemptsLoaded?: boolean;
 }
 
-export const TestResults: React.FC<TestResultsProps> = ({ results, onRetry, onGoBack }) => {
+export const TestResults: React.FC<TestResultsProps> = ({
+    results,
+    onRetry,
+    onGoBack,
+    remainingAttempts,
+    attemptsLoaded,
+}) => {
     const [selectedQuestionIndex, setSelectedQuestionIndex] = useState<number | null>(null);
     const userGradingCriteria = useSelector((state: RootState) => state.auth.user?.gradingCriteria);
     const gradingCriteria = (results as any).gradingCriteria || userGradingCriteria;
@@ -284,8 +292,11 @@ export const TestResults: React.FC<TestResultsProps> = ({ results, onRetry, onGo
                 </div>
 
                 <div className={styles.actions}>
-                    {onRetry && (
-                        <Button onClick={onRetry} className={styles.retryBtn}>
+                    {onRetry && attemptsLoaded && remainingAttempts !== null && remainingAttempts > 0 && (
+                        <Button
+                            onClick={onRetry}
+                            className={styles.retryBtn}
+                        >
                             Пройти заново
                         </Button>
                     )}

@@ -198,7 +198,7 @@ const TestPreview = ({
                 original.classNumber !== current.classNumber ||
                 original.classLetter !== current.classLetter ||
                 new Date(original.dueDate).getTime() !== new Date(current.dueDate).getTime() ||
-                (original.maxAttempts || 1) !== (current.maxAttempts || 1)
+                (original.maxAttempts ?? 1) !== (current.maxAttempts ?? 1)
             );
         });
     };
@@ -396,7 +396,9 @@ const TestPreview = ({
     };
 
     const getRemainingAttempts = (schedule?: ClassSchedule): number | null => {
-        if (!schedule || schedule.maxAttempts === undefined) return null;
+        if (!schedule) return null;
+
+        const maxAttempts = schedule.maxAttempts ?? 1;
 
         const studentAttempts = testAttempts.filter(
             (attempt) =>
@@ -406,7 +408,7 @@ const TestPreview = ({
                 attempt.status === "completed",
         ).length;
 
-        return Math.max(0, schedule.maxAttempts - studentAttempts);
+        return Math.max(0, maxAttempts - studentAttempts);
     };
 
     const handleArchive = async () => {
@@ -600,7 +602,7 @@ const TestPreview = ({
                                                     onClick={() => {
                                                         const updated = [...editingClassSchedules];
                                                         const currentAttempts =
-                                                            updated[index].maxAttempts || 1;
+                                                            updated[index].maxAttempts ?? 1;
                                                         if (currentAttempts > 1) {
                                                             updated[index] = {
                                                                 ...updated[index],
@@ -611,8 +613,7 @@ const TestPreview = ({
                                                     }}
                                                     disabled={
                                                         isPublishing ||
-                                                        !schedule.maxAttempts ||
-                                                        schedule.maxAttempts <= 1
+                                                        (schedule.maxAttempts ?? 1) <= 1
                                                     }
                                                     style={{
                                                         padding: "4px 8px",
@@ -629,7 +630,7 @@ const TestPreview = ({
                                                 </button>
                                                 <input
                                                     type="number"
-                                                    value={schedule.maxAttempts || 1}
+                                                    value={schedule.maxAttempts ?? 1}
                                                     onChange={(e) => {
                                                         const value = Math.min(
                                                             Math.max(
@@ -661,7 +662,7 @@ const TestPreview = ({
                                                     onClick={() => {
                                                         const updated = [...editingClassSchedules];
                                                         const currentAttempts =
-                                                            updated[index].maxAttempts || 1;
+                                                            updated[index].maxAttempts ?? 1;
                                                         if (currentAttempts < 100) {
                                                             updated[index] = {
                                                                 ...updated[index],
@@ -672,7 +673,7 @@ const TestPreview = ({
                                                     }}
                                                     disabled={
                                                         isPublishing ||
-                                                        (schedule.maxAttempts || 1) >= 100
+                                                        (schedule.maxAttempts ?? 1) >= 100
                                                     }
                                                     style={{
                                                         padding: "4px 8px",

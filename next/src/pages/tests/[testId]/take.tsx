@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
+import { useSelector } from "@/shared/store/store";
+import { selectAuth } from "@/shared/store/slices/auth";
 import DashboardLayout from "@/shared/components/DashboardLayout";
 import { Test } from "@/shared/types/test";
 
@@ -17,10 +19,12 @@ const TestTaker = dynamic(
 
 const TakeTestPage = () => {
     const router = useRouter();
+    const { user } = useSelector(selectAuth);
     const [testId, setTestId] = useState<string | null>(null);
     const [test, setTest] = useState<Test | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
 
     useEffect(() => {
         if (!router.isReady) return;
@@ -43,21 +47,54 @@ const TakeTestPage = () => {
             const testData = await testResponse.json();
             setTest(testData);
 
-            const attemptsResponse = await fetch("/api/tests/active-attempts", {
+            const attemptsResponse = await fetch(`/api/tests/${testId}/attempts`, {
                 credentials: "include",
             });
-            console.log("Active attempts response:", attemptsResponse.status);
+            console.log("Attempts response:", attemptsResponse.status);
             if (attemptsResponse.ok) {
                 const attempts = await attemptsResponse.json();
-                console.log("Active attempts:", attempts);
+                console.log("All attempts:", attempts);
+
                 const activeAttempt = attempts.find(
-                    (attempt: any) => attempt.testId === parseInt(testId || "0"),
+                    (attempt: any) => attempt.status === "in_progress",
                 );
                 console.log("Found active attempt:", activeAttempt);
                 if (activeAttempt) {
                     console.log("Redirecting to existing attempt:", activeAttempt.id);
                     router.replace(`/tests/${testId}/take/${activeAttempt.id}`);
                     return;
+                }
+
+                if (user && testData.classSchedules) {
+                    const userSchedule = testData.classSchedules.find(
+                        (s: any) =>
+                            s.classNumber === user.classNumber &&
+                            s.classLetter?.toUpperCase() === user.classLetter?.toUpperCase(),
+                    );
+
+                    if (userSchedule) {
+                        const maxAttempts = userSchedule.maxAttempts ?? 1;
+                        const completedAttempts = attempts.filter(
+                            (attempt: any) =>
+                                attempt.userId === user.id &&
+                                attempt.classNumber === userSchedule.classNumber &&
+                                attempt.classLetter?.toUpperCase() ===
+                                    userSchedule.classLetter?.toUpperCase() &&
+                                attempt.status === "completed",
+                        ).length;
+
+                        const remaining = Math.max(0, maxAttempts - completedAttempts);
+                        setRemainingAttempts(remaining);
+
+                        if (remaining === 0) {
+                            setError(
+                                "Количество попыток исчерпано. Максимально: " +
+                                    maxAttempts,
+                            );
+                            setIsLoading(false);
+                            return;
+                        }
+                    }
                 }
             } else {
                 console.log("Failed to fetch attempts:", attemptsResponse.status);
