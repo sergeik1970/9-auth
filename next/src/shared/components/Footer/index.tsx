@@ -53,14 +53,9 @@ const Footer = (): ReactElement => {
                                 </a>
                             </li>
                             <li>
-                                <a href="#" className={styles.link}>
+                                <Link href="/privacy" className={styles.link}>
                                     Политика конфиденциальности
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" className={styles.link}>
-                                    Условия использования
-                                </a>
+                                </Link>
                             </li>
                         </ul>
                     </div>
