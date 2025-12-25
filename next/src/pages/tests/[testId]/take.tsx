@@ -87,10 +87,7 @@ const TakeTestPage = () => {
                         setRemainingAttempts(remaining);
 
                         if (remaining === 0) {
-                            setError(
-                                "Количество попыток исчерпано. Максимально: " +
-                                    maxAttempts,
-                            );
+                            setError("Количество попыток исчерпано. Максимально: " + maxAttempts);
                             setIsLoading(false);
                             return;
                         }

@@ -27,9 +27,20 @@ const DifferenceBlock = (): ReactElement => {
                 <h3 className={styles.highlightsTitle}>Главное отличие Skorix</h3>
                 <div className={styles.highlights}>
                     {features.map((feature, index) => (
-                        <div key={index} className={`${styles.highlight} ${feature.isBright ? styles.highlightBright : ''}`}>
+                        <div
+                            key={index}
+                            className={`${styles.highlight} ${
+                                feature.isBright ? styles.highlightBright : ""
+                            }`}
+                        >
                             <div className={styles.highlightIcon}>{feature.icon}</div>
-                            <span className={`${styles.highlightText} ${feature.isBright ? styles.highlightTextBright : ''}`}>{feature.text}</span>
+                            <span
+                                className={`${styles.highlightText} ${
+                                    feature.isBright ? styles.highlightTextBright : ""
+                                }`}
+                            >
+                                {feature.text}
+                            </span>
                         </div>
                     ))}
                 </div>

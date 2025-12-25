@@ -14,7 +14,7 @@ export default function Document() {
                     <div>
                         <img
                             src="https://mc.yandex.ru/watch/105858203"
-                            style={{ position: 'absolute', left: '-9999px' }}
+                            style={{ position: "absolute", left: "-9999px" }}
                             alt=""
                         />
                     </div>

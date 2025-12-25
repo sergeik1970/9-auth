@@ -12,21 +12,27 @@ const StudentProfileBlock = (): ReactElement => {
                         <div className={styles.testItem}>
                             <div className={styles.testHeader}>
                                 <h4 className={styles.testName}>История России</h4>
-                                <span className={`${styles.testStatus} ${styles.statusCompleted}`}>Завершён</span>
+                                <span className={`${styles.testStatus} ${styles.statusCompleted}`}>
+                                    Завершён
+                                </span>
                             </div>
                             <p className={styles.testDate}>20 вопросов · 10 дек</p>
                         </div>
                         <div className={styles.testItem}>
                             <div className={styles.testHeader}>
                                 <h4 className={styles.testName}>Английский язык</h4>
-                                <span className={`${styles.testStatus} ${styles.statusInProgress}`}>В процессе</span>
+                                <span className={`${styles.testStatus} ${styles.statusInProgress}`}>
+                                    В процессе
+                                </span>
                             </div>
                             <p className={styles.testDate}>15 вопросов · 15 дек</p>
                         </div>
                         <div className={styles.testItem}>
                             <div className={styles.testHeader}>
                                 <h4 className={styles.testName}>Математика</h4>
-                                <span className={`${styles.testStatus} ${styles.statusNew}`}>Новый</span>
+                                <span className={`${styles.testStatus} ${styles.statusNew}`}>
+                                    Новый
+                                </span>
                             </div>
                             <p className={styles.testDate}>25 вопросов · 18 дек</p>
                         </div>

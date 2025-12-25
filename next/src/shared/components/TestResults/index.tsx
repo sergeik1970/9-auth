@@ -292,14 +292,15 @@ export const TestResults: React.FC<TestResultsProps> = ({
                 </div>
 
                 <div className={styles.actions}>
-                    {onRetry && attemptsLoaded && remainingAttempts !== null && remainingAttempts > 0 && (
-                        <Button
-                            onClick={onRetry}
-                            className={styles.retryBtn}
-                        >
-                            Пройти заново
-                        </Button>
-                    )}
+                    {onRetry &&
+                        attemptsLoaded &&
+                        remainingAttempts !== null &&
+                        remainingAttempts !== undefined &&
+                        remainingAttempts > 0 && (
+                            <Button onClick={onRetry} className={styles.retryBtn}>
+                                Пройти заново
+                            </Button>
+                        )}
                     {onGoBack && (
                         <Button onClick={onGoBack} variant="secondary" className={styles.backBtn}>
                             К списку тестов

@@ -10,6 +10,7 @@ import WhoIsItForBlock from "@/shared/components/WhoIsItForBlock";
 import BenefitsBlock from "@/shared/components/BenefitsBlock";
 import FAQBlock from "@/shared/components/FAQBlock";
 import CTABlock from "@/shared/components/CTABlock";
+import CookiesBanner from "@/shared/components/CookiesBanner";
 
 const HomePage = (): ReactElement => {
     return (
@@ -26,6 +27,7 @@ const HomePage = (): ReactElement => {
                 <CTABlock />
             </main>
             <Footer />
+            <CookiesBanner />
         </div>
     );
 };
