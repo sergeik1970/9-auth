@@ -1,9 +1,17 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
+import {
+    Injectable,
+    NotFoundException,
+    ForbiddenException,
+    BadRequestException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, Not } from "typeorm";
 import { User, UserRole } from "src/entities/User/user.entity";
 import { Test } from "src/entities/Test/test.entity";
-import { TestAttempt, AttemptStatus } from "src/entities/TestAttempt/testAttempt.entity";
+import {
+    TestAttempt,
+    AttemptStatus,
+} from "src/entities/TestAttempt/testAttempt.entity";
 import { Region } from "src/entities/Region/region.entity";
 import { School } from "src/entities/School/school.entity";
 import { Settlement } from "src/entities/Settlement/settlement.entity";
@@ -38,7 +46,9 @@ export class AdminService {
 
     async getAllUsers(user: JwtPayload): Promise<any[]> {
         if (user.role !== "admin") {
-            throw new ForbiddenException("Only admins can access this resource");
+            throw new ForbiddenException(
+                "Only admins can access this resource",
+            );
         }
 
         const users = await this.userRepository.find({
@@ -69,7 +79,8 @@ export class AdminService {
                     regionName: u.region?.name || null,
                     schoolId: u.schoolId,
                     schoolName: u.school?.name || null,
-                    educationalInstitutionCustom: u.educationalInstitutionCustom,
+                    educationalInstitutionCustom:
+                        u.educationalInstitutionCustom,
                     completedTests: completedAttempts,
                     totalAttempts: totalAttempts,
                     createdAt: u.createdAt,
@@ -81,7 +92,9 @@ export class AdminService {
 
     async getUserById(id: number, user: JwtPayload): Promise<any> {
         if (user.role !== "admin") {
-            throw new ForbiddenException("Only admins can access this resource");
+            throw new ForbiddenException(
+                "Only admins can access this resource",
+            );
         }
 
         const targetUser = await this.userRepository.findOne({
@@ -114,7 +127,8 @@ export class AdminService {
             regionName: targetUser.region?.name || null,
             schoolId: targetUser.schoolId,
             schoolName: targetUser.school?.name || null,
-            educationalInstitutionCustom: targetUser.educationalInstitutionCustom,
+            educationalInstitutionCustom:
+                targetUser.educationalInstitutionCustom,
             completedTests: completedAttempts,
             totalAttempts: totalAttempts,
             createdAt: targetUser.createdAt,
@@ -122,7 +136,11 @@ export class AdminService {
         };
     }
 
-    async updateUser(id: number, updateData: any, user: JwtPayload): Promise<User> {
+    async updateUser(
+        id: number,
+        updateData: any,
+        user: JwtPayload,
+    ): Promise<User> {
         if (user.role !== "admin") {
             throw new ForbiddenException("Only admins can update users");
         }
@@ -137,17 +155,25 @@ export class AdminService {
 
         // Обновляем поля
         if (updateData.name !== undefined) targetUser.name = updateData.name;
-        if (updateData.lastName !== undefined) targetUser.lastName = updateData.lastName;
-        if (updateData.patronymic !== undefined) targetUser.patronymic = updateData.patronymic;
+        if (updateData.lastName !== undefined)
+            targetUser.lastName = updateData.lastName;
+        if (updateData.patronymic !== undefined)
+            targetUser.patronymic = updateData.patronymic;
         if (updateData.email !== undefined) targetUser.email = updateData.email;
         if (updateData.role !== undefined) targetUser.role = updateData.role;
-        if (updateData.regionId !== undefined) targetUser.regionId = updateData.regionId;
-        if (updateData.settlementId !== undefined) targetUser.settlementId = updateData.settlementId;
-        if (updateData.schoolId !== undefined) targetUser.schoolId = updateData.schoolId;
-        if (updateData.classNumber !== undefined) targetUser.classNumber = updateData.classNumber;
-        if (updateData.classLetter !== undefined) targetUser.classLetter = updateData.classLetter;
+        if (updateData.regionId !== undefined)
+            targetUser.regionId = updateData.regionId;
+        if (updateData.settlementId !== undefined)
+            targetUser.settlementId = updateData.settlementId;
+        if (updateData.schoolId !== undefined)
+            targetUser.schoolId = updateData.schoolId;
+        if (updateData.classNumber !== undefined)
+            targetUser.classNumber = updateData.classNumber;
+        if (updateData.classLetter !== undefined)
+            targetUser.classLetter = updateData.classLetter;
         if (updateData.educationalInstitutionCustom !== undefined)
-            targetUser.educationalInstitutionCustom = updateData.educationalInstitutionCustom;
+            targetUser.educationalInstitutionCustom =
+                updateData.educationalInstitutionCustom;
 
         const updated = await this.userRepository.save(targetUser);
 
@@ -157,7 +183,10 @@ export class AdminService {
         } as User;
     }
 
-    async deleteUser(id: number, user: JwtPayload): Promise<{ message: string }> {
+    async deleteUser(
+        id: number,
+        user: JwtPayload,
+    ): Promise<{ message: string }> {
         if (user.role !== "admin") {
             throw new ForbiddenException("Only admins can delete users");
         }
@@ -223,7 +252,9 @@ export class AdminService {
         user?: JwtPayload,
     ): Promise<Settlement[]> {
         if (user && user.role !== "admin") {
-            throw new ForbiddenException("Only admins can access this resource");
+            throw new ForbiddenException(
+                "Only admins can access this resource",
+            );
         }
 
         if (regionId) {
@@ -232,7 +263,9 @@ export class AdminService {
             });
 
             if (!region) {
-                throw new NotFoundException(`Region with ID ${regionId} not found`);
+                throw new NotFoundException(
+                    `Region with ID ${regionId} not found`,
+                );
             }
 
             return await this.settlementRepository.find({
@@ -303,7 +336,9 @@ export class AdminService {
         user?: JwtPayload,
     ): Promise<School[]> {
         if (user && user.role !== "admin") {
-            throw new ForbiddenException("Only admins can access this resource");
+            throw new ForbiddenException(
+                "Only admins can access this resource",
+            );
         }
 
         if (settlementId) {
@@ -312,7 +347,9 @@ export class AdminService {
             });
 
             if (!settlement) {
-                throw new NotFoundException(`Settlement with ID ${settlementId} not found`);
+                throw new NotFoundException(
+                    `Settlement with ID ${settlementId} not found`,
+                );
             }
 
             return await this.schoolRepository.find({
@@ -328,7 +365,9 @@ export class AdminService {
 
     async getSchoolById(id: number, user: JwtPayload): Promise<School> {
         if (user.role !== "admin") {
-            throw new ForbiddenException("Only admins can access this resource");
+            throw new ForbiddenException(
+                "Only admins can access this resource",
+            );
         }
 
         const school = await this.schoolRepository.findOne({
@@ -402,7 +441,10 @@ export class AdminService {
         return await this.schoolRepository.save(school);
     }
 
-    async deleteSchool(id: number, user: JwtPayload): Promise<{ message: string }> {
+    async deleteSchool(
+        id: number,
+        user: JwtPayload,
+    ): Promise<{ message: string }> {
         if (user.role !== "admin") {
             throw new ForbiddenException("Only admins can delete schools");
         }
@@ -418,5 +460,41 @@ export class AdminService {
         await this.schoolRepository.remove(school);
 
         return { message: "School deleted successfully" };
+    }
+
+    async getRegions(user: JwtPayload): Promise<Region[]> {
+        if (user.role !== "admin") {
+            throw new ForbiddenException(
+                "Only admins can access this resource",
+            );
+        }
+
+        return await this.regionRepository.find({
+            relations: ["settlements"],
+            order: { name: "ASC" },
+        });
+    }
+
+    async createRegion(name: string, user: JwtPayload): Promise<Region> {
+        if (user.role !== "admin") {
+            throw new ForbiddenException("Only admins can create regions");
+        }
+
+        if (!name || !name.trim()) {
+            throw new BadRequestException("Region name is required");
+        }
+
+        const existingRegion = await this.regionRepository.findOne({
+            where: { name: name.trim() },
+        });
+
+        if (existingRegion) {
+            throw new BadRequestException(
+                "Region with this name already exists",
+            );
+        }
+
+        const region = this.regionRepository.create({ name: name.trim() });
+        return await this.regionRepository.save(region);
     }
 }

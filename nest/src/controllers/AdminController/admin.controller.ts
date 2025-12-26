@@ -54,7 +54,11 @@ export class AdminController {
     @UseGuards(JwtAuthGuard, AdminGuard)
     @HttpCode(HttpStatus.CREATED)
     createSettlement(@Body() body: any, @Req() req: any) {
-        return this.adminService.createSettlement(body.regionId, body.name, req.user);
+        return this.adminService.createSettlement(
+            body.regionId,
+            body.name,
+            req.user,
+        );
     }
 
     @Get("settlements")
@@ -76,7 +80,12 @@ export class AdminController {
     @UseGuards(JwtAuthGuard, AdminGuard)
     @HttpCode(HttpStatus.CREATED)
     createSchool(@Body() body: any, @Req() req: any) {
-        return this.adminService.createSchool(body.regionId, body.settlementId, body.name, req.user);
+        return this.adminService.createSchool(
+            body.regionId,
+            body.settlementId,
+            body.name,
+            req.user,
+        );
     }
 
     @Get("schools")
@@ -103,7 +112,11 @@ export class AdminController {
     @Put("schools/:id")
     @UseGuards(JwtAuthGuard, AdminGuard)
     @HttpCode(HttpStatus.OK)
-    updateSchool(@Param("id", ParseIntPipe) id: number, @Body() body: any, @Req() req: any) {
+    updateSchool(
+        @Param("id", ParseIntPipe) id: number,
+        @Body() body: any,
+        @Req() req: any,
+    ) {
         return this.adminService.updateSchool(
             id,
             body.regionId,
@@ -118,5 +131,18 @@ export class AdminController {
     @HttpCode(HttpStatus.OK)
     deleteSchool(@Param("id", ParseIntPipe) id: number, @Req() req: any) {
         return this.adminService.deleteSchool(id, req.user);
+    }
+
+    @Get("regions")
+    @UseGuards(JwtAuthGuard, AdminGuard)
+    getRegions(@Req() req: any) {
+        return this.adminService.getRegions(req.user);
+    }
+
+    @Post("regions")
+    @UseGuards(JwtAuthGuard, AdminGuard)
+    @HttpCode(HttpStatus.CREATED)
+    createRegion(@Body() body: any, @Req() req: any) {
+        return this.adminService.createRegion(body.name, req.user);
     }
 }
