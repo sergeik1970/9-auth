@@ -67,8 +67,7 @@ const Auth = (): ReactElement => {
     useEffect(() => {
         const loadRegions = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-                const res = await fetch(`${apiUrl}/api/regions`);
+                const res = await fetch(`/api/regions`);
 
                 if (!res.ok) {
                     console.error(`API returned status ${res.status}`);
@@ -107,8 +106,7 @@ const Auth = (): ReactElement => {
             if (!selectedRegion) return;
 
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-                const res = await fetch(`${apiUrl}/api/regions/${selectedRegion.id}/settlements`);
+                const res = await fetch(`/api/regions/${selectedRegion.id}/settlements`);
 
                 if (!res.ok) {
                     console.error(`Failed to load settlements: ${res.status}`);
@@ -151,9 +149,8 @@ const Auth = (): ReactElement => {
             if (!selectedSettlement) return;
 
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
                 const res = await fetch(
-                    `${apiUrl}/api/regions/settlement/${selectedSettlement.id}/schools`,
+                    `/api/regions/settlement/${selectedSettlement.id}/schools`,
                 );
 
                 if (!res.ok) {

@@ -75,10 +75,8 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
     useEffect(() => {
         const loadLocationNames = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
                 if (user.regionId) {
-                    const regionsRes = await fetch(`${apiUrl}/api/regions`);
+                    const regionsRes = await fetch(`/api/regions`);
                     const regions = await regionsRes.json();
                     const region = Array.isArray(regions)
                         ? regions.find((r: any) => r.id === user.regionId)
@@ -88,7 +86,7 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
 
                 if (user.settlementId && user.regionId) {
                     const settlementsRes = await fetch(
-                        `${apiUrl}/api/regions/${user.regionId}/settlements`,
+                        `/api/regions/${user.regionId}/settlements`,
                     );
                     const settlements = await settlementsRes.json();
                     const settlement = Array.isArray(settlements)
@@ -100,7 +98,7 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
 
                 if (user.schoolId && user.settlementId) {
                     const schoolsRes = await fetch(
-                        `${apiUrl}/api/regions/settlement/${user.settlementId}/schools`,
+                        `/api/regions/settlement/${user.settlementId}/schools`,
                     );
                     const schools = await schoolsRes.json();
                     const school = Array.isArray(schools)
