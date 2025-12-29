@@ -6,6 +6,7 @@ RUN npm ci
 
 FROM node:21-alpine as builder
 COPY . .
+COPY .env.production .env.production
 
 COPY --from=deps --chown=builder ./node_modules ./node_modules
 ARG NEXT_PUBLIC_API_URL=""
