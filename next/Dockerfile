@@ -13,10 +13,13 @@ RUN npm run build
 
 FROM node:21-alpine as runner
 
+WORKDIR /opt/next
+
 COPY --from=deps --chown=runner ./package.json ./package.json
 COPY --from=deps --chown=runner ./package-lock.json ./package-lock.json
 COPY --from=deps --chown=runner ./node_modules ./node_modules
 COPY --from=builder --chown=runner ./.next ./.next
+COPY --from=builder --chown=runner ./public ./public
 
 EXPOSE 3000
 
