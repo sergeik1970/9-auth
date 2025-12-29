@@ -14,14 +14,12 @@ services:
     next:
         build:
             context: ./next
-            args:
-                NEXT_PUBLIC_API_URL: /api
         tty: true
         working_dir: /opt/next
         expose:
             - '3000'
         environment:
-            NEXT_PUBLIC_API_URL: "/api"
+            API_INTERNAL_URL: "http://nest:3001"
         depends_on:
             - db
             - nest

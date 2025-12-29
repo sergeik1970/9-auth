@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const createApiUrl = (path: string) => `${process.env.NEXT_PUBLIC_API_URL}${path}`;
+const API_INTERNAL_URL = process.env.API_INTERNAL_URL || "http://localhost:3001";
+
+const createApiUrl = (path: string) => `${API_INTERNAL_URL}${path}`;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === "GET") {
