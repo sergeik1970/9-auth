@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const createApiUrl = (path: string) => `${process.env.NEXT_PUBLIC_API_URL}${path}`;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { settlementId } = req.query;
@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
 
             const response = await fetch(
-                `${API_URL}/api/admin/settlements/${settlementId}/schools`,
+                createApiUrl(`/api/admin/settlements/${settlementId}/schools`),
                 {
                     method: "GET",
                     headers,

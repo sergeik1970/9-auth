@@ -15,6 +15,16 @@ export const API_ENDPOINTS = {
         delete: (id: number) => `/api/tests/${id}`,
         getAttempts: (id: number) => `/api/tests/${id}/attempts`,
     },
+    admin: {
+        regions: "/api/admin/regions",
+        regionSettlements: (regionId: string | number) => `/api/admin/regions/${regionId}/settlements`,
+        settlements: "/api/admin/settlements",
+        schools: "/api/admin/schools",
+        schoolById: (id: string | number) => `/api/admin/schools/${id}`,
+        users: "/api/admin/users",
+        userById: (id: string | number) => `/api/admin/users/${id}`,
+        settlementSchools: (settlementId: string | number) => `/api/admin/settlements/${settlementId}/schools`,
+    },
 };
 
 export const createApiUrl = (endpoint: string): string => {

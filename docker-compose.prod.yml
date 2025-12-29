@@ -18,6 +18,8 @@ services:
         working_dir: /opt/next
         expose:
             - '3000'
+        environment:
+            NEXT_PUBLIC_API_URL: ""
         depends_on:
             - db
             - nest

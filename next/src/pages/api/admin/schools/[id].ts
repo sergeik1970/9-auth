@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const createApiUrl = (path: string) => `${process.env.NEXT_PUBLIC_API_URL}${path}`;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { id } = req.query;
@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (req.method === "GET") {
         try {
-            const response = await fetch(`${API_URL}/api/admin/schools/${id}`, {
+            const response = await fetch(createApiUrl(`/api/admin/schools/${id}`), {
                 method: "GET",
                 headers,
             });
@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
     } else if (req.method === "PUT") {
         try {
-            const response = await fetch(`${API_URL}/api/admin/schools/${id}`, {
+            const response = await fetch(createApiUrl(`/api/admin/schools/${id}`), {
                 method: "PUT",
                 headers,
                 body: JSON.stringify(req.body),
@@ -53,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
     } else if (req.method === "DELETE") {
         try {
-            const response = await fetch(`${API_URL}/api/admin/schools/${id}`, {
+            const response = await fetch(createApiUrl(`/api/admin/schools/${id}`), {
                 method: "DELETE",
                 headers,
             });

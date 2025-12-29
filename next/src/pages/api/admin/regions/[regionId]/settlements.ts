@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const createApiUrl = (path: string) => `${process.env.NEXT_PUBLIC_API_URL}${path}`;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { regionId } = req.query;
@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 headers.Cookie = `token=${token}`;
             }
 
-            const response = await fetch(`${API_URL}/api/admin/regions/${regionId}/settlements`, {
+            const response = await fetch(createApiUrl(`/api/admin/regions/${regionId}/settlements`), {
                 method: "GET",
                 headers,
             });

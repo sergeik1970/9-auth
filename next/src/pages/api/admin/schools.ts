@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const createApiUrl = (path: string) => `${process.env.NEXT_PUBLIC_API_URL}${path}`;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const token = req.cookies.token;
@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (req.method === "GET") {
         try {
-            const response = await fetch(`${API_URL}/api/admin/schools`, {
+            const response = await fetch(createApiUrl("/api/admin/schools"), {
                 method: "GET",
                 headers,
             });
@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
     } else if (req.method === "POST") {
         try {
-            const response = await fetch(`${API_URL}/api/admin/schools`, {
+            const response = await fetch(createApiUrl("/api/admin/schools"), {
                 method: "POST",
                 headers,
                 body: JSON.stringify(req.body),
