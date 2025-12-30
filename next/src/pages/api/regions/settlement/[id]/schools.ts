@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const API_INTERNAL_URL = process.env.API_INTERNAL_URL || "http://localhost:3001";
+const API_INTERNAL_URL = process.env.API_INTERNAL_URL;
+if (!API_INTERNAL_URL) throw new Error("API_INTERNAL_URL is not set");
 
 const createApiUrl = (path: string) => `${API_INTERNAL_URL}${path}`;
 

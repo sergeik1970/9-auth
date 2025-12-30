@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_INTERNAL_URL = process.env.API_INTERNAL_URL;
+if (!API_INTERNAL_URL) throw new Error("API_INTERNAL_URL is not set");
+
+const createApiUrl = (path: string) => `${API_INTERNAL_URL}${path}`;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { testId } = req.query;
@@ -20,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (req.method === "GET") {
         try {
-            const response = await fetch(`${API_URL}/api/tests/${testId}`, {
+            const response = await fetch(createApiUrl(`/api/tests/${testId}`), {
                 method: "GET",
                 headers,
             });
@@ -38,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } else if (req.method === "PATCH") {
         try {
             console.log("PATCH request to update test:", testId, req.body);
-            const response = await fetch(`${API_URL}/api/tests/${testId}`, {
+            const response = await fetch(createApiUrl(`/api/tests/${testId}`), {
                 method: "PATCH",
                 headers,
                 body: JSON.stringify(req.body),
@@ -62,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
     } else if (req.method === "DELETE") {
         try {
-            const response = await fetch(`${API_URL}/api/tests/${testId}`, {
+            const response = await fetch(createApiUrl(`/api/tests/${testId}`), {
                 method: "DELETE",
                 headers,
             });

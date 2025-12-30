@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_INTERNAL_URL = process.env.API_INTERNAL_URL;
+if (!API_INTERNAL_URL) throw new Error("API_INTERNAL_URL is not set");
+
+const createApiUrl = (path: string) => `${API_INTERNAL_URL}${path}`;
 
 function parseCookiesFromRequest(req: NextApiRequest): Record<string, string> {
     const cookieHeader = req.headers.cookie || "";
@@ -42,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 Cookie: `token=${token}`,
             };
 
-            const backendUrl = `${API_URL}/api/tests/active-attempts`;
+            const backendUrl = createApiUrl("/api/tests/active-attempts");
             console.log("Fetching from backend:", backendUrl);
             const response = await fetch(backendUrl, {
                 method: "GET",

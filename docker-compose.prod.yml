@@ -21,7 +21,9 @@ services:
         expose:
             - '3000'
         environment:
+            NEXT_PUBLIC_API_URL: "/api"
             API_INTERNAL_URL: "http://nest:3001"
+            NODE_ENV: "production"
         depends_on:
             - db
             - nest

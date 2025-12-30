@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const createApiUrl = (path: string) => `${process.env.NEXT_PUBLIC_API_URL}${path}`;
+const API_INTERNAL_URL = process.env.API_INTERNAL_URL;
+if (!API_INTERNAL_URL) throw new Error("API_INTERNAL_URL is not set");
+
+const createApiUrl = (path: string) => `${API_INTERNAL_URL}${path}`;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { regionId } = req.query;
