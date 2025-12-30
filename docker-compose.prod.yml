@@ -14,6 +14,8 @@ services:
     next:
         build:
             context: ./next
+            args:
+                NEXT_PUBLIC_API_URL: "/api"
         tty: true
         working_dir: /opt/next
         expose:
