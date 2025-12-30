@@ -23,10 +23,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 headers.Cookie = `token=${token}`;
             }
 
-            const response = await fetch(createApiUrl(`/api/tests/${testId}/attempts/${attemptId}`), {
-                method: "GET",
-                headers,
-            });
+            const response = await fetch(
+                createApiUrl(`/api/tests/${testId}/attempts/${attemptId}`),
+                {
+                    method: "GET",
+                    headers,
+                },
+            );
 
             const data = await response.json();
             res.status(response.status).json(data);

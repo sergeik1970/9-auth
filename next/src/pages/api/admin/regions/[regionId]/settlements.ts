@@ -19,10 +19,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 headers.Cookie = `token=${token}`;
             }
 
-            const response = await fetch(createApiUrl(`/api/admin/regions/${regionId}/settlements`), {
-                method: "GET",
-                headers,
-            });
+            const response = await fetch(
+                createApiUrl(`/api/admin/regions/${regionId}/settlements`),
+                {
+                    method: "GET",
+                    headers,
+                },
+            );
 
             if (!response.ok) {
                 return res.status(response.status).json({ error: "Failed to fetch settlements" });

@@ -85,9 +85,7 @@ export default function EditProfile({ user, onClose, onSuccess }: EditProfilePro
                 }
 
                 if (user.settlementId && user.regionId) {
-                    const settlementsRes = await fetch(
-                        `/api/regions/${user.regionId}/settlements`,
-                    );
+                    const settlementsRes = await fetch(`/api/regions/${user.regionId}/settlements`);
                     const settlements = await settlementsRes.json();
                     const settlement = Array.isArray(settlements)
                         ? settlements.find((s: any) => s.id === user.settlementId)

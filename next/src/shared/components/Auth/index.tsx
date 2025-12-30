@@ -149,9 +149,7 @@ const Auth = (): ReactElement => {
             if (!selectedSettlement) return;
 
             try {
-                const res = await fetch(
-                    `/api/regions/settlement/${selectedSettlement.id}/schools`,
-                );
+                const res = await fetch(`/api/regions/settlement/${selectedSettlement.id}/schools`);
 
                 if (!res.ok) {
                     console.error(`Failed to load schools: ${res.status}`);
