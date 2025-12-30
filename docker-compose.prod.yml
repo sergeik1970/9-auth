@@ -15,13 +15,13 @@ services:
         build:
             context: ./next
             args:
-                NEXT_PUBLIC_API_URL: "/api"
+                NEXT_PUBLIC_API_URL: ""
         tty: true
         working_dir: /opt/next
         expose:
             - '3000'
         environment:
-            NEXT_PUBLIC_API_URL: "/api"
+            NEXT_PUBLIC_API_URL: ""
             API_INTERNAL_URL: "http://nest:3001"
             NODE_ENV: "production"
         depends_on:

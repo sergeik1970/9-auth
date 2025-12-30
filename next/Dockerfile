@@ -15,6 +15,8 @@ COPY . .
 COPY --from=deps /app/node_modules ./node_modules
 ARG NEXT_PUBLIC_API_URL=""
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ARG API_INTERNAL_URL="http://nest:3001"
+ENV API_INTERNAL_URL=${API_INTERNAL_URL}
 RUN npm run build
 
 FROM node:21-alpine as runner
