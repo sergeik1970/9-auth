@@ -48,6 +48,8 @@ export interface JwtPayload {
     settlementId?: number;
 }
 
+import { QuestionService } from "../QuestionService/question.service";
+
 @Injectable()
 export class TestService {
     private readonly logger = new Logger(TestService.name);
@@ -63,7 +65,13 @@ export class TestService {
         private readonly attemptRepository: Repository<TestAttempt>,
         @InjectRepository(TestAnswer)
         private readonly answerRepository: Repository<TestAnswer>,
+        private readonly questionService: QuestionService,
     ) {}
+
+    // Получение вопросов для теста через QuestionService
+    async getTestQuestions(testId: number, user: JwtPayload) {
+        return this.questionService.getQuestionsByTestId(testId, user);
+    }
 
     private isStudentInClass(
         studentNumber: number | null | undefined,
@@ -508,7 +516,11 @@ export class TestService {
 
             // Проверяем, есть ли у студента активная попытка на этот тест
             const hasActiveAttempt = await this.attemptRepository.findOne({
-                where: { testId: id, userId: user.sub, status: AttemptStatus.IN_PROGRESS },
+                where: {
+                    testId: id,
+                    userId: user.sub,
+                    status: AttemptStatus.IN_PROGRESS,
+                },
             });
 
             // Студент может видеть активные тесты или тесты, на которые у него есть активная попытка
@@ -567,7 +579,11 @@ export class TestService {
             const now = new Date();
             const dueDate = new Date(studentSchedule.dueDate);
 
-            if (!isNaN(dueDate.getTime()) && now > dueDate && !hasActiveAttempt) {
+            if (
+                !isNaN(dueDate.getTime()) &&
+                now > dueDate &&
+                !hasActiveAttempt
+            ) {
                 this.logger.log(
                     `[getTestById] Student ${user.sub} denied access to test ${id}: deadline passed`,
                     {

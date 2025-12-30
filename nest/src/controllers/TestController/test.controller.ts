@@ -99,6 +99,15 @@ export class TestController {
         return this.testService.getTestById(id, req.user);
     }
 
+    @Get(":id/questions")
+    @UseGuards(JwtAuthGuard)
+    getTestQuestions(@Param("id", ParseIntPipe) id: number, @Req() req: any) {
+        this.logger.log(
+            `[GET /tests/${id}/questions] called by user ${req.user?.id}`,
+        );
+        return this.testService.getTestQuestions(id, req.user);
+    }
+
     @Patch(":id")
     @UseGuards(JwtAuthGuard)
     updateTest(
